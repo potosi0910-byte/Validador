@@ -2616,22 +2616,24 @@ def validar_otros_servicios_malla_2275(data, nombre_archivo=""):
                 _e("S06-OBLIGATORIO", "critica", "codTecnologiaSalud",
                    "codTecnologiaSalud es obligatorio en otrosServicios.")
 
-            # ── S08: cantidadOS según tipoOS ─────────────────
-            # Dispositivos/insumos/traslados/SC: unidades; Honorarios: siempre 1; Estancia: días
-            if tipo_os == "03":
-                cantidad_os = svc.get("cantidadOS")
+            # ── S08: cantidadOS solo para códigos de 6 chars sin letras (honorarios CUPS) ──
+            # Solo se valida cuando el código tiene exactamente 6 caracteres y todos son dígitos.
+            # Para cualquier otro tipo (DM*, traslados con letras, estancias, etc.) no se genera alerta.
+            cantidad_os = svc.get("cantidadOS")
+            es_honorario_cups = len(cod_tec) == 6 and cod_tec.isdigit()
+
+            if es_honorario_cups:
                 try:
                     if int(str(cantidad_os).strip()) != 1:
                         _e("S08-HONORARIOS", "alta", "cantidadOS",
-                           "Para honorarios (tipoOS='03') cantidadOS debe ser 1. "
-                           "Solo se permite reportar 1 honorario por procedimiento y por profesional. "
-                           "(Para dispositivos/insumos/traslados/SC informar en unidades; "
-                           "para estancia informar cantidad de días.)", cantidad_os)
+                           f"Para honorarios (código '{cod_tec}') cantidadOS debe ser 1. "
+                           "Solo se permite reportar 1 honorario por procedimiento y por profesional.",
+                           cantidad_os)
                 except (ValueError, TypeError, AttributeError):
                     _e("S08-HONORARIOS", "alta", "cantidadOS",
-                       "cantidadOS debe ser un valor numérico entero. "
-                       "Para honorarios debe ser 1; para estancia informar días; "
-                       "para dispositivos/insumos/traslados/SC informar en unidades.", cantidad_os)
+                       f"Para honorarios (código '{cod_tec}') cantidadOS debe ser un valor numérico entero igual a 1. "
+                       "Solo se permite reportar 1 honorario por procedimiento y por profesional.",
+                       cantidad_os)
 
             # ── RVC050: S09-S10 obligatorios para DM/SC/HO ───
             if tipo_os in TIPOS_OS_CON_PRESCRIPTOR:
