@@ -1,0 +1,91 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL513568",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "CC",
+            "numDocumentoIdentificacion": "48571441",
+            "tipoUsuario": "04",
+            "fechaNacimiento": "1971-06-02",
+            "codSexo": "F",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19548",
+            "codZonaTerritorialResidencia": "01",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "procedimientos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2026-01-07 07:50",
+                        "idMIPRES": null,
+                        "numAutorizacion": "299784155",
+                        "codProcedimiento": "903026",
+                        "viaIngresoServicioSalud": "02",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "02",
+                        "codServicio": 706,
+                        "finalidadTecnologiaSalud": "15",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "34565078",
+                        "codDiagnosticoPrincipal": "E785",
+                        "codDiagnosticoRelacionado": null,
+                        "codComplicacion": null,
+                        "vrServicio": 163900,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2026-01-07 07:50",
+                        "idMIPRES": null,
+                        "numAutorizacion": "299784155",
+                        "codProcedimiento": "903876",
+                        "viaIngresoServicioSalud": "02",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "02",
+                        "codServicio": 706,
+                        "finalidadTecnologiaSalud": "15",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "34565078",
+                        "codDiagnosticoPrincipal": "E785",
+                        "codDiagnosticoRelacionado": null,
+                        "codComplicacion": null,
+                        "vrServicio": 17800,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 2
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2026-01-07 07:51",
+                        "idMIPRES": null,
+                        "numAutorizacion": "299784155",
+                        "codProcedimiento": "904904",
+                        "viaIngresoServicioSalud": "02",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "02",
+                        "codServicio": 706,
+                        "finalidadTecnologiaSalud": "15",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "34565078",
+                        "codDiagnosticoPrincipal": "E785",
+                        "codDiagnosticoRelacionado": null,
+                        "codComplicacion": null,
+                        "vrServicio": 81500,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 3
+                    }
+                ]
+            }
+        }
+    ]
+}

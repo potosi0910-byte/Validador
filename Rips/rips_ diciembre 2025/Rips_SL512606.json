@@ -1,0 +1,85 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL512606",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "RC",
+            "numDocumentoIdentificacion": "1029610300",
+            "tipoUsuario": "04",
+            "fechaNacimiento": "2025-11-13",
+            "codSexo": "F",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19001",
+            "codZonaTerritorialResidencia": "02",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "medicamentos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "296334658",
+                        "idMIPRES": null,
+                        "fechaDispensAdmon": "2025-12-14 16:11",
+                        "codDiagnosticoPrincipal": "E278",
+                        "codDiagnosticoRelacionado": "P929",
+                        "tipoMedicamento": "01",
+                        "codTecnologiaSalud": "19914784-2",
+                        "nomTecnologiaSalud": "HIERRO",
+                        "concentracionMedicamento": 0,
+                        "unidadMedida": 168,
+                        "formaFarmaceutica": "COLFF004",
+                        "unidadMinDispensa": 13,
+                        "cantidadMedicamento": 1,
+                        "diasTratamiento": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061736685",
+                        "vrUnitMedicamento": 5263,
+                        "vrServicio": 5263,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-11-25 12:59",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "E278",
+                        "codDiagnosticoPrincipalE": "E278",
+                        "codDiagnosticoRelacionadoE1": "P929",
+                        "codDiagnosticoRelacionadoE2": "Q564",
+                        "codDiagnosticoRelacionadoE3": "P743",
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-11-25 17:02",
+                        "consecutivo": 1
+                    }
+                ],
+                "hospitalizacion": [
+                    {
+                        "codPrestador": "190010002301",
+                        "viaIngresoServicioSalud": "03",
+                        "fechaInicioAtencion": "2025-11-25 17:02",
+                        "numAutorizacion": "296334658",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "E278",
+                        "codDiagnosticoPrincipalE": "E278",
+                        "codDiagnosticoRelacionadoE1": "P929",
+                        "codDiagnosticoRelacionadoE2": "Q564",
+                        "codDiagnosticoRelacionadoE3": "P743",
+                        "codComplicacion": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-12-29 17:03",
+                        "consecutivo": 1
+                    }
+                ]
+            }
+        }
+    ]
+}

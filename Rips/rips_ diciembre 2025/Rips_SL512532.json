@@ -1,0 +1,69 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL512532",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "AS",
+            "numDocumentoIdentificacion": "19001NN128219",
+            "tipoUsuario": "05",
+            "fechaNacimiento": "2004-11-21",
+            "codSexo": "F",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19622",
+            "codZonaTerritorialResidencia": "01",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "862",
+            "servicios": {
+                "procedimientos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-03-21 09:32",
+                        "idMIPRES": null,
+                        "numAutorizacion": null,
+                        "codProcedimiento": "881432",
+                        "viaIngresoServicioSalud": "02",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "02",
+                        "codServicio": 745,
+                        "finalidadTecnologiaSalud": "15",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "34571261",
+                        "codDiagnosticoPrincipal": "O200",
+                        "codDiagnosticoRelacionado": null,
+                        "codComplicacion": null,
+                        "vrServicio": 178700,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-03-21 09:32",
+                        "idMIPRES": null,
+                        "numAutorizacion": null,
+                        "codProcedimiento": "881436",
+                        "viaIngresoServicioSalud": "02",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "02",
+                        "codServicio": 745,
+                        "finalidadTecnologiaSalud": "15",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "34571261",
+                        "codDiagnosticoPrincipal": "O200",
+                        "codDiagnosticoRelacionado": null,
+                        "codComplicacion": null,
+                        "vrServicio": 294000,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 2
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,87 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL512814",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "RC",
+            "numDocumentoIdentificacion": "1144525987",
+            "tipoUsuario": "02",
+            "fechaNacimiento": "2020-07-30",
+            "codSexo": "M",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19785",
+            "codZonaTerritorialResidencia": "02",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "consultas": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-31 10:17",
+                        "numAutorizacion": "299441373",
+                        "codConsulta": "890482",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "01",
+                        "codServicio": 340,
+                        "finalidadTecnologiaSalud": "16",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "T16X",
+                        "codDiagnosticoRelacionado1": null,
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "10293533",
+                        "vrServicio": 88400,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-31 09:48",
+                        "numAutorizacion": "299441373",
+                        "codConsulta": "890701",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "05",
+                        "codServicio": 1102,
+                        "finalidadTecnologiaSalud": "16",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "T16X",
+                        "codDiagnosticoRelacionado1": null,
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061757846",
+                        "vrServicio": 77300,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 2
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-31 09:49",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "T16X",
+                        "codDiagnosticoPrincipalE": "T16X",
+                        "codDiagnosticoRelacionadoE1": null,
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-12-31 12:26",
+                        "consecutivo": 1
+                    }
+                ]
+            }
+        }
+    ]
+}

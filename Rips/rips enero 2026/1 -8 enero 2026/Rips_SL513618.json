@@ -1,0 +1,69 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL513618",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "CC",
+            "numDocumentoIdentificacion": "34542293",
+            "tipoUsuario": "10",
+            "fechaNacimiento": "1964-05-09",
+            "codSexo": "F",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19001",
+            "codZonaTerritorialResidencia": "02",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "procedimientos": [
+                    {
+                        "codPrestador": "190010002302",
+                        "fechaInicioAtencion": "2026-01-02 13:50",
+                        "idMIPRES": null,
+                        "numAutorizacion": null,
+                        "codProcedimiento": "931001",
+                        "viaIngresoServicioSalud": "02",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "02",
+                        "codServicio": 739,
+                        "finalidadTecnologiaSalud": "15",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061784662",
+                        "codDiagnosticoPrincipal": "S934",
+                        "codDiagnosticoRelacionado": null,
+                        "codComplicacion": null,
+                        "vrServicio": 33500,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    },
+                    {
+                        "codPrestador": "190010002302",
+                        "fechaInicioAtencion": "2026-01-05 13:50",
+                        "idMIPRES": null,
+                        "numAutorizacion": null,
+                        "codProcedimiento": "931001",
+                        "viaIngresoServicioSalud": "02",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "02",
+                        "codServicio": 739,
+                        "finalidadTecnologiaSalud": "15",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061784662",
+                        "codDiagnosticoPrincipal": "S934",
+                        "codDiagnosticoRelacionado": null,
+                        "codComplicacion": null,
+                        "vrServicio": 33500,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 2
+                    }
+                ]
+            }
+        }
+    ]
+}

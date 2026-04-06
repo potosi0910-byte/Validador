@@ -1,0 +1,91 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL512967",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "CC",
+            "numDocumentoIdentificacion": "12269955",
+            "tipoUsuario": "04",
+            "fechaNacimiento": "1954-11-01",
+            "codSexo": "M",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "41396",
+            "codZonaTerritorialResidencia": "02",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "consultas": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-31 04:37",
+                        "numAutorizacion": "258870872576",
+                        "codConsulta": "890701",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "05",
+                        "codServicio": 1102,
+                        "finalidadTecnologiaSalud": "15",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "M751",
+                        "codDiagnosticoRelacionado1": null,
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061798473",
+                        "vrServicio": 81500,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "medicamentos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "258870872576",
+                        "idMIPRES": null,
+                        "fechaDispensAdmon": "2025-12-30 15:18",
+                        "codDiagnosticoPrincipal": "M751",
+                        "codDiagnosticoRelacionado": null,
+                        "tipoMedicamento": "01",
+                        "codTecnologiaSalud": "19934768-18",
+                        "nomTecnologiaSalud": "DICLOFENACO",
+                        "concentracionMedicamento": 0,
+                        "unidadMedida": 168,
+                        "formaFarmaceutica": "COLFF004",
+                        "unidadMinDispensa": 1,
+                        "cantidadMedicamento": 1,
+                        "diasTratamiento": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061798473",
+                        "vrUnitMedicamento": 3100,
+                        "vrServicio": 3100,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-30 15:16",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "M751",
+                        "codDiagnosticoPrincipalE": "M751",
+                        "codDiagnosticoRelacionadoE1": null,
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-12-30 15:21",
+                        "consecutivo": 1
+                    }
+                ]
+            }
+        }
+    ]
+}

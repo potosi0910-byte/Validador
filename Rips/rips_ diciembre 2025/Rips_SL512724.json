@@ -1,0 +1,64 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL512724",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "RC",
+            "numDocumentoIdentificacion": "1061833875",
+            "tipoUsuario": "04",
+            "fechaNacimiento": "2023-08-03",
+            "codSexo": "M",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19001",
+            "codZonaTerritorialResidencia": "02",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "consultas": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-28 18:51",
+                        "numAutorizacion": "299220606",
+                        "codConsulta": "890701",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "05",
+                        "codServicio": 1102,
+                        "finalidadTecnologiaSalud": "16",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "S014",
+                        "codDiagnosticoRelacionado1": "W543",
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061788144",
+                        "vrServicio": 77300,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-28 19:09",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "S014",
+                        "codDiagnosticoPrincipalE": "S014",
+                        "codDiagnosticoRelacionadoE1": "W543",
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-12-29 01:55",
+                        "consecutivo": 1
+                    }
+                ]
+            }
+        }
+    ]
+}

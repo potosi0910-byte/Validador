@@ -1,0 +1,82 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL512664",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "CC",
+            "numDocumentoIdentificacion": "76263457",
+            "tipoUsuario": "04",
+            "fechaNacimiento": "1970-08-14",
+            "codSexo": "M",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19532",
+            "codZonaTerritorialResidencia": "01",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "procedimientos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-26 18:24",
+                        "idMIPRES": null,
+                        "numAutorizacion": null,
+                        "codProcedimiento": "951302",
+                        "viaIngresoServicioSalud": "03",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "02",
+                        "codServicio": 744,
+                        "finalidadTecnologiaSalud": "15",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061789013",
+                        "codDiagnosticoPrincipal": "H330",
+                        "codDiagnosticoRelacionado": null,
+                        "codComplicacion": null,
+                        "vrServicio": 294500,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-26 18:26",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "H330",
+                        "codDiagnosticoPrincipalE": "H330",
+                        "codDiagnosticoRelacionadoE1": null,
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-12-27 02:53",
+                        "consecutivo": 1
+                    }
+                ],
+                "hospitalizacion": [
+                    {
+                        "codPrestador": "190010002301",
+                        "viaIngresoServicioSalud": "03",
+                        "fechaInicioAtencion": "2025-12-27 02:53",
+                        "numAutorizacion": null,
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "H330",
+                        "codDiagnosticoPrincipalE": "H330",
+                        "codDiagnosticoRelacionadoE1": null,
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "codComplicacion": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-12-31 07:38",
+                        "consecutivo": 1
+                    }
+                ]
+            }
+        }
+    ]
+}

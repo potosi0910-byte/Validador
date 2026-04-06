@@ -1,0 +1,106 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL512834",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "CC",
+            "numDocumentoIdentificacion": "1061775646",
+            "tipoUsuario": "04",
+            "fechaNacimiento": "1994-12-07",
+            "codSexo": "F",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19001",
+            "codZonaTerritorialResidencia": "02",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "consultas": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-29 20:44",
+                        "numAutorizacion": "299331827",
+                        "codConsulta": "890450",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "01",
+                        "codServicio": 320,
+                        "finalidadTecnologiaSalud": "15",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "O021",
+                        "codDiagnosticoRelacionado1": null,
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "4617137",
+                        "vrServicio": 88400,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-30 00:37",
+                        "numAutorizacion": "299331827",
+                        "codConsulta": "890701",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "05",
+                        "codServicio": 1102,
+                        "finalidadTecnologiaSalud": "15",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "O021",
+                        "codDiagnosticoRelacionado1": null,
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061811894",
+                        "vrServicio": 77300,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 2
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-29 18:50",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "O021",
+                        "codDiagnosticoPrincipalE": "O021",
+                        "codDiagnosticoRelacionadoE1": null,
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-12-30 01:27",
+                        "consecutivo": 1
+                    }
+                ],
+                "hospitalizacion": [
+                    {
+                        "codPrestador": "190010002301",
+                        "viaIngresoServicioSalud": "03",
+                        "fechaInicioAtencion": "2025-12-29 20:32",
+                        "numAutorizacion": "299331827",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "O021",
+                        "codDiagnosticoPrincipalE": "O021",
+                        "codDiagnosticoRelacionadoE1": null,
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "codComplicacion": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-12-30 01:27",
+                        "consecutivo": 1
+                    }
+                ]
+            }
+        }
+    ]
+}

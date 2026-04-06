@@ -1,0 +1,114 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL512695",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "TI",
+            "numDocumentoIdentificacion": "1058934888",
+            "tipoUsuario": "02",
+            "fechaNacimiento": "2011-03-31",
+            "codSexo": "M",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19001",
+            "codZonaTerritorialResidencia": "02",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "consultas": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-30 11:58",
+                        "numAutorizacion": "299347162",
+                        "codConsulta": "890482",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "01",
+                        "codServicio": 340,
+                        "finalidadTecnologiaSalud": "16",
+                        "causaMotivoAtencion": "26",
+                        "codDiagnosticoPrincipal": "S003",
+                        "codDiagnosticoRelacionado1": null,
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "10293533",
+                        "vrServicio": 88400,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-30 12:45",
+                        "numAutorizacion": "299347162",
+                        "codConsulta": "890701",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "05",
+                        "codServicio": 1102,
+                        "finalidadTecnologiaSalud": "16",
+                        "causaMotivoAtencion": "26",
+                        "codDiagnosticoPrincipal": "S003",
+                        "codDiagnosticoRelacionado1": null,
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061736481",
+                        "vrServicio": 77300,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 2
+                    }
+                ],
+                "medicamentos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "299347162",
+                        "idMIPRES": null,
+                        "fechaDispensAdmon": "2025-12-30 08:30",
+                        "codDiagnosticoPrincipal": "S003",
+                        "codDiagnosticoRelacionado": null,
+                        "tipoMedicamento": "01",
+                        "codTecnologiaSalud": "19935303-4",
+                        "nomTecnologiaSalud": "PARACETAMOL",
+                        "concentracionMedicamento": 0,
+                        "unidadMedida": 168,
+                        "formaFarmaceutica": "COLFF001",
+                        "unidadMinDispensa": 66,
+                        "cantidadMedicamento": 1,
+                        "diasTratamiento": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061736481",
+                        "vrUnitMedicamento": 400,
+                        "vrServicio": 400,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-30 08:26",
+                        "causaMotivoAtencion": "26",
+                        "codDiagnosticoPrincipal": "S003",
+                        "codDiagnosticoPrincipalE": "S003",
+                        "codDiagnosticoRelacionadoE1": null,
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-12-30 16:57",
+                        "consecutivo": 1
+                    }
+                ]
+            }
+        }
+    ]
+}

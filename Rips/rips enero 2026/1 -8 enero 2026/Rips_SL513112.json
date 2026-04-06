@@ -1,0 +1,147 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL513112",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "TI",
+            "numDocumentoIdentificacion": "1166466397",
+            "tipoUsuario": "02",
+            "fechaNacimiento": "2016-01-09",
+            "codSexo": "F",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19001",
+            "codZonaTerritorialResidencia": "02",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "consultas": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2026-01-02 21:07",
+                        "numAutorizacion": "299522537",
+                        "codConsulta": "890701",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "05",
+                        "codServicio": 1102,
+                        "finalidadTecnologiaSalud": "16",
+                        "causaMotivoAtencion": "26",
+                        "codDiagnosticoPrincipal": "S913",
+                        "codDiagnosticoRelacionado1": null,
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1053837971",
+                        "vrServicio": 77300,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "medicamentos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "299522537",
+                        "idMIPRES": null,
+                        "fechaDispensAdmon": "2026-01-02 22:58",
+                        "codDiagnosticoPrincipal": "S913",
+                        "codDiagnosticoRelacionado": null,
+                        "tipoMedicamento": "01",
+                        "codTecnologiaSalud": "51330-17",
+                        "nomTecnologiaSalud": null,
+                        "concentracionMedicamento": 0,
+                        "unidadMedida": 0,
+                        "formaFarmaceutica": null,
+                        "unidadMinDispensa": 66,
+                        "cantidadMedicamento": 1,
+                        "diasTratamiento": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1053837971",
+                        "vrUnitMedicamento": 400,
+                        "vrServicio": 400,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2026-01-02 21:08",
+                        "causaMotivoAtencion": "26",
+                        "codDiagnosticoPrincipal": "S913",
+                        "codDiagnosticoPrincipalE": "S913",
+                        "codDiagnosticoRelacionadoE1": null,
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2026-01-03 06:41",
+                        "consecutivo": 1
+                    }
+                ],
+                "otrosServicios": [
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "299522537",
+                        "idMIPRES": null,
+                        "fechaSuministroTecnologia": "2026-01-02 21:11",
+                        "tipoOS": "01",
+                        "codTecnologiaSalud": "A07CA990001",
+                        "nomTecnologiaSalud": "CLORURO DE SODIO 175,7 MG Y GLUCONATO DE ZINC 6 MG Y  GLUCOS",
+                        "cantidadOS": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1053837971",
+                        "vrUnitOS": 19500,
+                        "vrServicio": 19500,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "299522537",
+                        "idMIPRES": null,
+                        "fechaSuministroTecnologia": "2026-01-04 13:17",
+                        "tipoOS": "01",
+                        "codTecnologiaSalud": "1420610689",
+                        "nomTecnologiaSalud": "TIRAS PARA GLUCOMETRIA",
+                        "cantidadOS": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1053837971",
+                        "vrUnitOS": 5900,
+                        "vrServicio": 5900,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 2
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "299522537",
+                        "idMIPRES": null,
+                        "fechaSuministroTecnologia": "2026-01-04 13:17",
+                        "tipoOS": "03",
+                        "codTecnologiaSalud": "5DSM01",
+                        "nomTecnologiaSalud": "DERECHOS DE SALA DE OBSERVACION EN URGENCIAS COMPLEJIDAD MED",
+                        "cantidadOS": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1053837971",
+                        "vrUnitOS": 148500,
+                        "vrServicio": 148500,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 3
+                    }
+                ]
+            }
+        }
+    ]
+}

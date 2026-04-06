@@ -1,0 +1,115 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL513308",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "CC",
+            "numDocumentoIdentificacion": "10308098",
+            "tipoUsuario": "01",
+            "fechaNacimiento": "1985-12-06",
+            "codSexo": "M",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19001",
+            "codZonaTerritorialResidencia": "02",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "consultas": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2026-01-05 10:22",
+                        "numAutorizacion": "299617231",
+                        "codConsulta": "890701",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "05",
+                        "codServicio": 1102,
+                        "finalidadTecnologiaSalud": "15",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "T150",
+                        "codDiagnosticoRelacionado1": "H571",
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1143876080",
+                        "vrServicio": 77300,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "medicamentos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "299617231",
+                        "idMIPRES": null,
+                        "fechaDispensAdmon": "2026-01-05 08:15",
+                        "codDiagnosticoPrincipal": "T150",
+                        "codDiagnosticoRelacionado": "H571",
+                        "tipoMedicamento": "01",
+                        "codTecnologiaSalud": "19934768-18",
+                        "nomTecnologiaSalud": "DICLOFENACO",
+                        "concentracionMedicamento": 0,
+                        "unidadMedida": 168,
+                        "formaFarmaceutica": "COLFF004",
+                        "unidadMinDispensa": 1,
+                        "cantidadMedicamento": 1,
+                        "diasTratamiento": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1143876080",
+                        "vrUnitMedicamento": 3100,
+                        "vrServicio": 3100,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "procedimientos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2026-01-05 08:43",
+                        "idMIPRES": null,
+                        "numAutorizacion": "299617231",
+                        "codProcedimiento": "982102",
+                        "viaIngresoServicioSalud": "03",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "04",
+                        "codServicio": 208,
+                        "finalidadTecnologiaSalud": "16",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "10545572",
+                        "codDiagnosticoPrincipal": "T150",
+                        "codDiagnosticoRelacionado": "H571",
+                        "codComplicacion": null,
+                        "vrServicio": 85400,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2026-01-05 07:52",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "T150",
+                        "codDiagnosticoPrincipalE": "T150",
+                        "codDiagnosticoRelacionadoE1": "H571",
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2026-01-05 18:20",
+                        "consecutivo": 1
+                    }
+                ]
+            }
+        }
+    ]
+}

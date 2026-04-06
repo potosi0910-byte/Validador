@@ -1,0 +1,130 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL512777",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "CC",
+            "numDocumentoIdentificacion": "1061532222",
+            "tipoUsuario": "01",
+            "fechaNacimiento": "1989-03-14",
+            "codSexo": "F",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19548",
+            "codZonaTerritorialResidencia": "01",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "procedimientos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-29 11:02",
+                        "idMIPRES": null,
+                        "numAutorizacion": "2025004025068",
+                        "codProcedimiento": "881317",
+                        "viaIngresoServicioSalud": "02",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "02",
+                        "codServicio": 745,
+                        "finalidadTecnologiaSalud": "15",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "10303082",
+                        "codDiagnosticoPrincipal": "K802",
+                        "codDiagnosticoRelacionado": null,
+                        "codComplicacion": null,
+                        "vrServicio": 5373700,
+                        "conceptoRecaudo": "02",
+                        "valorPagoModerador": 4700,
+                        "numFEVPagoModerador": "SL512776",
+                        "consecutivo": 1
+                    }
+                ],
+                "medicamentos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "2025004025068",
+                        "idMIPRES": null,
+                        "fechaDispensAdmon": "2025-12-29 10:49",
+                        "codDiagnosticoPrincipal": "K802",
+                        "codDiagnosticoRelacionado": null,
+                        "tipoMedicamento": "01",
+                        "codTecnologiaSalud": "20205574-1",
+                        "nomTecnologiaSalud": "PROPOFOL",
+                        "concentracionMedicamento": 0,
+                        "unidadMedida": 168,
+                        "formaFarmaceutica": "COLFF005",
+                        "unidadMinDispensa": 13,
+                        "cantidadMedicamento": 1,
+                        "diasTratamiento": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "106176438",
+                        "vrUnitMedicamento": 9773,
+                        "vrServicio": 9773,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "otrosServicios": [
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "2025004025068",
+                        "idMIPRES": null,
+                        "fechaSuministroTecnologia": "2025-12-29 08:08",
+                        "tipoOS": "01",
+                        "codTecnologiaSalud": "DMC0000492",
+                        "nomTecnologiaSalud": "CANULA NASAL OXIGENO ADULTO MEDEX",
+                        "cantidadOS": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061692845",
+                        "vrUnitOS": 4300,
+                        "vrServicio": 4300,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "2025004025068",
+                        "idMIPRES": null,
+                        "fechaSuministroTecnologia": "2025-12-29 08:08",
+                        "tipoOS": "01",
+                        "codTecnologiaSalud": "DMC0000021",
+                        "nomTecnologiaSalud": "CATETER INTRAVENOSO DE SEGURIDAD NRO. 22",
+                        "cantidadOS": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061692845",
+                        "vrUnitOS": 5200,
+                        "vrServicio": 5200,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 2
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "2025004025068",
+                        "idMIPRES": null,
+                        "fechaSuministroTecnologia": "2025-12-29 08:08",
+                        "tipoOS": "01",
+                        "codTecnologiaSalud": "DMC0000064",
+                        "nomTecnologiaSalud": "CONECTOR REF 409100H SAFEFLOW",
+                        "cantidadOS": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061692845",
+                        "vrUnitOS": 7600,
+                        "vrServicio": 7600,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 3
+                    }
+                ]
+            }
+        }
+    ]
+}

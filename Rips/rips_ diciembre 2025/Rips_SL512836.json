@@ -1,0 +1,149 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL512836",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "RC",
+            "numDocumentoIdentificacion": "1061828919",
+            "tipoUsuario": "02",
+            "fechaNacimiento": "2021-04-20",
+            "codSexo": "F",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19001",
+            "codZonaTerritorialResidencia": "02",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "consultas": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-30 18:16",
+                        "numAutorizacion": "299419355",
+                        "codConsulta": "890701",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "05",
+                        "codServicio": 1102,
+                        "finalidadTecnologiaSalud": "16",
+                        "causaMotivoAtencion": "26",
+                        "codDiagnosticoPrincipal": "S069",
+                        "codDiagnosticoRelacionado1": null,
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "34332064",
+                        "vrServicio": 77300,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-31 12:09",
+                        "numAutorizacion": "299419355",
+                        "codConsulta": "890602",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "01",
+                        "codServicio": 356,
+                        "finalidadTecnologiaSalud": "16",
+                        "causaMotivoAtencion": "26",
+                        "codDiagnosticoPrincipal": "S069",
+                        "codDiagnosticoRelacionado1": null,
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "34332064",
+                        "vrServicio": 123400,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 2
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-31 12:10",
+                        "numAutorizacion": "299419355",
+                        "codConsulta": "890602",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "01",
+                        "codServicio": 356,
+                        "finalidadTecnologiaSalud": "16",
+                        "causaMotivoAtencion": "26",
+                        "codDiagnosticoPrincipal": "S069",
+                        "codDiagnosticoRelacionado1": null,
+                        "codDiagnosticoRelacionado2": null,
+                        "codDiagnosticoRelacionado3": null,
+                        "tipoDiagnosticoPrincipal": "01",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "34332064",
+                        "vrServicio": 123400,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 3
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-30 17:48",
+                        "causaMotivoAtencion": "26",
+                        "codDiagnosticoPrincipal": "S069",
+                        "codDiagnosticoPrincipalE": "S069",
+                        "codDiagnosticoRelacionadoE1": null,
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-12-31 13:05",
+                        "consecutivo": 1
+                    }
+                ],
+                "hospitalizacion": [
+                    {
+                        "codPrestador": "190010002301",
+                        "viaIngresoServicioSalud": "03",
+                        "fechaInicioAtencion": "2025-12-30 18:20",
+                        "numAutorizacion": "299419355",
+                        "causaMotivoAtencion": "26",
+                        "codDiagnosticoPrincipal": "S069",
+                        "codDiagnosticoPrincipalE": "S069",
+                        "codDiagnosticoRelacionadoE1": null,
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "codComplicacion": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-12-31 13:05",
+                        "consecutivo": 1
+                    }
+                ],
+                "otrosServicios": [
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": "299419355",
+                        "idMIPRES": null,
+                        "fechaSuministroTecnologia": "2025-12-30 18:30",
+                        "tipoOS": "03",
+                        "codTecnologiaSalud": "130M02",
+                        "nomTecnologiaSalud": "INTERNACION PEDIATRICA COMPLEJIDAD MEDIANA HABITACION MULTIP",
+                        "cantidadOS": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "34332064",
+                        "vrUnitOS": 552700,
+                        "vrServicio": 552700,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,90 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL512520",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "CE",
+            "numDocumentoIdentificacion": "VEN27746684",
+            "tipoUsuario": "05",
+            "fechaNacimiento": "2000-12-24",
+            "codSexo": "F",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19532",
+            "codZonaTerritorialResidencia": "02",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "procedimientos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-02-03 15:28",
+                        "idMIPRES": null,
+                        "numAutorizacion": null,
+                        "codProcedimiento": "906625",
+                        "viaIngresoServicioSalud": "03",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "02",
+                        "codServicio": 706,
+                        "finalidadTecnologiaSalud": "15",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "34565078",
+                        "codDiagnosticoPrincipal": "O039",
+                        "codDiagnosticoRelacionado": null,
+                        "codComplicacion": null,
+                        "vrServicio": 87500,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "medicamentos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "numAutorizacion": null,
+                        "idMIPRES": null,
+                        "fechaDispensAdmon": "2025-02-03 18:59",
+                        "codDiagnosticoPrincipal": "O039",
+                        "codDiagnosticoRelacionado": null,
+                        "tipoMedicamento": "01",
+                        "codTecnologiaSalud": "20018905-5",
+                        "nomTecnologiaSalud": "MEDROXIPROGESTERONA",
+                        "concentracionMedicamento": 0,
+                        "unidadMedida": 168,
+                        "formaFarmaceutica": "COLFF004",
+                        "unidadMinDispensa": 1,
+                        "cantidadMedicamento": 1,
+                        "diasTratamiento": 1,
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "1061725586",
+                        "vrUnitMedicamento": 15020,
+                        "vrServicio": 15020,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-02-03 15:00",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "O039",
+                        "codDiagnosticoPrincipalE": "O039",
+                        "codDiagnosticoRelacionadoE1": null,
+                        "codDiagnosticoRelacionadoE2": null,
+                        "codDiagnosticoRelacionadoE3": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2025-02-03 22:30",
+                        "consecutivo": 1
+                    }
+                ]
+            }
+        }
+    ]
+}

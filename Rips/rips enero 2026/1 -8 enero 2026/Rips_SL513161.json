@@ -1,0 +1,104 @@
+{
+    "numDocumentoIdObligado": "891501676",
+    "numFactura": "SL513161",
+    "tipoNota": null,
+    "numNota": null,
+    "usuarios": [
+        {
+            "tipoDocumentoIdentificacion": "CC",
+            "numDocumentoIdentificacion": "25404021",
+            "tipoUsuario": "04",
+            "fechaNacimiento": "1927-06-15",
+            "codSexo": "F",
+            "codPaisResidencia": "170",
+            "codMunicipioResidencia": "19256",
+            "codZonaTerritorialResidencia": "01",
+            "incapacidad": "NO",
+            "consecutivo": 1,
+            "codPaisOrigen": "170",
+            "servicios": {
+                "procedimientos": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-30 09:17",
+                        "idMIPRES": null,
+                        "numAutorizacion": "216942594",
+                        "codProcedimiento": "163002",
+                        "viaIngresoServicioSalud": "03",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "04",
+                        "codServicio": 208,
+                        "finalidadTecnologiaSalud": "16",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "10545572",
+                        "codDiagnosticoPrincipal": "H440",
+                        "codDiagnosticoRelacionado": "I10X",
+                        "codComplicacion": null,
+                        "vrServicio": 3170600,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 1
+                    },
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-30 09:17",
+                        "idMIPRES": null,
+                        "numAutorizacion": "216942594",
+                        "codProcedimiento": "951302",
+                        "viaIngresoServicioSalud": "03",
+                        "modalidadGrupoServicioTecSal": "01",
+                        "grupoServicios": "02",
+                        "codServicio": 744,
+                        "finalidadTecnologiaSalud": "16",
+                        "tipoDocumentoIdentificacion": "CC",
+                        "numDocumentoIdentificacion": "10545572",
+                        "codDiagnosticoPrincipal": "H440",
+                        "codDiagnosticoRelacionado": "I10X",
+                        "codComplicacion": null,
+                        "vrServicio": 294500,
+                        "conceptoRecaudo": "05",
+                        "valorPagoModerador": 0,
+                        "numFEVPagoModerador": null,
+                        "consecutivo": 2
+                    }
+                ],
+                "urgencias": [
+                    {
+                        "codPrestador": "190010002301",
+                        "fechaInicioAtencion": "2025-12-19 14:08",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "H440",
+                        "codDiagnosticoPrincipalE": "H440",
+                        "codDiagnosticoRelacionadoE1": "I10X",
+                        "codDiagnosticoRelacionadoE2": "F03X",
+                        "codDiagnosticoRelacionadoE3": "M819",
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2026-01-02 16:18",
+                        "consecutivo": 1
+                    }
+                ],
+                "hospitalizacion": [
+                    {
+                        "codPrestador": "190010002301",
+                        "viaIngresoServicioSalud": "03",
+                        "fechaInicioAtencion": "2025-12-31 07:32",
+                        "numAutorizacion": "216942594",
+                        "causaMotivoAtencion": "38",
+                        "codDiagnosticoPrincipal": "H440",
+                        "codDiagnosticoPrincipalE": "H440",
+                        "codDiagnosticoRelacionadoE1": "I10X",
+                        "codDiagnosticoRelacionadoE2": "F03X",
+                        "codDiagnosticoRelacionadoE3": "M819",
+                        "codComplicacion": null,
+                        "condicionDestinoUsuarioEgreso": "01",
+                        "codDiagnosticoCausaMuerte": null,
+                        "fechaEgreso": "2026-01-02 16:18",
+                        "consecutivo": 1
+                    }
+                ]
+            }
+        }
+    ]
+}
