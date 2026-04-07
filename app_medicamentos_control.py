@@ -458,14 +458,43 @@ CONCEPTOS_RECAUDO_MED       = {"01", "02", "03", "05"}          # M20 (04=Antici
 # ── Catálogos adicionales Malla 2275/2023 ─────────────────────────────────────
 TIPOS_DOC_USUARIO         = {"CC","TI","RC","CN","CE","PA","MS","AS","CD","SC","PE","DE","PT"}
 TIPOS_DOC_PROFESIONAL     = {"CC","CE","CD","PA","SC","PE","DE","PT"}
-CODIGOS_SEXO              = {"M","F","I","N"}
+# Catálogo Sexo: H=Hombre, I=Indeterminado o Intersexual, M=Mujer
+CODIGOS_SEXO              = {"H","I","M"}
 VALORES_SINO              = {"SI","NO"}
 # Catálogo conceptoRecaudo: 01=Copago, 02=Cuota moderadora, 03=Planes voluntarios, 04=Anticipo, 05=No aplica
 CONCEPTOS_RECAUDO_CONSULTA = {"01","02","03","05"}      # C18: excluye solo 04=Anticipo
 CONCEPTOS_RECAUDO_PROC    = {"01","02","03","05"}        # P17: admite copago
 TIPOS_DOC_RN              = {"CN","RC","MS"}             # N02: recién nacidos
-COND_EGRESO_MUERTO        = {"03","3"}                   # condición egreso = muerto
+COND_EGRESO_MUERTO        = {"02"}                       # CondicionyDestinoUsuarioEgreso 02=PACIENTE MUERTO
 TIPOS_OS_CON_PRESCRIPTOR  = {"01","02","03"}             # S: DM/SC/Honorarios
+
+# ── Catálogos de dominio completos (tablas de referencia RIPS v2) ─────────────
+# TipoNota: NA=Nota ajuste, NC=Nota crédito, ND=Nota débito, RS=RIPS sin Factura
+TIPOS_NOTA_VALIDOS        = {"NA","NC","ND","RS"}
+
+# RIPSTipoUsuarioVersion2
+TIPOS_USUARIO_RIPS        = {"01","02","03","04","05","06","07","08","09","10","11","12","13"}
+
+# ZonaVersion2: 01=Rural, 02=Urbano
+ZONAS_VALIDAS             = {"01","02"}
+
+# ModalidadAtencion (nota: código 05 no existe en catálogo oficial)
+MODALIDADES_ATENCION      = {"01","02","03","04","06","07","08","09"}
+
+# GrupoServicios: 01=Consulta externa, 02=Apoyo diagnóstico, 03=Internación, 04=Quirúrgico, 05=Atención inmediata
+GRUPOS_SERVICIOS          = {"01","02","03","04","05"}
+
+# RIPSFinalidadConsultaVersion2: códigos 11..44
+FINALIDADES_CONSULTA      = {str(i).zfill(2) for i in range(11, 45)}
+
+# RIPSCausaExternaVersion2: códigos 21..49
+CAUSAS_EXTERNAS           = {str(i) for i in range(21, 50)}
+
+# CondicionyDestinoUsuarioEgreso: 01..08
+COND_EGRESO_VALIDAS       = {"01","02","03","04","05","06","07","08"}
+
+# TipoOtrosServicios: 01..06
+TIPOS_OS_VALIDOS          = {"01","02","03","04","05","06"}
 
 def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
     """
@@ -1181,6 +1210,11 @@ def validar_general_malla_2275(data, nombre_archivo=""):
         if len(tipo_nota_s) != 2:
             _e("T03-DOMINIO", "critica", "tipoNota",
                "tipoNota debe tener exactamente 2 caracteres o ser null.", tipo_nota_s)
+        elif tipo_nota_s not in TIPOS_NOTA_VALIDOS:
+            _e("T03-DOMINIO", "critica", "tipoNota",
+               f"tipoNota '{tipo_nota_s}' no pertenece al catálogo TipoNota. "
+               f"Valores válidos: NA=Nota ajuste RIPS, NC=Nota crédito, ND=Nota débito, RS=RIPS sin Factura.",
+               tipo_nota_s)
         if num_nota is None or normalizar_str(num_nota) == "":
             _e("T04-CONDICIONAL", "critica", "numNota",
                "numNota es obligatorio cuando tipoNota está informado.")
@@ -1322,13 +1356,20 @@ def validar_usuarios_malla_2275(data, nombre_archivo=""):
                f"numDocumentoldentificacion debe tener entre 4 y 20 caracteres (actual: {len(num_doc)}).",
                num_doc)
 
-        # ── U03: tipoUsuario 2 chars ──────────────────────────
+        # ── U03: tipoUsuario 2 chars, dominio RIPSTipoUsuarioVersion2 ───
         tipo_usr = normalizar_str(u.get("tipoUsuario") or "")
         if not tipo_usr:
             _e("U03-DOMINIO", "critica", "tipoUsuario", "tipoUsuario es obligatorio.")
         elif len(tipo_usr) != 2:
             _e("U03-DOMINIO", "critica", "tipoUsuario",
                f"tipoUsuario debe tener exactamente 2 caracteres.", tipo_usr)
+        elif tipo_usr not in TIPOS_USUARIO_RIPS:
+            _e("U03-DOMINIO", "critica", "tipoUsuario",
+               f"tipoUsuario '{tipo_usr}' no pertenece al catálogo RIPSTipoUsuarioVersion2 "
+               f"(01=Contrib. cotizante, 02=Contrib. beneficiario, 03=Contrib. adicional, "
+               f"04=Subsidiado, 05=No afiliado, 06-07=Especial/Excepción, 08=PPL, "
+               f"09=ARL, 10=SOAT, 11=Planes voluntarios, 12=Particular, 13=Especial Ley 352).",
+               tipo_usr)
 
         # ── U04 / RVC006: fechaNacimiento ─────────────────────
         fecha_nac_raw = normalizar_str(u.get("fechaNacimiento") or "")
@@ -1358,7 +1399,8 @@ def validar_usuarios_malla_2275(data, nombre_archivo=""):
                f"codSexo debe tener exactamente 1 carácter.", cod_sexo)
         elif cod_sexo not in CODIGOS_SEXO:
             _e("U05-DOMINIO", "critica", "codSexo",
-               f"codSexo '{cod_sexo}' no pertenece al catálogo Sexo (M/F/I/N).", cod_sexo)
+               f"codSexo '{cod_sexo}' no pertenece al catálogo Sexo. "
+               "Valores válidos: H=Hombre, M=Mujer, I=Indeterminado o Intersexual.", cod_sexo)
 
         # ── U06: codPaisResidencia 3 chars ────────────────────
         cod_pais = normalizar_str(u.get("codPaisResidencia") or "")
@@ -1381,13 +1423,18 @@ def validar_usuarios_malla_2275(data, nombre_archivo=""):
                    f"codMunicipioResidencia debe tener 5 caracteres (DANE). Actual: '{cod_mun_s}'.",
                    cod_mun_s)
 
-        # ── U08: codZonaTerritorialResidencia (opcional, 2 si presente) ─
+        # ── U08: codZonaTerritorialResidencia (opcional, dominio 01/02) ─
         cod_zona = u.get("codZonaTerritorialResidencia")
         if cod_zona is not None:
             cod_zona_s = normalizar_str(cod_zona)
             if cod_zona_s and len(cod_zona_s) != 2:
                 _e("U08-DOMINIO", "alta", "codZonaTerritorialResidencia",
                    f"codZonaTerritorialResidencia debe tener 2 caracteres si se informa. Actual: '{cod_zona_s}'.",
+                   cod_zona_s)
+            elif cod_zona_s and cod_zona_s not in ZONAS_VALIDAS:
+                _e("U08-DOMINIO", "alta", "codZonaTerritorialResidencia",
+                   f"codZonaTerritorialResidencia '{cod_zona_s}' no pertenece al catálogo ZonaVersion2. "
+                   "Valores válidos: 01=Rural, 02=Urbano.",
                    cod_zona_s)
 
         # ── U09: incapacidad SI/NO ────────────────────────────
@@ -1427,10 +1474,10 @@ def validar_usuarios_malla_2275(data, nombre_archivo=""):
                         _e("RVC008", "media", "fechaNacimiento",
                            f"La edad de la madre es {edad_madre} años. Para recién nacidos se esperan 9-60 años (RVC008).",
                            fecha_nac_raw)
-                if cod_sexo and cod_sexo != "F":
+                if cod_sexo and cod_sexo != "M":
                     _e("RVC009", "media", "codSexo",
                        f"El usuario con recién nacidos tiene codSexo='{cod_sexo}'. "
-                       "Se esperaba 'F' (Femenino) (RVC009).", cod_sexo)
+                       "Se esperaba 'M' (Mujer) según catálogo Sexo (RVC009).", cod_sexo)
 
     return errores
 
@@ -1570,41 +1617,60 @@ def validar_consultas_malla_2275(data, nombre_archivo=""):
                 _e("C04-FORMATO", "critica", "codConsulta",
                    f"codConsulta debe tener 6 caracteres. Actual: {len(cod_con)}.", cod_con)
 
-            # ── C05: modalidadGrupoServicioTecSal 2 chars ─────
+            # ── C05: modalidadGrupoServicioTecSal → catálogo ModalidadAtencion ─
             mod = normalizar_str(con.get("modalidadGrupoServicioTecSal") or "")
             if not mod:
                 _e("C05-DOMINIO", "critica", "modalidadGrupoServicioTecSal",
-                   "modalidadGrupoServicioTecSal es obligatorio (2 caracteres).")
+                   "modalidadGrupoServicioTecSal es obligatorio (catálogo ModalidadAtencion).")
             elif len(mod) != 2:
                 _e("C05-DOMINIO", "critica", "modalidadGrupoServicioTecSal",
                    f"modalidadGrupoServicioTecSal debe tener 2 caracteres. Actual: {len(mod)}.", mod)
+            elif mod not in MODALIDADES_ATENCION:
+                _e("C05-DOMINIO", "critica", "modalidadGrupoServicioTecSal",
+                   f"modalidadGrupoServicioTecSal '{mod}' no pertenece al catálogo ModalidadAtencion. "
+                   "Válidos: 01=Intramural, 02=Extramural unidad móvil, 03=Extramural domiciliaria, "
+                   "04=Extramural jornada salud, 06=Telemedicina interactiva, 07=Telemedicina no interactiva, "
+                   "08=Telemedicina telexperticia, 09=Telemedicina telemonitoreo.", mod)
 
-            # ── C06: grupoServicios 2 chars ───────────────────
+            # ── C06: grupoServicios → catálogo GrupoServicios ─
             grupo = normalizar_str(con.get("grupoServicios") or "")
             if not grupo:
                 _e("C06-DOMINIO", "critica", "grupoServicios",
-                   "grupoServicios es obligatorio (2 caracteres).")
+                   "grupoServicios es obligatorio (catálogo GrupoServicios).")
             elif len(grupo) != 2:
                 _e("C06-DOMINIO", "critica", "grupoServicios",
                    f"grupoServicios debe tener 2 caracteres. Actual: {len(grupo)}.", grupo)
+            elif grupo not in GRUPOS_SERVICIOS:
+                _e("C06-DOMINIO", "critica", "grupoServicios",
+                   f"grupoServicios '{grupo}' no pertenece al catálogo GrupoServicios. "
+                   "Válidos: 01=Consulta externa, 02=Apoyo diagnóstico, 03=Internación, "
+                   "04=Quirúrgico, 05=Atención inmediata.", grupo)
 
-            # ── C08: finalidadTecnologiaSalud 2 chars ─────────
+            # ── C08: finalidadTecnologiaSalud → RIPSFinalidadConsultaVersion2 ─
             final = normalizar_str(con.get("finalidadTecnologiaSalud") or "")
             if not final:
                 _e("C08-DOMINIO", "critica", "finalidadTecnologiaSalud",
-                   "finalidadTecnologiaSalud es obligatorio (2 caracteres).")
+                   "finalidadTecnologiaSalud es obligatorio (catálogo RIPSFinalidadConsultaVersion2, códigos 11-44).")
             elif len(final) != 2:
                 _e("C08-DOMINIO", "critica", "finalidadTecnologiaSalud",
                    f"finalidadTecnologiaSalud debe tener 2 caracteres. Actual: {len(final)}.", final)
+            elif final not in FINALIDADES_CONSULTA:
+                _e("C08-DOMINIO", "critica", "finalidadTecnologiaSalud",
+                   f"finalidadTecnologiaSalud '{final}' no pertenece al catálogo RIPSFinalidadConsultaVersion2 "
+                   "(códigos 11 al 44).", final)
 
-            # ── C09: causaMotivoAtencion 2 chars ─────────────
+            # ── C09: causaMotivoAtencion → RIPSCausaExternaVersion2 ───────────
             causa = normalizar_str(con.get("causaMotivoAtencion") or "")
             if not causa:
                 _e("C09-DOMINIO", "critica", "causaMotivoAtencion",
-                   "causaMotivoAtencion es obligatorio (2 caracteres).")
+                   "causaMotivoAtencion es obligatorio (catálogo RIPSCausaExternaVersion2, códigos 21-49).")
             elif len(causa) != 2:
                 _e("C09-DOMINIO", "critica", "causaMotivoAtencion",
                    f"causaMotivoAtencion debe tener 2 caracteres. Actual: {len(causa)}.", causa)
+            elif causa not in CAUSAS_EXTERNAS:
+                _e("C09-DOMINIO", "critica", "causaMotivoAtencion",
+                   f"causaMotivoAtencion '{causa}' no pertenece al catálogo RIPSCausaExternaVersion2 "
+                   "(códigos 21=Accidente trabajo ... 49=IVE voluntad semana 24).", causa)
 
             # ── C10 / RVC031: diagnóstico principal ──────────
             diag_p = normalizar_str(con.get("codDiagnosticoPrincipal") or "")
@@ -1817,23 +1883,32 @@ def validar_procedimientos_malla_2275(data, nombre_archivo=""):
                 _e("P05-FORMATO", "critica", "codProcedimiento",
                    f"codProcedimiento debe tener 6 caracteres. Actual: {len(cod_proc)}.", cod_proc)
 
-            # ── P08: grupoServicios 2 chars ───────────────────
+            # ── P08: grupoServicios → catálogo GrupoServicios ─
             grupo = normalizar_str(proc.get("grupoServicios") or "")
             if not grupo:
                 _e("P08-DOMINIO", "critica", "grupoServicios",
-                   "grupoServicios es obligatorio en procedimientos (2 caracteres).")
+                   "grupoServicios es obligatorio en procedimientos (catálogo GrupoServicios).")
             elif len(grupo) != 2:
                 _e("P08-DOMINIO", "critica", "grupoServicios",
                    f"grupoServicios debe tener 2 caracteres. Actual: {len(grupo)}.", grupo)
+            elif grupo not in GRUPOS_SERVICIOS:
+                _e("P08-DOMINIO", "critica", "grupoServicios",
+                   f"grupoServicios '{grupo}' no pertenece al catálogo GrupoServicios. "
+                   "Válidos: 01=Consulta externa, 02=Apoyo diagnóstico, 03=Internación, "
+                   "04=Quirúrgico, 05=Atención inmediata.", grupo)
 
-            # ── P10: finalidadTecnologiaSalud 2 chars ─────────
+            # ── P10: finalidadTecnologiaSalud → RIPSFinalidadConsultaVersion2 ─
             final = normalizar_str(proc.get("finalidadTecnologiaSalud") or "")
             if not final:
                 _e("P10-DOMINIO", "critica", "finalidadTecnologiaSalud",
-                   "finalidadTecnologiaSalud es obligatorio en procedimientos (2 caracteres).")
+                   "finalidadTecnologiaSalud es obligatorio en procedimientos (catálogo RIPSFinalidadConsultaVersion2).")
             elif len(final) != 2:
                 _e("P10-DOMINIO", "critica", "finalidadTecnologiaSalud",
                    f"finalidadTecnologiaSalud debe tener 2 caracteres. Actual: {len(final)}.", final)
+            elif final not in FINALIDADES_CONSULTA:
+                _e("P10-DOMINIO", "critica", "finalidadTecnologiaSalud",
+                   f"finalidadTecnologiaSalud '{final}' no pertenece al catálogo RIPSFinalidadConsultaVersion2 "
+                   "(códigos 11 al 44).", final)
 
             # ── P13 / RVC031: diagnóstico principal ──────────
             diag_p = normalizar_str(proc.get("codDiagnosticoPrincipal") or "")
@@ -2015,14 +2090,18 @@ def validar_urgencias_malla_2275(data, nombre_archivo=""):
                        f"Estancia en urgencias de {horas:.1f} horas supera las 48 horas (RVC040).",
                        f_egr_raw)
 
-            # ── R03: causaMotivoAtencion 2 chars ─────────────
+            # ── R03: causaMotivoAtencion → RIPSCausaExternaVersion2 ──────────
             causa = normalizar_str(urg.get("causaMotivoAtencion") or "")
             if not causa:
                 _e("R03-DOMINIO", "critica", "causaMotivoAtencion",
-                   "causaMotivoAtencion es obligatorio en urgencias (2 caracteres).")
+                   "causaMotivoAtencion es obligatorio en urgencias (catálogo RIPSCausaExternaVersion2, códigos 21-49).")
             elif len(causa) != 2:
                 _e("R03-DOMINIO", "critica", "causaMotivoAtencion",
                    f"causaMotivoAtencion debe tener 2 caracteres. Actual: {len(causa)}.", causa)
+            elif causa not in CAUSAS_EXTERNAS:
+                _e("R03-DOMINIO", "critica", "causaMotivoAtencion",
+                   f"causaMotivoAtencion '{causa}' no pertenece al catálogo RIPSCausaExternaVersion2 "
+                   "(códigos 21=Accidente trabajo ... 49=IVE voluntad semana 24).", causa)
 
             # ── R04: codDiagnosticoPrincipal ──────────────────
             diag_p = normalizar_str(urg.get("codDiagnosticoPrincipal") or "")
@@ -2030,11 +2109,17 @@ def validar_urgencias_malla_2275(data, nombre_archivo=""):
                 _e("R04-OBLIGATORIO", "critica", "codDiagnosticoPrincipal",
                    "codDiagnosticoPrincipal es obligatorio en urgencias.")
 
-            # ── R09: condicionDestinoUsuarioEgreso ────────────
+            # ── R09: condicionDestinoUsuarioEgreso → catálogo CondicionyDestinoUsuarioEgreso ─
             cond_egr = normalizar_str(urg.get("condicionDestinoUsuarioEgreso") or "")
             if not cond_egr:
                 _e("R09-OBLIGATORIO", "critica", "condicionDestinoUsuarioEgreso",
                    "condicionDestinoUsuarioEgreso es obligatorio en urgencias.")
+            elif cond_egr not in COND_EGRESO_VALIDAS:
+                _e("R09-DOMINIO", "critica", "condicionDestinoUsuarioEgreso",
+                   f"condicionDestinoUsuarioEgreso '{cond_egr}' no pertenece al catálogo. "
+                   "Válidos: 01=A domicilio, 02=Muerto, 03=Derivado otro servicio, 04=Referido otra institución, "
+                   "05=Contrareferido, 06=Hospitalización domiciliaria, 07=Servicio social, 08=Continúa en servicio.",
+                   cond_egr)
 
             # ── R10 / RVC042: causa muerte si condición = muerto ─
             if cond_egr in COND_EGRESO_MUERTO:
@@ -2162,11 +2247,17 @@ def validar_hospitalizacion_malla_2275(data, nombre_archivo=""):
                        f"Estancia en hospitalización de {horas:.1f} horas es menor a 6 horas (RVC041).",
                        f_egr_raw)
 
-            # ── H09: condicionDestinoUsuarioEgreso ────────────
+            # ── H09: condicionDestinoUsuarioEgreso → catálogo CondicionyDestinoUsuarioEgreso ─
             cond_egr = normalizar_str(hosp.get("condicionDestinoUsuarioEgreso") or "")
             if not cond_egr:
                 _e("H09-OBLIGATORIO", "critica", "condicionDestinoUsuarioEgreso",
                    "condicionDestinoUsuarioEgreso es obligatorio en hospitalización.")
+            elif cond_egr not in COND_EGRESO_VALIDAS:
+                _e("H09-DOMINIO", "critica", "condicionDestinoUsuarioEgreso",
+                   f"condicionDestinoUsuarioEgreso '{cond_egr}' no pertenece al catálogo. "
+                   "Válidos: 01=A domicilio, 02=Muerto, 03=Derivado otro servicio, 04=Referido otra institución, "
+                   "05=Contrareferido, 06=Hospitalización domiciliaria, 07=Servicio social, 08=Continúa en servicio.",
+                   cond_egr)
 
             # ── H10 / RVC042: causa muerte ────────────────────
             if cond_egr in COND_EGRESO_MUERTO:
@@ -2314,11 +2405,17 @@ def validar_recien_nacidos_malla_2275(data, nombre_archivo=""):
                     _e("RVC058", "media", "peso",
                        "peso debe ser un valor numérico en gramos.", peso)
 
-            # ── N10: condicionDestinoUsuarioEgreso ────────────
+            # ── N10: condicionDestinoUsuarioEgreso → catálogo CondicionyDestinoUsuarioEgreso ─
             cond_egr = normalizar_str(rn.get("condicionDestinoUsuarioEgreso") or "")
             if not cond_egr:
                 _e("N10-OBLIGATORIO", "critica", "condicionDestinoUsuarioEgreso",
                    "condicionDestinoUsuarioEgreso es obligatorio en recién nacidos.")
+            elif cond_egr not in COND_EGRESO_VALIDAS:
+                _e("N10-DOMINIO", "critica", "condicionDestinoUsuarioEgreso",
+                   f"condicionDestinoUsuarioEgreso '{cond_egr}' no pertenece al catálogo. "
+                   "Válidos: 01=A domicilio, 02=Muerto, 03=Derivado otro servicio, 04=Referido otra institución, "
+                   "05=Contrareferido, 06=Hospitalización domiciliaria, 07=Servicio social, 08=Continúa en servicio.",
+                   cond_egr)
 
             # ── N11 / RVC042: causa muerte ────────────────────
             if cond_egr in COND_EGRESO_MUERTO:
@@ -2601,14 +2698,20 @@ def validar_otros_servicios_malla_2275(data, nombre_archivo=""):
                 _validar_fecha_atencion_campo(
                     fecha_raw, nombre_campo_fecha, fecha_hoy, errores, ctx, "RVC013-S")
 
-            # ── S05: tipoOS 2 chars ───────────────────────────
+            # ── S05: tipoOS → catálogo TipoOtrosServicios ─────
             tipo_os = normalizar_str(svc.get("tipoOS") or "")
             if not tipo_os:
                 _e("S05-DOMINIO", "critica", "tipoOS",
-                   "tipoOS es obligatorio en otrosServicios (2 caracteres).")
+                   "tipoOS es obligatorio en otrosServicios (catálogo TipoOtrosServicios).")
             elif len(tipo_os) != 2:
                 _e("S05-DOMINIO", "critica", "tipoOS",
                    f"tipoOS debe tener 2 caracteres. Actual: {len(tipo_os)}.", tipo_os)
+            elif tipo_os not in TIPOS_OS_VALIDOS:
+                _e("S05-DOMINIO", "critica", "tipoOS",
+                   f"tipoOS '{tipo_os}' no pertenece al catálogo TipoOtrosServicios. "
+                   "Válidos: 01=Dispositivos médicos e insumos, 02=Traslados, 03=Estancias, "
+                   "04=Servicios complementarios, 05=Honorarios, 06=Servicios salud comunidades indígenas.",
+                   tipo_os)
 
             # ── S06: codTecnologiaSalud obligatorio ───────────
             cod_tec = normalizar_str(svc.get("codTecnologiaSalud") or "")
