@@ -1934,12 +1934,29 @@ def validar_procedimientos_malla_2275(data, nombre_archivo=""):
             vrs_raw = proc.get("vrServicio")
             if vrs_raw is not None:
                 try:
-                    if float(str(vrs_raw).strip()) < 0:
+                    vrs_num_p = float(str(vrs_raw).strip())
+                    if vrs_num_p < 0:
                         _e("P16-RANGO", "critica", "vrServicio",
                            "vrServicio no puede ser negativo.", vrs_raw)
                 except (ValueError, TypeError):
+                    vrs_num_p = None
                     _e("P16-RANGO", "critica", "vrServicio",
                        "vrServicio debe ser numérico.", vrs_raw)
+            else:
+                vrs_num_p = None
+
+            # ── TERAPIA-MULTIPLE: facturación múltiple de terapia física/respiratoria ──
+            # 931001 = Terapia Física  |  939403 = Terapia Respiratoria
+            # Si el vrServicio supera $50.000 se infiere que se agruparon sesiones;
+            # cada sesión debe facturarse de forma individual.
+            TERAPIAS_INDIVIDUALES = {"931001": "Terapia Física", "939403": "Terapia Respiratoria"}
+            if cod_proc in TERAPIAS_INDIVIDUALES and vrs_num_p is not None and vrs_num_p > 50000:
+                nombre_terapia = TERAPIAS_INDIVIDUALES[cod_proc]
+                _e("TERAPIA-MULTIPLE", "alta", "vrServicio",
+                   f"Existen terapias físicas o respiratorias facturadas de forma múltiple "
+                   f"(código {cod_proc} – {nombre_terapia}, vrServicio={vrs_num_p:,.0f}). "
+                   "Cada sesión de terapia debe ser facturada individualmente.",
+                   vrs_raw)
 
             # ── P17: conceptoRecaudo (admite copago=02) ───────
             cr = normalizar_str(proc.get("conceptoRecaudo") or "")
