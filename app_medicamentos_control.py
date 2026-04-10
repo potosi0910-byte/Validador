@@ -1,16 +1,30 @@
 from io import BytesIO
 from datetime import datetime, timedelta
+from collections import Counter
 import unicodedata
 import re
+import time
  
 from flask import Flask, render_template, request, send_file
 import json
+from auditoria import validar_auditoria
  
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, Alignment, PatternFill
  
 app = Flask(__name__)
+
+# Caché del último procesamiento (permite exportar sin reenviar archivos)
+_ultimo_resultado = {
+    'registros':              [],
+    'alertas':                None,
+    'validaciones_malla':     [],
+    'validaciones_general':   [],
+    'validaciones_auditoria': [],
+    'stats':                  {},
+    'error':                  None,
+}
  
  
 # ══════════════════════════════════════════════════════════════
@@ -323,6 +337,9 @@ def extraer_autorizaciones_rips(data, nombre_archivo=""):
                 # Fechas de hospitalización para cálculo de días de estancia
                 "fecha_inicio_hosp":    None,
                 "fecha_egreso_hosp":    None,
+                # Fechas de urgencias para validación de emisión de autorizaciones
+                "fecha_inicio_urg":     None,
+                "fecha_egreso_urg":     None,
             }
 
         p = pacientes[num_doc]
@@ -340,6 +357,20 @@ def extraer_autorizaciones_rips(data, nombre_archivo=""):
                         p["fecha_inicio_hosp"] = normalizar_str(fi)
                     if fe and not p["fecha_egreso_hosp"]:
                         p["fecha_egreso_hosp"] = normalizar_str(fe)
+
+        # ── Extraer fechas de urgencias ──────────────────────────────────────
+        if tiene_urg:
+            urg_regs = servicios.get("urgencias", [])
+            if isinstance(urg_regs, list):
+                for ureg in urg_regs:
+                    if not isinstance(ureg, dict):
+                        continue
+                    fi_u = ureg.get("fechaInicioAtencion") or ureg.get("fechaInicio")
+                    fe_u = ureg.get("fechaEgreso")
+                    if fi_u and not p["fecha_inicio_urg"]:
+                        p["fecha_inicio_urg"] = normalizar_str(fi_u)
+                    if fe_u and not p["fecha_egreso_urg"]:
+                        p["fecha_egreso_urg"] = normalizar_str(fe_u)
 
         # ── Extraer procedimientos para regla de urgencias ───────────────────
         if tiene_urg:
@@ -536,8 +567,9 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
         'codigo_no_cruza':       [],  # Auth OK pero CUPS de EPS no en RIPS
         'urgencias_sin_aut':     [],  # NUEVO: urgencias sin ninguna autorización
         'procedimiento_sin_aut': [],  # NUEVO: procedimiento < 870000 sin auth
-        'hosp_dias_excedidos':   [],  # NUEVO: días de estancia > días autorizados
-        'hosp_aut_fuera_plazo':  [],  # NUEVO: fecha_emision > fecha_egreso + 24h
+        'hosp_dias_excedidos':    [],  # días de estancia > días autorizados
+        'hosp_aut_antes_atencion': [], # fecha_emision < fechaInicioAtencion
+        'hosp_aut_fuera_plazo':   [],  # fecha_emision > fecha_egreso + 48h
     }
 
     def to_int(s):
@@ -564,6 +596,8 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
         procedimientos_pac = p.get('procedimientos_pac', [])
         fecha_inicio_hosp  = p.get('fecha_inicio_hosp')
         fecha_egreso_hosp  = p.get('fecha_egreso_hosp')
+        fecha_inicio_urg   = p.get('fecha_inicio_urg')
+        fecha_egreso_urg   = p.get('fecha_egreso_urg')
 
         archivo_eps_def = regs_pac[0].get('archivo', '') if regs_pac else ''
 
@@ -614,6 +648,7 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
         vistos_proc     = set()
         vistos_dias     = set()
         vistos_plazo    = set()
+        vistos_antes    = set()
 
         # ════════════════════════════════════════════════════════════════
         # HOSPITALARIO
@@ -646,6 +681,69 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
                                 'archivo_rips': archivo_rips,
                                 'archivo_eps':  archivo_eps_def,
                             })
+
+            # ── VALIDACIÓN FECHA EMISIÓN DE AUTORIZACIONES ──────────────────
+            # Regla 1: emisión debe ser POSTERIOR a fechaInicioAtencion.
+            #   - fechaInicioAtencion ref: urgencias tiene prioridad, si no hosp.
+            # Regla 2: emisión no puede exceder 48h después del fechaEgreso.
+            #   - fechaEgreso ref: hospitalización tiene prioridad, si no urgencias.
+            def _pf(s):
+                if not s:
+                    return None
+                try:
+                    return datetime.strptime(str(s).strip()[:16], "%Y-%m-%d %H:%M")
+                except Exception:
+                    try:
+                        return datetime.strptime(str(s).strip()[:10], "%Y-%m-%d")
+                    except Exception:
+                        return None
+
+            _ini_ref = fecha_inicio_urg or fecha_inicio_hosp
+            _egr_ref = fecha_egreso_hosp or fecha_egreso_urg
+            ini_ref_dt = _pf(_ini_ref)
+            egr_ref_dt = _pf(_egr_ref)
+
+            if ini_ref_dt or egr_ref_dt:
+                for na, info_na in auths_excel_pac.items():
+                    fem = info_na.get('fecha_emision')
+                    if not fem:
+                        continue
+                    emision_dt = fem if isinstance(fem, datetime) else _pf(str(fem))
+                    if not emision_dt:
+                        continue
+
+                    # Regla 1: emisión anterior a inicio de atención → alerta
+                    if ini_ref_dt and emision_dt < ini_ref_dt:
+                        clave_a = (num_doc, na)
+                        if clave_a not in vistos_antes:
+                            vistos_antes.add(clave_a)
+                            alertas['hosp_aut_antes_atencion'].append({
+                                'num_aut':       na,
+                                'num_doc':       num_doc,
+                                'num_factura':   num_factura,
+                                'fecha_inicio':  str(_ini_ref)[:16],
+                                'fecha_emision': str(emision_dt)[:16],
+                                'archivo_rips':  archivo_rips,
+                                'archivo_eps':   info_na['archivo'],
+                            })
+
+                    # Regla 2: emisión más de 48h después del egreso → alerta
+                    if egr_ref_dt:
+                        diff_seg = (emision_dt - egr_ref_dt).total_seconds()
+                        if diff_seg > 172800:  # > 48 horas
+                            clave_p = (num_doc, na)
+                            if clave_p not in vistos_plazo:
+                                vistos_plazo.add(clave_p)
+                                alertas['hosp_aut_fuera_plazo'].append({
+                                    'num_aut':       na,
+                                    'num_doc':       num_doc,
+                                    'num_factura':   num_factura,
+                                    'fecha_egreso':  str(_egr_ref)[:16],
+                                    'fecha_emision': str(emision_dt)[:16],
+                                    'horas_diff':    round(diff_seg / 3600, 1),
+                                    'archivo_rips':  archivo_rips,
+                                    'archivo_eps':   info_na['archivo'],
+                                })
 
             # ── SOLO URGENCIAS (sin hospitalización) ─────────────────────
             # Regla: si tiene auth → OK sin alerta. Si no → alertar.
@@ -736,36 +834,6 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
                         except (ValueError, TypeError):
                             pass
 
-                        # Fecha de emisión: no debe superar 24h después del egreso
-                        fecha_emision = info_na.get('fecha_emision')
-                        if fecha_emision and fecha_egreso_hosp:
-                            try:
-                                fe_dt = datetime.strptime(
-                                    str(fecha_egreso_hosp).strip()[:16], "%Y-%m-%d %H:%M"
-                                )
-                                if isinstance(fecha_emision, datetime):
-                                    emision_dt = fecha_emision
-                                else:
-                                    emision_dt = datetime.strptime(
-                                        str(fecha_emision).strip()[:16], "%Y-%m-%d %H:%M"
-                                    )
-                                diff_seg = (emision_dt - fe_dt).total_seconds()
-                                if diff_seg > 86400:  # Más de 24 horas después del egreso
-                                    clave_p = (num_doc, na)
-                                    if clave_p not in vistos_plazo:
-                                        vistos_plazo.add(clave_p)
-                                        alertas['hosp_aut_fuera_plazo'].append({
-                                            'num_aut':       na,
-                                            'num_doc':       num_doc,
-                                            'num_factura':   num_factura,
-                                            'fecha_egreso':  str(fecha_egreso_hosp)[:16],
-                                            'fecha_emision': str(emision_dt)[:16],
-                                            'horas_diff':    round(diff_seg / 3600, 1),
-                                            'archivo_rips':  archivo_rips,
-                                            'archivo_eps':   info_na['archivo'],
-                                        })
-                            except Exception:
-                                pass
 
         # ════════════════════════════════════════════════════════════════
         # AMBULATORIO
@@ -2793,7 +2861,7 @@ def validar_otros_servicios_malla_2275(data, nombre_archivo=""):
 # ══════════════════════════════════════════════════════════════
  
 def construir_excel(registros, alertas=None, validaciones_malla=None,
-                    validaciones_general=None):
+                    validaciones_general=None, validaciones_auditoria=None):
     wb  = Workbook()
  
     # ── Hoja 1: Medicamentos inválidos ───────────────────────────────────
@@ -2869,7 +2937,7 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
  
         for item in alertas.get('aut_excel_no_rips', []):
             ws2.append([
-                "Existen números de autorización generados por la EPS que no han sido asociados al archivo Json.",
+                "Existen números de autorización generados por la EPS que no han sido asociados al archivo Json.(no aplica para paquete Parto - cesarea Nueva EPS)",
                 item.get('num_aut', ''),
                 item.get('num_doc', ''),
                 item.get('num_factura', ''),
@@ -2879,7 +2947,7 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
  
         for item in alertas.get('aut_rips_no_excel', []):
             ws2.append([
-                "Autorización RIPS NO encontrada en base EPS",
+                "Autorización RIPS NO encontrada en base EPS-(no aplica para autorizaciones 2025 o refacturación)",
                 item.get('num_aut', ''),
                 item.get('num_doc', ''),
                 item.get('num_factura', ''),
@@ -2930,10 +2998,22 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
                 item.get('archivo_eps', ''),
             ])
 
+        for item in alertas.get('hosp_aut_antes_atencion', []):
+            ws2.append([
+                f"Fecha de emisión de autorización ({item.get('fecha_emision','')}) es ANTERIOR "
+                f"al inicio de la atención ({item.get('fecha_inicio','')}). "
+                "La autorización debe emitirse a partir del inicio de la atención.",
+                item.get('num_aut', ''),
+                item.get('num_doc', ''),
+                item.get('num_factura', ''),
+                item.get('archivo_rips', ''),
+                item.get('archivo_eps', ''),
+            ])
+
         for item in alertas.get('hosp_aut_fuera_plazo', []):
             ws2.append([
                 f"Fecha de emisión de autorización ({item.get('fecha_emision','')}) supera "
-                f"24h después del egreso ({item.get('fecha_egreso','')}). "
+                f"48h después del egreso ({item.get('fecha_egreso','')}). "
                 f"Diferencia: {item.get('horas_diff','')}h.",
                 item.get('num_aut', ''),
                 item.get('num_doc', ''),
@@ -3062,6 +3142,69 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
             )
             ws4.column_dimensions[get_column_letter(i)].width = min(max_len + 3, 80)
 
+    # ── Hoja 5: Auditoría clínica ────────────────────────────────────────────
+    if validaciones_auditoria:
+        ws5 = wb.create_sheet("Auditoria")
+        headers5 = [
+            "Archivo", "Factura", "N° Doc Paciente", "Consecutivo",
+            "ID Regla", "Categoría", "Severidad", "Campo", "Mensaje", "Valor Actual"
+        ]
+        ws5.append(headers5)
+
+        fill_critica5 = PatternFill("solid", fgColor="C00000")
+        fill_alta5    = PatternFill("solid", fgColor="E26B0A")
+        fill_media5   = PatternFill("solid", fgColor="F0AD00")
+        fill_head5    = PatternFill("solid", fgColor="1F5C99")
+
+        for col in range(1, len(headers5) + 1):
+            c = ws5.cell(row=1, column=col)
+            c.font      = Font(bold=True, color="FFFFFF")
+            c.alignment = Alignment(horizontal="center")
+            c.fill      = fill_head5
+
+        # Mapa de prefijo de regla → categoría legible
+        _CAT = {
+            "EST":       "Estancia",
+            "TRANS":     "Transfusional",
+            "URG":       "Urgencias",
+            "LAB":       "Laboratorio",
+        }
+
+        for v in validaciones_auditoria:
+            id_r  = v.get("id_regla", "")
+            prefijo = id_r.split("-")[0] if "-" in id_r else id_r
+            cat   = _CAT.get(prefijo, "Auditoría")
+            sev   = v.get("severidad", "")
+            fila  = [
+                v.get("archivo",      ""),
+                v.get("num_factura",  ""),
+                v.get("num_doc",      ""),
+                v.get("consecutivo",  ""),
+                id_r,
+                cat,
+                sev,
+                v.get("campo",        ""),
+                v.get("mensaje",      ""),
+                v.get("valor_actual", ""),
+            ]
+            ws5.append(fila)
+            row_fill = (fill_critica5 if sev == "critica"
+                        else fill_alta5  if sev == "alta"
+                        else fill_media5 if sev == "media"
+                        else None)
+            for col in range(1, len(headers5) + 1):
+                cell = ws5.cell(row=ws5.max_row, column=col)
+                if row_fill:
+                    cell.fill = row_fill
+                    cell.font = Font(color="FFFFFF" if sev == "critica" else "000000")
+
+        for i in range(1, len(headers5) + 1):
+            max_len = max(
+                (len(str(ws5.cell(r, i).value or "")) for r in range(1, ws5.max_row + 1)),
+                default=10
+            )
+            ws5.column_dimensions[get_column_letter(i)].width = min(max_len + 3, 80)
+
     bio = BytesIO()
     wb.save(bio)
     bio.seek(0)
@@ -3074,27 +3217,49 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
  
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    global _ultimo_resultado
     registros          = []
     alertas            = None
     error              = None
     stats              = {}
- 
+
     if request.method == 'POST':
+        t_inicio        = time.time()
         action          = request.form.get("action", "view")
         archivos_json   = request.files.getlist('json_files')
         archivos_excel  = request.files.getlist('excel_files')
- 
-        if not archivos_json or all(a.filename == "" for a in archivos_json):
+
+        sin_json = not archivos_json or all(a.filename == "" for a in archivos_json)
+
+        # ── Exportar usando caché si no llegan archivos nuevos ────────────────
+        if sin_json and action == "excel" and _ultimo_resultado.get('stats'):
+            output = construir_excel(
+                _ultimo_resultado['registros'],
+                _ultimo_resultado['alertas'],
+                _ultimo_resultado['validaciones_malla'],
+                _ultimo_resultado['validaciones_general'],
+                _ultimo_resultado['validaciones_auditoria'],
+            )
+            nombre = f"Alertas_Malla_Validadora_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
+            return send_file(
+                output,
+                as_attachment=True,
+                download_name=nombre,
+                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+
+        if sin_json:
             error = "Por favor seleccione uno o más archivos JSON (RIPS)."
             return render_template('index.html', registros=None, alertas=None,
                                    error=error, stats={})
- 
+
         auts_rips_global   = {}
         registros_excel    = {}
         set_aut_excel      = set()
         errores_acum       = []
         validaciones_malla    = []
         validaciones_general  = []
+        validaciones_auditoria = []
 
         # ── Cargar Excel de autorizaciones (opcional) ─────────────────────
         hay_excel = archivos_excel and any(a.filename != "" for a in archivos_excel)
@@ -3143,6 +3308,9 @@ def index():
                 validaciones_general.extend(
                     validar_otros_servicios_malla_2275(data, archivo.filename)
                 )
+                validaciones_auditoria.extend(
+                    validar_auditoria(data, archivo.filename)
+                )
                 archivos_procesados += 1
             except Exception as e:
                 errores_acum.append(f"Error en {archivo.filename}: {e}")
@@ -3152,7 +3320,16 @@ def index():
             alertas = validar_autorizaciones(pacientes_rips_global, registros_excel, set_aut_excel)
 
         # Estadísticas resumen
+        t_elapsed = time.time() - t_inicio
+        tiempo_str = f"{t_elapsed:.1f}s" if t_elapsed < 60 else f"{int(t_elapsed//60)}m {int(t_elapsed%60)}s"
+
         total_auths_rips = sum(len(p.get('set_auths', set())) for p in pacientes_rips_global.values())
+
+        # Top reglas por módulo (máx. 5)
+        malla_top    = Counter(v['id_regla'] for v in validaciones_malla).most_common(5)
+        general_top  = Counter(v['id_regla'] for v in validaciones_general).most_common(5)
+        audit_top    = Counter(v['id_regla'] for v in validaciones_auditoria).most_common(5)
+
         stats = {
             'archivos_json':        archivos_procesados,
             'total_rips':           total_rips,
@@ -3171,19 +3348,37 @@ def index():
             'malla_total':          len(validaciones_malla),
             'malla_criticas':       sum(1 for v in validaciones_malla if v.get('severidad') == 'critica'),
             'malla_notificaciones': sum(1 for v in validaciones_malla if v.get('severidad') in {'media', 'alta'}),
+            'malla_top_reglas':     malla_top,
             'general_total':        len(validaciones_general),
             'general_criticas':     sum(1 for v in validaciones_general if v.get('severidad') == 'critica'),
             'general_notificaciones': sum(1 for v in validaciones_general if v.get('severidad') in {'media', 'alta'}),
+            'general_top_reglas':   general_top,
+            'auditoria_total':      len(validaciones_auditoria),
+            'auditoria_criticas':   sum(1 for v in validaciones_auditoria if v.get('severidad') == 'critica'),
+            'auditoria_notificaciones': sum(1 for v in validaciones_auditoria if v.get('severidad') in {'media', 'alta'}),
+            'auditoria_top_reglas': audit_top,
+            'tiempo_procesamiento': tiempo_str,
         }
  
         if errores_acum:
             error = " | ".join(errores_acum)
- 
+
+        # ── Guardar en caché para exportar sin reenviar archivos ──────────────
+        _ultimo_resultado = {
+            'registros':              registros,
+            'alertas':                alertas,
+            'validaciones_malla':     validaciones_malla,
+            'validaciones_general':   validaciones_general,
+            'validaciones_auditoria': validaciones_auditoria,
+            'stats':                  stats,
+            'error':                  error,
+        }
+
         # ── Exportar a Excel ─────────────────────────────────────────────
         if action == "excel":
             output = construir_excel(registros, alertas, validaciones_malla,
-                                     validaciones_general)
-            nombre = f"reporte_rips_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+                                     validaciones_general, validaciones_auditoria)
+            nombre = f"Alertas_Malla_Validadora_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
             return send_file(
                 output,
                 as_attachment=True,

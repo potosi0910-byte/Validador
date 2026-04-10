@@ -4,7 +4,9 @@
       "Bash(python -c \"import ast, sys; ast.parse\\(open\\(''app_medicamentos_control.py''\\).read\\(\\)\\); print\\(''Sintaxis OK''\\)\")",
       "Bash(python -c \"import py_compile; py_compile.compile\\(''app_medicamentos_control.py'', doraise=True\\); print\\(''OK''\\)\")",
       "Bash(python -c \":*)",
-      "Bash(python -c \"import app_medicamentos_control; print\\('OK'\\)\")"
+      "Bash(python -c \"import app_medicamentos_control; print\\('OK'\\)\")",
+      "Bash(python -c ':*)",
+      "Bash(python -c \"import auditoria; print\\('OK'\\)\")"
     ]
   }
 }

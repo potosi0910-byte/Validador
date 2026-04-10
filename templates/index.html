@@ -3,41 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HSLV · Validador RIPS</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>HSLV · Validador RIPS — Malla 2275</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=26">
 </head>
-<body>
+<body data-has-results="{{ 'true' if (stats and stats.archivos_json) else 'false' }}">
 
-<!-- Partículas de fondo -->
+<!-- Fondo atmosférico -->
 <div class="bg-grid"></div>
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
 <div class="orb orb-3"></div>
 
+<!-- ══════════════════════════════════════════════════════════
+     OVERLAY DE CARGA IA
+     ══════════════════════════════════════════════════════════ -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-panel">
+
+        <div class="loading-cross-wrap">
+            <div class="lc-ring lc-ring-1"></div>
+            <div class="lc-ring lc-ring-2"></div>
+            <div class="lc-cross">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="loading-title">Analizando archivos RIPS</div>
+        <div class="loading-sub" id="loadingSub">Iniciando motor de validación IA...</div>
+
+        <div class="loading-pct-wrap">
+            <div class="loading-pct-track">
+                <div class="loading-pct-fill" id="loadingBar"></div>
+            </div>
+            <div class="loading-pct-num" id="loadingPct">0%</div>
+        </div>
+
+        <div class="loading-counters">
+            <div class="lc-stat">
+                <span class="lc-num" id="lsFiles">0</span>
+                <span class="lc-lbl">archivos JSON</span>
+            </div>
+            <div class="lc-divider"></div>
+            <div class="lc-stat">
+                <span class="lc-num" id="lsTime">0s</span>
+                <span class="lc-lbl">transcurrido</span>
+            </div>
+            <div class="lc-divider"></div>
+            <div class="lc-stat">
+                <span class="lc-num" id="lsRecords">—</span>
+                <span class="lc-lbl">reglas activas</span>
+            </div>
+        </div>
+
+        <div class="loading-modules">
+            <div class="lm-item" id="lm1">
+                <span class="lm-dot"></span> Malla RIPS 2275
+            </div>
+            <div class="lm-item" id="lm2">
+                <span class="lm-dot"></span> Validación General
+            </div>
+            <div class="lm-item" id="lm3">
+                <span class="lm-dot"></span> Auditoría Clínica
+            </div>
+        </div>
+
+    </div>
+</div>
+
 <div class="shell">
 
-    <!-- ── HEADER ─────────────────────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════
+         HEADER INSTITUCIONAL
+         ══════════════════════════════════════════════════════ -->
     <header class="topbar">
         <div class="topbar-brand">
             <div class="brand-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                    <path d="M2 17l10 5 10-5"/>
-                    <path d="M2 12l10 5 10-5"/>
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
                 </svg>
             </div>
             <div>
-                <span class="brand-name">HSLV</span>
-                <span class="brand-sub">Validador RIPS · Módulo Medicamentos</span>
+                <span class="brand-name">Hospital Susana López de Valencia</span>
+                <span class="brand-sub">Plataforma de Validación RIPS &amp; Auditoría Clínica</span>
             </div>
         </div>
-        <div class="topbar-badge">
-            <span class="pulse-dot"></span>
-            Resolución 2275 / 2023
+        <div class="topbar-right">
+            <div class="topbar-badge">
+                <span class="pulse-dot"></span>
+                Res. 2275 / 2023
+            </div>
+            <div class="topbar-badge topbar-badge-ai">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zm3 6v-1h4v1a2 2 0 11-4 0zm4-2a4 4 0 10-4 0h4z"/>
+                </svg>
+                IA Activa
+            </div>
         </div>
     </header>
 
-    <!-- ── PANEL DE CARGA ─────────────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════
+         PANEL DE CARGA
+         ══════════════════════════════════════════════════════ -->
     <section class="card upload-card">
         <div class="card-label">
             <svg viewBox="0 0 20 20" fill="currentColor">
@@ -54,22 +122,104 @@
                 <div class="upload-zone" id="zoneJson">
                     <div class="upload-zone-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                            <polyline points="14 2 14 8 20 8"/>
-                            <line x1="16" y1="13" x2="8" y2="13"/>
-                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
                         </svg>
                     </div>
                     <p class="upload-zone-title">RIPS JSON</p>
-                    <p class="upload-zone-sub">Uno o varios archivos .json</p>
-                    <label class="btn-file" for="json_files">Seleccionar JSON</label>
-                    <input id="json_files" type="file" name="json_files"
-                           accept=".json,application/json" multiple required
-                           onchange="actualizarContadorJson(this)">
+
+                    <!-- Toggle modo -->
+                    <div class="rips-mode-toggle">
+                        <button type="button" class="rips-mode-btn rips-mode-active" id="btnModoAuto"
+                                onclick="cambiarModo('auto')">
+                            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.5 7.5a.5.5 0 010 1H5.707l2.147 2.146a.5.5 0 01-.708.708l-3-3a.5.5 0 010-.708l3-3a.5.5 0 11.708.708L5.707 7.5H11.5z"/></svg>
+                            Automático
+                        </button>
+                        <button type="button" class="rips-mode-btn" id="btnModoManual"
+                                onclick="cambiarModo('manual')">
+                            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/><path d="M7.646 1.146a.5.5 0 01.708 0l3 3a.5.5 0 01-.708.708L8.5 2.707V11.5a.5.5 0 01-1 0V2.707L5.354 4.854a.5.5 0 11-.708-.708l3-3z"/></svg>
+                            Manual
+                        </button>
+                    </div>
+
+                    <!-- ── MODO AUTOMÁTICO ── -->
+                    <div id="panelAuto">
+                        <p class="upload-zone-sub">Seleccione la carpeta con archivos <code>Rips_SL*.json</code></p>
+                        <button type="button" class="btn-file"
+                                onclick="document.getElementById('json_files_auto').click()">
+                            Cargue RIPS JSON
+                        </button>
+                        <input id="json_files_auto" type="file"
+                               webkitdirectory mozdirectory
+                               onchange="onCarpetaAuto(this)">
+
+                        <!-- Resumen por día + controles de filtro -->
+                        <div id="autoResumen" style="display:none">
+                            <div class="rips-resumen-header">
+                                <span id="autoTotalEncontrados"></span>
+                                <span class="rips-resumen-hint">Elija cómo filtrar:</span>
+                            </div>
+
+                            <!-- Opción A: rango de fechas -->
+                            <div class="rips-filtro-tabs">
+                                <button type="button" class="rips-ftab rips-ftab-active" id="ftabFecha"
+                                        onclick="cambiarFiltro('fecha')">Por fecha</button>
+                                <button type="button" class="rips-ftab" id="ftabNum"
+                                        onclick="cambiarFiltro('numero')">Por N° de archivo</button>
+                            </div>
+
+                            <div id="filtroFecha">
+                                <div class="rips-date-row">
+                                    <label>Desde</label>
+                                    <input type="date" id="fechaDesde" onchange="aplicarFiltroAuto()">
+                                    <label>Hasta</label>
+                                    <input type="date" id="fechaHasta" onchange="aplicarFiltroAuto()">
+                                </div>
+                            </div>
+
+                            <div id="filtroNumero" style="display:none">
+                                <div class="rips-num-row">
+                                    <label>Desde el archivo N°</label>
+                                    <input type="number" id="numDesde" min="1" value="1"
+                                           onchange="aplicarFiltroAuto()" oninput="aplicarFiltroAuto()">
+                                    <span class="rips-num-hint" id="numHint"></span>
+                                </div>
+                            </div>
+
+                            <!-- Tabla por día -->
+                            <div class="rips-dias-wrap">
+                                <table class="rips-dias-tbl" id="tablaDias">
+                                    <thead><tr><th>Fecha</th><th>Archivos</th></tr></thead>
+                                    <tbody id="tablaDiasCuerpo"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── MODO MANUAL ── -->
+                    <div id="panelManual" style="display:none">
+                        <p class="upload-zone-sub">Seleccione los archivos <code>Rips_SL*.json</code> que desea procesar (máx. 700)</p>
+                        <button type="button" class="btn-file"
+                                onclick="document.getElementById('json_files_manual').click()">
+                            Seleccionar archivos
+                        </button>
+                        <input id="json_files_manual" type="file"
+                               accept=".json,application/json" multiple
+                               onchange="onManual(this)">
+                        <div id="manualInfo" style="display:none" class="rips-manual-info">
+                            <span id="manualConteo"></span>
+                            <span id="manualAntiguo" class="rips-antiguo"></span>
+                        </div>
+                    </div>
+
+                    <!-- Contador unificado y avisos -->
                     <div class="file-counter" id="counterJson" style="display:none">
                         <span class="counter-num" id="counterJsonNum">0</span>
-                        <span class="counter-lbl">archivo(s) seleccionado(s)</span>
+                        <span class="counter-lbl" id="counterJsonLbl">archivo(s) listos</span>
                     </div>
+                    <div class="file-counter-warn" id="counterJsonWarn" style="display:none"></div>
+
+                    <!-- Input oculto — solo para compatibilidad, el envío real usa fetch -->
+                    <input id="json_files" type="file" name="json_files" style="display:none" tabindex="-1">
                 </div>
 
                 <!-- EXCEL EPS -->
@@ -82,7 +232,10 @@
                     </div>
                     <p class="upload-zone-title">Base EPS <span class="tag-optional">Opcional</span></p>
                     <p class="upload-zone-sub">Uno o varios Excel de autorizaciones</p>
-                    <label class="btn-file btn-excel" for="excel_files">Seleccionar Excel</label>
+                    <button type="button" class="btn-file btn-excel"
+                            onclick="document.getElementById('excel_files').click()">
+                        Seleccionar Excel
+                    </button>
                     <input id="excel_files" type="file" name="excel_files"
                            accept=".xlsx,.xls" multiple
                            onchange="mostrarNombres(this, 'listExcel')">
@@ -91,27 +244,42 @@
 
             </div><!-- /upload-grid -->
 
-            <!-- Aviso Jorge -->
+            <!-- ── AVISO JORGE ─────────────────────────────── -->
+            {% if stats and stats.archivos_json %}
+            <div class="notice-jorge notice-jorge-warn">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <div>
+                    <strong>Resultados pendientes de exportar.</strong>
+                    Descarga el Excel <em>antes</em> de procesar nuevos archivos o perderás los resultados actuales.
+                </div>
+            </div>
+            {% else %}
             <div class="notice-jorge">
                 <svg viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                 </svg>
-                <strong>JORGE:</strong>&nbsp;descarga primero el Excel antes de procesar un nuevo archivo.
+                Exporte el Excel antes de procesar un nuevo lote para no perder los resultados.
             </div>
+            {% endif %}
 
+            <!-- ── BOTONES: EXPORTAR primero, luego PROCESAR ── -->
             <div class="action-bar">
-                <button type="submit" name="action" value="view" class="btn btn-primary">
+                <button type="submit" name="action" value="excel" class="btn btn-success"
+                        id="btnExport" onclick="iniciarExport(this)">
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                    Exportar Excel
+                </button>
+                <button type="submit" name="action" value="view" class="btn btn-primary"
+                        id="btnProcess" onclick="return confirmarProcesar(event)">
                     <svg viewBox="0 0 20 20" fill="currentColor">
                         <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
                         <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
                     </svg>
                     Procesar archivos
-                </button>
-                <button type="submit" name="action" value="excel" class="btn btn-success">
-                    <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                    Exportar Excel
                 </button>
             </div>
 
@@ -127,8 +295,245 @@
         {% endif %}
     </section>
 
-    <!-- ── ESTADÍSTICAS ───────────────────────────────────── -->
-    {% if stats %}
+    <!-- ══════════════════════════════════════════════════════
+         DASHBOARD DE RESULTADOS
+         ══════════════════════════════════════════════════════ -->
+    {% if stats and stats.archivos_json %}
+    <section class="dashboard-section">
+
+        <!-- Hero resumen -->
+        <div class="dashboard-hero">
+            <div class="dh-left">
+                <div class="dh-title">
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v2a1 1 0 102 0V9z" clip-rule="evenodd"/>
+                    </svg>
+                    Resultados del análisis
+                </div>
+                <div class="dh-meta">
+                    <span class="dh-tag">
+                        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M14 4.5V14a2 2 0 01-2 2H4a2 2 0 01-2-2V2a2 2 0 012-2h5.5L14 4.5z"/></svg>
+                        {{ stats.archivos_json }} archivo(s) JSON
+                    </span>
+                    <span class="dh-tag">
+                        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 1a.5.5 0 00-.5.5v3a.5.5 0 01-1 0v-3A1.5 1.5 0 011.5 0h3a.5.5 0 010 1h-3zm9 0a.5.5 0 000 1h3a.5.5 0 01.5.5v3a.5.5 0 001 0v-3A1.5 1.5 0 0013.5 0h-3zm-9 13a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a1.5 1.5 0 01-1.5-1.5v-3a.5.5 0 011 0v3zm13 0a1.5 1.5 0 01-1.5 1.5h-3a.5.5 0 010-1h3a.5.5 0 00.5-.5v-3a.5.5 0 011 0v3z"/></svg>
+                        {{ stats.total_rips }} registros RIPS
+                    </span>
+                    <span class="dh-tag dh-tag-time">
+                        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 3.5a.5.5 0 00-1 0V9a.5.5 0 00.252.434l3.5 2a.5.5 0 00.496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 108 0a8 8 0 000 16zm7-8A7 7 0 111 8a7 7 0 0114 0z"/></svg>
+                        {{ stats.tiempo_procesamiento }}
+                    </span>
+                </div>
+            </div>
+            <div class="dh-totals">
+                {% set grand_total = stats.get('malla_total',0) + stats.get('general_total',0) + stats.get('auditoria_total',0) %}
+                <div class="dh-total-big {% if grand_total > 0 %}dh-has-alerts{% endif %}">
+                    <span class="dh-big-num">{{ grand_total }}</span>
+                    <span class="dh-big-lbl">alertas totales</span>
+                </div>
+                {% set grand_critica = stats.get('malla_criticas',0) + stats.get('general_criticas',0) + stats.get('auditoria_criticas',0) %}
+                {% if grand_critica > 0 %}
+                <div class="dh-critica-badge">
+                    <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    {{ grand_critica }} crítica(s)
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Grid de módulos -->
+        <div class="module-grid">
+
+            <!-- ── Módulo 1: Malla RIPS 2275 ── -->
+            <div class="module-card {% if stats.get('malla_criticas',0) > 0 %}mc-danger{% elif stats.get('malla_total',0) > 0 %}mc-warn{% else %}mc-ok{% endif %}">
+                <div class="mc-header">
+                    <div class="mc-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                            <rect x="9" y="3" width="6" height="4" rx="2"/>
+                            <path d="M9 12h6M9 16h4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="mc-title">Malla RIPS 2275</div>
+                        <div class="mc-sub">Validación estructural y normativa</div>
+                    </div>
+                </div>
+                <div class="mc-count-row">
+                    <span class="mc-count {% if stats.get('malla_criticas',0) > 0 %}mc-count-red{% elif stats.get('malla_total',0) > 0 %}mc-count-warn{% else %}mc-count-ok{% endif %}">
+                        {{ stats.get('malla_total', 0) }}
+                    </span>
+                    <span class="mc-count-lbl">alertas</span>
+                </div>
+                {% if stats.get('malla_total', 0) > 0 %}
+                <div class="mc-sev-bars">
+                    {% set t = stats.get('malla_total',1) %}
+                    <div class="sev-row">
+                        <span class="sev-lbl sev-red">Crítica</span>
+                        <div class="sev-track">
+                            <div class="sev-fill sev-fill-red" style="width:{{ ((stats.get('malla_criticas',0)/t)*100)|int }}%"></div>
+                        </div>
+                        <span class="sev-num">{{ stats.get('malla_criticas',0) }}</span>
+                    </div>
+                    <div class="sev-row">
+                        <span class="sev-lbl sev-amber">Alta/Med</span>
+                        <div class="sev-track">
+                            <div class="sev-fill sev-fill-amber" style="width:{{ ((stats.get('malla_notificaciones',0)/t)*100)|int }}%"></div>
+                        </div>
+                        <span class="sev-num">{{ stats.get('malla_notificaciones',0) }}</span>
+                    </div>
+                </div>
+                {% if stats.get('malla_top_reglas') %}
+                <div class="mc-top-rules">
+                    <div class="mtr-header">Reglas más frecuentes</div>
+                    {% for regla, cnt in stats.malla_top_reglas %}
+                    <div class="mtr-row">
+                        <span class="mtr-code">{{ regla }}</span>
+                        <div class="mtr-bar-wrap">
+                            <div class="mtr-bar" style="width:{{ ((cnt / stats.malla_top_reglas[0][1]) * 100)|int }}%"></div>
+                        </div>
+                        <span class="mtr-cnt">{{ cnt }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="mc-ok-msg">
+                    <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    Sin alertas detectadas
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- ── Módulo 2: Validación General ── -->
+            <div class="module-card {% if stats.get('general_criticas',0) > 0 %}mc-danger{% elif stats.get('general_total',0) > 0 %}mc-warn{% else %}mc-ok{% endif %}">
+                <div class="mc-header">
+                    <div class="mc-icon mc-icon-general">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                            <polyline points="13 2 13 9 20 9"/>
+                            <line x1="8" y1="13" x2="16" y2="13"/>
+                            <line x1="8" y1="17" x2="16" y2="17"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="mc-title">Validación General</div>
+                        <div class="mc-sub">Cruce autorizaciones EPS–RIPS</div>
+                    </div>
+                </div>
+                <div class="mc-count-row">
+                    <span class="mc-count {% if stats.get('general_criticas',0) > 0 %}mc-count-red{% elif stats.get('general_total',0) > 0 %}mc-count-warn{% else %}mc-count-ok{% endif %}">
+                        {{ stats.get('general_total', 0) }}
+                    </span>
+                    <span class="mc-count-lbl">alertas</span>
+                </div>
+                {% if stats.get('general_total', 0) > 0 %}
+                <div class="mc-sev-bars">
+                    {% set tg = stats.get('general_total',1) %}
+                    <div class="sev-row">
+                        <span class="sev-lbl sev-red">Crítica</span>
+                        <div class="sev-track">
+                            <div class="sev-fill sev-fill-red" style="width:{{ ((stats.get('general_criticas',0)/tg)*100)|int }}%"></div>
+                        </div>
+                        <span class="sev-num">{{ stats.get('general_criticas',0) }}</span>
+                    </div>
+                    <div class="sev-row">
+                        <span class="sev-lbl sev-amber">Alta/Med</span>
+                        <div class="sev-track">
+                            <div class="sev-fill sev-fill-amber" style="width:{{ ((stats.get('general_notificaciones',0)/tg)*100)|int }}%"></div>
+                        </div>
+                        <span class="sev-num">{{ stats.get('general_notificaciones',0) }}</span>
+                    </div>
+                </div>
+                {% if stats.get('general_top_reglas') %}
+                <div class="mc-top-rules">
+                    <div class="mtr-header">Reglas más frecuentes</div>
+                    {% for regla, cnt in stats.general_top_reglas %}
+                    <div class="mtr-row">
+                        <span class="mtr-code">{{ regla }}</span>
+                        <div class="mtr-bar-wrap">
+                            <div class="mtr-bar" style="width:{{ ((cnt / stats.general_top_reglas[0][1]) * 100)|int }}%"></div>
+                        </div>
+                        <span class="mtr-cnt">{{ cnt }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="mc-ok-msg">
+                    <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    Sin alertas detectadas
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- ── Módulo 3: Auditoría Clínica ── -->
+            <div class="module-card {% if stats.get('auditoria_criticas',0) > 0 %}mc-danger{% elif stats.get('auditoria_total',0) > 0 %}mc-warn{% else %}mc-ok{% endif %}">
+                <div class="mc-header">
+                    <div class="mc-icon mc-icon-audit">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="mc-title">Auditoría Clínica</div>
+                        <div class="mc-sub">Estancia · Transfusional · Urgencias · Lab</div>
+                    </div>
+                </div>
+                <div class="mc-count-row">
+                    <span class="mc-count {% if stats.get('auditoria_criticas',0) > 0 %}mc-count-red{% elif stats.get('auditoria_total',0) > 0 %}mc-count-warn{% else %}mc-count-ok{% endif %}">
+                        {{ stats.get('auditoria_total', 0) }}
+                    </span>
+                    <span class="mc-count-lbl">alertas</span>
+                </div>
+                {% if stats.get('auditoria_total', 0) > 0 %}
+                <div class="mc-sev-bars">
+                    {% set ta = stats.get('auditoria_total',1) %}
+                    <div class="sev-row">
+                        <span class="sev-lbl sev-red">Crítica</span>
+                        <div class="sev-track">
+                            <div class="sev-fill sev-fill-red" style="width:{{ ((stats.get('auditoria_criticas',0)/ta)*100)|int }}%"></div>
+                        </div>
+                        <span class="sev-num">{{ stats.get('auditoria_criticas',0) }}</span>
+                    </div>
+                    <div class="sev-row">
+                        <span class="sev-lbl sev-amber">Alta/Med</span>
+                        <div class="sev-track">
+                            <div class="sev-fill sev-fill-amber" style="width:{{ ((stats.get('auditoria_notificaciones',0)/ta)*100)|int }}%"></div>
+                        </div>
+                        <span class="sev-num">{{ stats.get('auditoria_notificaciones',0) }}</span>
+                    </div>
+                </div>
+                {% if stats.get('auditoria_top_reglas') %}
+                <div class="mc-top-rules">
+                    <div class="mtr-header">Reglas más frecuentes</div>
+                    {% for regla, cnt in stats.auditoria_top_reglas %}
+                    <div class="mtr-row">
+                        <span class="mtr-code">{{ regla }}</span>
+                        <div class="mtr-bar-wrap">
+                            <div class="mtr-bar" style="width:{{ ((cnt / stats.auditoria_top_reglas[0][1]) * 100)|int }}%"></div>
+                        </div>
+                        <span class="mtr-cnt">{{ cnt }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="mc-ok-msg">
+                    <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    Sin alertas detectadas
+                </div>
+                {% endif %}
+            </div>
+
+        </div><!-- /module-grid -->
+    </section>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         ESTADÍSTICAS KPI
+         ══════════════════════════════════════════════════════ -->
+    {% if stats and stats.archivos_json %}
     <section class="stats-row">
         <div class="stat-chip">
             <span class="stat-val">{{ stats.archivos_json }}</span>
@@ -171,7 +576,9 @@
     </section>
     {% endif %}
 
-    <!-- ── ALERTA VOLUMEN RIPS ───────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════
+         ALERTA VOLUMEN RIPS
+         ══════════════════════════════════════════════════════ -->
     {% if stats and stats.alerta_volumen %}
     <section class="card alert-card alert-card-vol">
         <div class="card-label label-vol">
@@ -188,7 +595,9 @@
     </section>
     {% endif %}
 
-    <!-- ── ALERTAS DE AUTORIZACIONES ─────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════
+         ALERTAS DE AUTORIZACIONES
+         ══════════════════════════════════════════════════════ -->
     {% if alertas %}
 
         {% if alertas.tipo_doc_mismatch %}
@@ -204,12 +613,8 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>N° Documento</th>
-                            <th>Tipo RIPS</th>
-                            <th>Tipo EPS</th>
-                            <th>Autorización</th>
-                            <th>Archivo EPS</th>
+                            <th>#</th><th>N° Documento</th><th>Tipo RIPS</th>
+                            <th>Tipo EPS</th><th>Autorización</th><th>Archivo EPS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -243,10 +648,8 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>N° Autorización EPS</th>
-                            <th>N° Documento Afiliado</th>
-                            <th>Archivo EPS</th>
+                            <th>#</th><th>N° Autorización EPS</th>
+                            <th>N° Documento Afiliado</th><th>Archivo EPS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -278,11 +681,8 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>N° Autorización RIPS</th>
-                            <th>N° Documento Afiliado</th>
-                            <th>N° Factura RIPS</th>
-                            <th>Archivo EPS</th>
+                            <th>#</th><th>N° Autorización RIPS</th>
+                            <th>N° Documento Afiliado</th><th>N° Factura RIPS</th><th>Archivo EPS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -315,13 +715,9 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>N° Autorización</th>
-                            <th>Código EPS</th>
-                            <th>N° Documento</th>
-                            <th>N° Factura RIPS</th>
-                            <th>Archivo RIPS</th>
-                            <th>Archivo EPS</th>
+                            <th>#</th><th>N° Autorización</th><th>Código EPS</th>
+                            <th>N° Documento</th><th>N° Factura RIPS</th>
+                            <th>Archivo RIPS</th><th>Archivo EPS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -355,7 +751,9 @@
 
     {% endif %}
 
-    <!-- ── TABLA MEDICAMENTOS INVÁLIDOS ───────────────────── -->
+    <!-- ══════════════════════════════════════════════════════
+         TABLA MEDICAMENTOS INVÁLIDOS
+         ══════════════════════════════════════════════════════ -->
     {% if registros %}
     <section class="card results-card">
         <div class="card-label">
@@ -366,17 +764,12 @@
             Medicamentos inválidos encontrados
             <span class="badge-count badge-warn">{{ registros|length }}</span>
         </div>
-
         <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Archivo</th>
-                        <th>N° Factura</th>
-                        <th>ID RIPS</th>
-                        <th>Código</th>
-                        <th>Nombre Tecnología</th>
+                        <th>#</th><th>Archivo</th><th>N° Factura</th>
+                        <th>ID RIPS</th><th>Código</th><th>Nombre Tecnología</th>
                         <th class="align-right">Valor Servicio</th>
                     </tr>
                 </thead>
@@ -403,24 +796,202 @@
     {% endif %}
 
     <footer class="footer">
-        HSLV · Sistema de Validación RIPS &nbsp;·&nbsp; Resoluciones 2275 y 2284 de 2023
+        HSLV · Sistema de Validación RIPS &amp; Auditoría Clínica &nbsp;·&nbsp; Resoluciones 2275 y 2284 de 2023
     </footer>
 
 </div><!-- /shell -->
 
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ══════════════════════════════════════════════════════════ -->
 <script>
-function actualizarContadorJson(input) {
-    const counter = document.getElementById('counterJson');
-    const num     = document.getElementById('counterJsonNum');
-    const zone    = input.closest('.upload-zone');
-    if (input.files.length === 0) {
-        counter.style.display = 'none';
-        zone.classList.remove('zone-loaded');
+// ═══════════════════════════════════════════════════════════════
+// CARGA RIPS JSON — MODO AUTOMÁTICO / MANUAL
+// ═══════════════════════════════════════════════════════════════
+const RIPS_PREFIJO = 'Rips_SL';
+const RIPS_MAX     = 700;
+
+let _ripsFiltrados   = [];   // archivos que se enviarán al servidor
+let _autoTodos       = [];   // todos los Rips_SL*.json encontrados en la carpeta (ordenados desc)
+let _modoActual      = 'auto';
+let _filtroActual    = 'fecha';
+
+// ── Cambiar modo Auto / Manual ────────────────────────────────
+function cambiarModo(modo) {
+    _modoActual = modo;
+    document.getElementById('panelAuto').style.display   = modo === 'auto'   ? '' : 'none';
+    document.getElementById('panelManual').style.display = modo === 'manual' ? '' : 'none';
+    document.getElementById('btnModoAuto').classList.toggle('rips-mode-active',   modo === 'auto');
+    document.getElementById('btnModoManual').classList.toggle('rips-mode-active', modo === 'manual');
+    _resetContador();
+    _ripsFiltrados = [];
+    _autoTodos     = [];
+}
+
+// ── Cambiar pestaña de filtro (fecha / número) ────────────────
+function cambiarFiltro(tipo) {
+    _filtroActual = tipo;
+    document.getElementById('filtroFecha').style.display  = tipo === 'fecha'  ? '' : 'none';
+    document.getElementById('filtroNumero').style.display = tipo === 'numero' ? '' : 'none';
+    document.getElementById('ftabFecha').classList.toggle('rips-ftab-active', tipo === 'fecha');
+    document.getElementById('ftabNum').classList.toggle('rips-ftab-active',   tipo === 'numero');
+    aplicarFiltroAuto();
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function _resetContador() {
+    document.getElementById('counterJson').style.display  = 'none';
+    document.getElementById('counterJsonWarn').style.display = 'none';
+    document.getElementById('zoneJson').classList.remove('zone-loaded');
+}
+
+function _setContador(n, warn) {
+    document.getElementById('counterJsonNum').textContent = n;
+    document.getElementById('counterJsonLbl').textContent = 'archivo(s) listos';
+    document.getElementById('counterJson').style.display  = 'flex';
+    document.getElementById('zoneJson').classList.add('zone-loaded');
+    const warnEl = document.getElementById('counterJsonWarn');
+    if (warn) { warnEl.textContent = warn; warnEl.style.display = 'block'; }
+    else       { warnEl.style.display = 'none'; }
+}
+
+function _fmtFecha(ts) {
+    const d = new Date(ts);
+    return d.toISOString().slice(0, 10);  // YYYY-MM-DD
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODO AUTOMÁTICO
+// ═══════════════════════════════════════════════════════════════
+function onCarpetaAuto(input) {
+    _resetContador();
+    _autoTodos     = [];
+    _ripsFiltrados = [];
+    document.getElementById('autoResumen').style.display = 'none';
+
+    const todos = Array.from(input.files).filter(f =>
+        f.name.endsWith('.json') && f.name.startsWith(RIPS_PREFIJO)
+    );
+
+    if (todos.length === 0) {
+        _setContador(0, 'No se encontraron archivos Rips_SL*.json en la carpeta seleccionada.');
         return;
     }
-    num.textContent = input.files.length;
-    counter.style.display = 'flex';
-    zone.classList.add('zone-loaded');
+
+    // Ordenar más reciente → más antiguo
+    todos.sort((a, b) => b.lastModified - a.lastModified);
+    _autoTodos = todos;
+
+    // Construir tabla resumen por día
+    const porDia = {};
+    todos.forEach(f => {
+        const dia = _fmtFecha(f.lastModified);
+        porDia[dia] = (porDia[dia] || 0) + 1;
+    });
+    const diasOrdenados = Object.keys(porDia).sort((a, b) => b.localeCompare(a));
+
+    const cuerpo = document.getElementById('tablaDiasCuerpo');
+    cuerpo.innerHTML = '';
+    diasOrdenados.forEach(dia => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${dia}</td><td>${porDia[dia]}</td>`;
+        cuerpo.appendChild(tr);
+    });
+
+    // Precargar fechas: más antigua → más reciente
+    const fechaMasAntigua  = diasOrdenados[diasOrdenados.length - 1];
+    const fechaMasReciente = diasOrdenados[0];
+    document.getElementById('fechaDesde').value = fechaMasAntigua;
+    document.getElementById('fechaHasta').value = fechaMasReciente;
+
+    // Número máximo de archivos para el filtro por número
+    document.getElementById('numDesde').max   = todos.length;
+    document.getElementById('numDesde').value = 1;
+    document.getElementById('numHint').textContent =
+        `(1 = más reciente, ${todos.length} = más antiguo)`;
+
+    document.getElementById('autoTotalEncontrados').textContent =
+        `Se encontraron ${todos.length} archivo(s) Rips_SL*.json`;
+
+    document.getElementById('autoResumen').style.display = '';
+    aplicarFiltroAuto();
+}
+
+function aplicarFiltroAuto() {
+    if (!_autoTodos.length) return;
+    let seleccionados = [];
+
+    if (_filtroActual === 'fecha') {
+        const desde = document.getElementById('fechaDesde').value;
+        const hasta = document.getElementById('fechaHasta').value;
+        seleccionados = _autoTodos.filter(f => {
+            const dia = _fmtFecha(f.lastModified);
+            return (!desde || dia >= desde) && (!hasta || dia <= hasta);
+        });
+    } else {
+        // Por número: desde el N° indicado hasta el más reciente (índice 0)
+        const n = parseInt(document.getElementById('numDesde').value, 10) || 1;
+        // archivo N° n = índice n-1; queremos desde índice 0 hasta índice n-1
+        seleccionados = _autoTodos.slice(0, n);
+    }
+
+    if (seleccionados.length === 0) {
+        _ripsFiltrados = [];
+        _setContador(0, 'El rango seleccionado no contiene archivos.');
+        return;
+    }
+
+    if (seleccionados.length > RIPS_MAX) {
+        _ripsFiltrados = [];
+        _setContador(seleccionados.length,
+            `⚠ El rango seleccionado contiene ${seleccionados.length} archivos, que supera el límite de ${RIPS_MAX}. ` +
+            `Ajuste el rango antes de procesar.`);
+        return;
+    }
+
+    _ripsFiltrados = seleccionados;
+    _setContador(seleccionados.length, null);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODO MANUAL
+// ═══════════════════════════════════════════════════════════════
+function onManual(input) {
+    _resetContador();
+    _ripsFiltrados = [];
+    document.getElementById('manualInfo').style.display = 'none';
+
+    const todos = Array.from(input.files).filter(f =>
+        f.name.endsWith('.json') && f.name.startsWith(RIPS_PREFIJO)
+    );
+
+    if (todos.length === 0) {
+        _setContador(0, 'No se encontraron archivos Rips_SL*.json entre los seleccionados.');
+        return;
+    }
+
+    // Ordenar más reciente primero
+    todos.sort((a, b) => b.lastModified - a.lastModified);
+
+    let warn = null;
+    let seleccionados = todos;
+    if (todos.length > RIPS_MAX) {
+        seleccionados = todos.slice(0, RIPS_MAX);
+        warn = `Se seleccionaron ${todos.length} archivos — se procesarán solo los ${RIPS_MAX} más recientes.`;
+    }
+
+    _ripsFiltrados = seleccionados;
+
+    // Archivo más antiguo seleccionado
+    const masAntiguo = seleccionados[seleccionados.length - 1];
+    const diaAntiguo = _fmtFecha(masAntiguo.lastModified);
+    document.getElementById('manualConteo').textContent =
+        `${seleccionados.length} archivo(s) seleccionado(s).`;
+    document.getElementById('manualAntiguo').textContent =
+        `Archivo más antiguo incluido: ${masAntiguo.name} (${diaAntiguo})`;
+    document.getElementById('manualInfo').style.display = '';
+
+    _setContador(seleccionados.length, warn);
 }
 
 function mostrarNombres(input, listaId) {
@@ -433,6 +1004,162 @@ function mostrarNombres(input, listaId) {
         ul.appendChild(li);
     });
     input.closest('.upload-zone').classList.add('zone-loaded');
+}
+
+// ── Control de exportación / procesamiento ───────────────────
+const LS_KEY       = 'hslv_resultados_exportados';
+let _hayResultados = document.body.dataset.hasResults === 'true';
+let _overlayTimer  = null;
+
+if (_hayResultados && localStorage.getItem(LS_KEY) !== 'si') {
+    localStorage.setItem(LS_KEY, 'no');
+}
+
+function _pararOverlay() {
+    if (_overlayTimer) { clearInterval(_overlayTimer); _overlayTimer = null; }
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+function iniciarExport(btn) {
+    localStorage.setItem(LS_KEY, 'si');
+    _enviarFormulario('excel');
+    return false;
+}
+
+function confirmarProcesar(e) {
+    // Bloquear si el rango automático supera el límite
+    if (_modoActual === 'auto') {
+        const warnEl = document.getElementById('counterJsonWarn');
+        if (warnEl.style.display !== 'none' && warnEl.textContent.includes('supera el límite')) {
+            alert('El rango seleccionado supera los ' + RIPS_MAX + ' archivos permitidos.\nAjuste el rango de fechas o el número de archivo antes de procesar.');
+            return false;
+        }
+    }
+    if (_ripsFiltrados.length === 0) {
+        alert('No hay archivos RIPS seleccionados. Seleccione una carpeta o archivos antes de procesar.');
+        return false;
+    }
+    const exportado = localStorage.getItem(LS_KEY);
+    if (_hayResultados && exportado !== 'si') {
+        if (!confirm('Tienes resultados sin exportar.\n\n¿Deseas continuar y perder los resultados actuales?')) {
+            return false;
+        }
+    }
+    localStorage.setItem(LS_KEY, 'no');
+    _enviarFormulario('view');
+    return false;
+}
+
+// ── Envío vía fetch — _ripsFiltrados nunca se pierde ─────────
+function _enviarFormulario(action) {
+    const nFiles = _ripsFiltrados.length || 1;
+    iniciarCarga(nFiles, action === 'excel');
+
+    const fd = new FormData();
+    fd.append('action', action);
+
+    // Adjuntar archivos filtrados (si vacíos el servidor usa su caché)
+    _ripsFiltrados.forEach(f => fd.append('json_files', f));
+
+    const excelInput = document.getElementById('excel_files');
+    if (excelInput) {
+        Array.from(excelInput.files).forEach(f => fd.append('excel_files', f));
+    }
+
+    fetch(window.location.pathname, { method: 'POST', body: fd })
+        .then(r => {
+            const ct = r.headers.get('content-type') || '';
+            if (ct.includes('spreadsheetml') || ct.includes('octet-stream')) {
+                // Respuesta binaria → descargar Excel directamente
+                return r.blob().then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a   = document.createElement('a');
+                    a.href     = url;
+                    a.download = 'Resultados_RIPS.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    _pararOverlay();
+                });
+            }
+            // Respuesta HTML → actualizar shell sin reemplazar la página completa
+            return r.text().then(html => {
+                const parser  = new DOMParser();
+                const newDoc  = parser.parseFromString(html, 'text/html');
+                // Actualizar atributo data-has-results
+                const nuevoHR = newDoc.body.dataset.hasResults === 'true';
+                document.body.dataset.hasResults = newDoc.body.dataset.hasResults;
+                _hayResultados = nuevoHR;
+                if (_hayResultados && localStorage.getItem(LS_KEY) !== 'si') {
+                    localStorage.setItem(LS_KEY, 'no');
+                }
+                // Reemplazar contenido interior del shell (formulario, dashboard, tablas)
+                const shellNew = newDoc.querySelector('.shell');
+                const shellCur = document.querySelector('.shell');
+                if (shellNew && shellCur) shellCur.innerHTML = shellNew.innerHTML;
+                _pararOverlay();
+            });
+        })
+        .catch(() => {
+            _pararOverlay();
+            alert('Error al comunicarse con el servidor. Intente nuevamente.');
+        });
+}
+
+// ── Overlay de carga IA ───────────────────────────────────────
+function iniciarCarga(nFiles, esExport) {
+    const overlay   = document.getElementById('loadingOverlay');
+    const bar       = document.getElementById('loadingBar');
+    const pctNum    = document.getElementById('loadingPct');
+    const sub       = document.getElementById('loadingSub');
+    const lsFiles   = document.getElementById('lsFiles');
+    const lsTime    = document.getElementById('lsTime');
+    const lsRecords = document.getElementById('lsRecords');
+    const lm1       = document.getElementById('lm1');
+    const lm2       = document.getElementById('lm2');
+    const lm3       = document.getElementById('lm3');
+
+    if (_overlayTimer) clearInterval(_overlayTimer);
+    overlay.classList.add('active');
+    lsFiles.textContent = nFiles > 0 ? nFiles : '...';
+
+    const TOTAL_REGLAS = 120;
+    let pct     = 0;
+    let elapsed = 0;
+    let records = 0;
+    const startT = Date.now();
+
+    const fases = esExport
+        ? ['Compilando resultados...', 'Generando libro Excel...', 'Aplicando formatos...', 'Preparando descarga...']
+        : ['Cargando archivos JSON...', 'Ejecutando Malla RIPS 2275...', 'Validando autorizaciones...', 'Analizando auditoría clínica...', 'Compilando resultados...'];
+
+    let faseIdx = 0;
+    sub.textContent = fases[0];
+
+    _overlayTimer = setInterval(() => {
+        elapsed = (Date.now() - startT) / 1000;
+        lsTime.textContent = elapsed < 60
+            ? elapsed.toFixed(1) + 's'
+            : Math.floor(elapsed / 60) + 'm ' + Math.floor(elapsed % 60) + 's';
+
+        const speed = pct < 50 ? 2.8 : pct < 75 ? 1.2 : pct < 90 ? 0.5 : 0.12;
+        pct = Math.min(pct + speed * (Math.random() * 0.8 + 0.6), 97);
+        bar.style.width     = pct + '%';
+        pctNum.textContent  = Math.floor(pct) + '%';
+        records = Math.min(records + Math.floor(nFiles * 3 * Math.random()), TOTAL_REGLAS);
+        lsRecords.textContent = records;
+
+        const faseP = Math.floor((pct / 100) * fases.length);
+        if (faseP !== faseIdx && faseP < fases.length) {
+            faseIdx = faseP;
+            sub.textContent = fases[faseIdx];
+        }
+
+        if (pct > 25) lm1.classList.add('lm-active');
+        if (pct > 55) lm2.classList.add('lm-active');
+        if (pct > 78) lm3.classList.add('lm-active');
+    }, 120);
 }
 </script>
 
