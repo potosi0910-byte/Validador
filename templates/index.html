@@ -4,12 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HSLV · Validador RIPS — Malla 2275</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=26">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=30">
 </head>
 <body data-has-results="{{ 'true' if (stats and stats.archivos_json) else 'false' }}">
 
-<!-- Fondo atmosférico -->
+<!-- Fondo 3D — inspirado en logo HSLV -->
+<div class="bg-glow-top"></div>
 <div class="bg-grid"></div>
+<div class="bg-grid-floor"></div>
+
+<div class="bg-cross bg-cross-1">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+    </svg>
+</div>
+<div class="bg-cross bg-cross-2">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+    </svg>
+</div>
+<div class="bg-cross bg-cross-3">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+    </svg>
+</div>
+
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
 <div class="orb orb-3"></div>
@@ -69,6 +88,27 @@
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     OVERLAY DE CLASIFICACIÓN (carga de carpeta JSON)
+     ══════════════════════════════════════════════════════════ -->
+<div class="clas-overlay" id="clasOverlay">
+    <div class="clas-card">
+        <div class="clas-spinner">
+            <div class="clas-ring"></div>
+            <div class="clas-ring clas-ring-2"></div>
+            <svg class="clas-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+            </svg>
+        </div>
+        <div class="clas-title" id="clasTitulo">Clasificando archivos RIPS</div>
+        <div class="clas-sub" id="clasSub">Leyendo y organizando por fecha<span class="clas-dots"><span>.</span><span>.</span><span>.</span></span></div>
+        <div class="clas-barra-wrap">
+            <div class="clas-barra" id="clasBarra"></div>
+        </div>
+        <div class="clas-detalle" id="clasDetalle"></div>
     </div>
 </div>
 
@@ -264,15 +304,8 @@
             </div>
             {% endif %}
 
-            <!-- ── BOTONES: EXPORTAR primero, luego PROCESAR ── -->
+            <!-- ── BOTONES: PROCESAR primero, luego EXPORTAR ── -->
             <div class="action-bar">
-                <button type="submit" name="action" value="excel" class="btn btn-success"
-                        id="btnExport" onclick="iniciarExport(this)">
-                    <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                    Exportar Excel
-                </button>
                 <button type="submit" name="action" value="view" class="btn btn-primary"
                         id="btnProcess" onclick="return confirmarProcesar(event)">
                     <svg viewBox="0 0 20 20" fill="currentColor">
@@ -280,6 +313,13 @@
                         <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
                     </svg>
                     Procesar archivos
+                </button>
+                <button type="submit" name="action" value="excel" class="btn btn-success"
+                        id="btnExport" onclick="return iniciarExport(this)">
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                    Exportar Excel
                 </button>
             </div>
 
@@ -572,6 +612,54 @@
             <span class="stat-val">{{ stats.codigo_no_cruza }}</span>
             <span class="stat-lbl">Código no cruza</span>
         </div>
+        {% if stats.amb_emision_post is defined and stats.amb_emision_post > 0 %}
+        <div class="stat-chip stat-danger">
+            <span class="stat-val">{{ stats.amb_emision_post }}</span>
+            <span class="stat-lbl">Emisión posterior (amb)</span>
+        </div>
+        {% endif %}
+        {% if stats.hosp_cod_sin_aut is defined and stats.hosp_cod_sin_aut > 0 %}
+        <div class="stat-chip stat-danger">
+            <span class="stat-val">{{ stats.hosp_cod_sin_aut }}</span>
+            <span class="stat-lbl">Cód. sin auth (hosp)</span>
+        </div>
+        {% endif %}
+        {% if stats.hosp_proc_no_cruza is defined and stats.hosp_proc_no_cruza > 0 %}
+        <div class="stat-chip stat-danger">
+            <span class="stat-val">{{ stats.hosp_proc_no_cruza }}</span>
+            <span class="stat-lbl">Cód. no cruza (hosp)</span>
+        </div>
+        {% endif %}
+        {% if stats.proc_sin_aut_amb is defined and stats.proc_sin_aut_amb > 0 %}
+        <div class="stat-chip stat-danger">
+            <span class="stat-val">{{ stats.proc_sin_aut_amb }}</span>
+            <span class="stat-lbl">Proc. sin auth (amb)</span>
+        </div>
+        {% endif %}
+        {% if stats.proc_aut_no_cruza is defined and stats.proc_aut_no_cruza > 0 %}
+        <div class="stat-chip stat-danger">
+            <span class="stat-val">{{ stats.proc_aut_no_cruza }}</span>
+            <span class="stat-lbl">Auth no cruza (amb)</span>
+        </div>
+        {% endif %}
+        {% if stats.cups_noestandar_nc is defined and stats.cups_noestandar_nc > 0 %}
+        <div class="stat-chip stat-warn">
+            <span class="stat-val">{{ stats.cups_noestandar_nc }}</span>
+            <span class="stat-lbl">CUPS no estándar s/auth</span>
+        </div>
+        {% endif %}
+        {% if stats.hosp_cups_duplicado is defined and stats.hosp_cups_duplicado > 0 %}
+        <div class="stat-chip stat-danger">
+            <span class="stat-val">{{ stats.hosp_cups_duplicado }}</span>
+            <span class="stat-lbl">CUPS duplicado (hosp)</span>
+        </div>
+        {% endif %}
+        {% if stats.hosp_proc_cod_nc is defined and stats.hosp_proc_cod_nc > 0 %}
+        <div class="stat-chip stat-danger">
+            <span class="stat-val">{{ stats.hosp_proc_cod_nc }}</span>
+            <span class="stat-lbl">Auth/Cód. no cruza (hosp+proc)</span>
+        </div>
+        {% endif %}
         {% endif %}
     </section>
     {% endif %}
@@ -738,7 +826,295 @@
         </section>
         {% endif %}
 
-        {% if not alertas.tipo_doc_mismatch and not alertas.aut_excel_no_rips and not alertas.aut_rips_no_excel and not alertas.codigo_no_cruza %}
+        {% if alertas.amb_aut_emision_posterior %}
+        <section class="card alert-card alert-card-warn">
+            <div class="card-label label-warn">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                </svg>
+                Autorización emitida POSTERIOR al servicio (Ambulatorio)
+                <span class="badge-count badge-warn">{{ alertas.amb_aut_emision_posterior|length }}</span>
+            </div>
+            <p class="alert-desc">La fecha de emisión de la autorización EPS es posterior a la fecha de prestación del servicio en el RIPS. En servicios ambulatorios la autorización debe generarse <strong>antes</strong> de la atención.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th><th>N° Autorización</th><th>N° Documento</th>
+                            <th>Fecha Servicio RIPS</th><th>Fecha Emisión EPS</th>
+                            <th>Archivo RIPS</th><th>Archivo EPS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in alertas.amb_aut_emision_posterior %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td class="mono">{{ item.num_aut }}</td>
+                            <td class="mono">{{ item.num_doc }}</td>
+                            <td class="mono">{{ item.fecha_servicio }}</td>
+                            <td class="mono">{{ item.fecha_emision }}</td>
+                            <td class="text-muted small">{{ item.archivo_rips }}</td>
+                            <td class="text-muted small">{{ item.archivo_eps }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        {# ── Hospitalario: códigos sin autorización ──────────────────────────── #}
+        {% if alertas.hosp_cod_sin_aut %}
+        <section class="card alert-card alert-card-danger">
+            <div class="card-label label-danger">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                Hospitalización: códigos sin autorización asociada
+                <span class="badge-count badge-danger">{{ alertas.hosp_cod_sin_aut|length }}</span>
+            </div>
+            <p class="alert-desc">Los siguientes registros de hospitalización tienen códigos de servicio sin <code>numAutorizacion</code>. Todos los servicios de hospitalización deben contar con autorización.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>#</th><th>Mensaje</th><th>N° Documento</th>
+                        <th>Factura RIPS</th><th>Archivo RIPS</th><th>Archivo EPS</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in alertas.hosp_cod_sin_aut %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td>{{ item.mensaje }}</td>
+                            <td class="mono">{{ item.num_doc }}</td>
+                            <td class="mono">{{ item.num_factura }}</td>
+                            <td class="text-muted small">{{ item.archivo_rips }}</td>
+                            <td class="text-muted small">{{ item.archivo_eps }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        {# ── Hospitalario: código no encontrado en BD EPS para esa auth ─────── #}
+        {% if alertas.hosp_proc_no_cruza %}
+        <section class="card alert-card alert-card-danger">
+            <div class="card-label label-danger">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                Hospitalización: código no encontrado en base de datos EPS
+                <span class="badge-count badge-danger">{{ alertas.hosp_proc_no_cruza|length }}</span>
+            </div>
+            <p class="alert-desc">Código de internación o procedimiento con valor numérico &lt; 870000 que tiene autorización en el RIPS, pero el código <strong>no está asociado</strong> a esa autorización en la base de datos EPS. Aplica a CUPS de internación (p.ej. 105M01, 106M01, 129M01…) y a CUPS numéricos &lt; 870000.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>#</th><th>Código</th><th>N° Autorización</th>
+                        <th>N° Documento</th><th>Sección</th>
+                        <th>Factura RIPS</th><th>Archivo RIPS</th><th>Archivo EPS</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in alertas.hosp_proc_no_cruza %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td class="mono">{{ item.cod_proc }}{% if item.es_internacion %} <span class="badge-count badge-warn" style="font-size:0.7rem">internación</span>{% endif %}</td>
+                            <td class="mono">{{ item.num_aut }}</td>
+                            <td class="mono">{{ item.num_doc }}</td>
+                            <td class="text-muted small">{{ item.seccion }}</td>
+                            <td class="mono">{{ item.num_factura }}</td>
+                            <td class="text-muted small">{{ item.archivo_rips }}</td>
+                            <td class="text-muted small">{{ item.archivo_eps }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        {# ── Hospitalario+Procedimientos: codProcedimiento < 870000 no cruza ── #}
+        {% if alertas.hosp_proc_cod_no_cruza %}
+        <section class="card alert-card alert-card-danger">
+            <div class="card-label label-danger">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                Hospitalización + Procedimientos: autorización y código no coinciden con EPS
+                <span class="badge-count badge-danger">{{ alertas.hosp_proc_cod_no_cruza|length }}</span>
+            </div>
+            <p class="alert-desc">El <code>numAutorizacion</code> y/o el <code>codProcedimiento</code> (&lt; 870000) reportado en la sección <strong>procedimientos</strong> no se encontró con ese código en la base de datos EPS. El número de autorización y el código deben coincidir exactamente.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>#</th><th>Mensaje</th><th>Código Proc.</th><th>N° Autorización RIPS</th>
+                        <th>N° Documento</th><th>Factura RIPS</th><th>Archivo RIPS</th><th>Archivo EPS</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in alertas.hosp_proc_cod_no_cruza %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td>{{ item.mensaje }}</td>
+                            <td class="mono">{{ item.cod_proc }}</td>
+                            <td class="mono">{{ item.num_aut }}</td>
+                            <td class="mono">{{ item.num_doc }}</td>
+                            <td class="mono">{{ item.num_factura }}</td>
+                            <td class="text-muted small">{{ item.archivo_rips }}</td>
+                            <td class="text-muted small">{{ item.archivo_eps }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        {# ── Hospitalario: CUPS duplicado en hospitalización ────────────────── #}
+        {% if alertas.hosp_cups_duplicado %}
+        <section class="card alert-card alert-card-danger">
+            <div class="card-label label-danger">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                Hospitalización: código CUPS duplicado
+                <span class="badge-count badge-danger">{{ alertas.hosp_cups_duplicado|length }}</span>
+            </div>
+            <p class="alert-desc">Los códigos de internación (p.ej. 105M01, 129M01…) y los procedimientos con código numérico &lt; 870000 <strong>no pueden reportarse más de una vez</strong> en los servicios de hospitalización del mismo paciente.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>#</th><th>Mensaje</th><th>Código CUPS</th><th>Repeticiones</th>
+                        <th>N° Documento</th><th>Factura RIPS</th><th>Archivo RIPS</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in alertas.hosp_cups_duplicado %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td>{{ item.mensaje }}</td>
+                            <td class="mono">{{ item.cod_proc }}</td>
+                            <td class="text-center">{{ item.repeticiones }}</td>
+                            <td class="mono">{{ item.num_doc }}</td>
+                            <td class="mono">{{ item.num_factura }}</td>
+                            <td class="text-muted small">{{ item.archivo_rips }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        {# ── Ambulatorio: procedimiento sin numAutorizacion ──────────────────── #}
+        {% if alertas.proc_sin_aut_amb %}
+        <section class="card alert-card alert-card-danger">
+            <div class="card-label label-danger">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                Procedimiento ambulatorio sin autorización obligatoria
+                <span class="badge-count badge-danger">{{ alertas.proc_sin_aut_amb|length }}</span>
+            </div>
+            <p class="alert-desc">Procedimientos de consulta externa con <code>numAutorizacion</code> nulo, vacío o ausente. La autorización es <strong>obligatoria</strong> para servicios ambulatorios.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>#</th><th>Código Proc.</th><th>N° Documento</th>
+                        <th>Fecha Servicio</th><th>Sección</th>
+                        <th>Factura RIPS</th><th>Archivo RIPS</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in alertas.proc_sin_aut_amb %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td class="mono">{{ item.cod_proc }}</td>
+                            <td class="mono">{{ item.num_doc }}</td>
+                            <td class="mono">{{ item.fecha_inicio }}</td>
+                            <td class="text-muted small">{{ item.seccion }}</td>
+                            <td class="mono">{{ item.num_factura }}</td>
+                            <td class="text-muted small">{{ item.archivo_rips }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        {# ── Ambulatorio: par (cod + auth) no encontrado en Excel ─────────────── #}
+        {% if alertas.proc_aut_no_cruza_amb %}
+        <section class="card alert-card alert-card-danger">
+            <div class="card-label label-danger">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                Autorización no corresponde al CUPS del RIPS (Ambulatorio)
+                <span class="badge-count badge-danger">{{ alertas.proc_aut_no_cruza_amb|length }}</span>
+            </div>
+            <p class="alert-desc">El número de autorización digitado en el RIPS no corresponde al que debería tener ese procedimiento según la base de datos EPS para el CUPS asociado.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>#</th><th>Código CUPS</th><th>N° Autorización RIPS</th>
+                        <th>N° Documento</th><th>Fecha Servicio</th>
+                        <th>Factura RIPS</th><th>Archivo RIPS</th><th>Archivo EPS</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in alertas.proc_aut_no_cruza_amb %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td class="mono">{{ item.cod_proc }}</td>
+                            <td class="mono">{{ item.num_aut }}</td>
+                            <td class="mono">{{ item.num_doc }}</td>
+                            <td class="mono">{{ item.fecha_inicio }}</td>
+                            <td class="mono">{{ item.num_factura }}</td>
+                            <td class="text-muted small">{{ item.archivo_rips }}</td>
+                            <td class="text-muted small">{{ item.archivo_eps }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        {# ── CUPS no estándar sin autorización ───────────────────────────────── #}
+        {% if alertas.cups_noestandar_sin_aut %}
+        <section class="card alert-card alert-card-warn">
+            <div class="card-label label-warn">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                CUPS no estándar sin autorización asociada
+                <span class="badge-count badge-warn">{{ alertas.cups_noestandar_sin_aut|length }}</span>
+            </div>
+            <p class="alert-desc">Procedimientos cuyo código tiene más de 6 caracteres o contiene letras (no es CUPS estándar). No se valida el código contra la base de datos, pero <strong>sí se exige autorización</strong>.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>#</th><th>Código Proc.</th><th>N° Documento</th>
+                        <th>Fecha Servicio</th><th>Sección</th>
+                        <th>Factura RIPS</th><th>Archivo RIPS</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in alertas.cups_noestandar_sin_aut %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td class="mono">{{ item.cod_proc }}</td>
+                            <td class="mono">{{ item.num_doc }}</td>
+                            <td class="mono">{{ item.fecha_inicio }}</td>
+                            <td class="text-muted small">{{ item.seccion }}</td>
+                            <td class="mono">{{ item.num_factura }}</td>
+                            <td class="text-muted small">{{ item.archivo_rips }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if not alertas.tipo_doc_mismatch and not alertas.aut_excel_no_rips and not alertas.aut_rips_no_excel and not alertas.codigo_no_cruza and not alertas.amb_aut_emision_posterior and not alertas.hosp_cod_sin_aut and not alertas.hosp_proc_no_cruza and not alertas.proc_sin_aut_amb and not alertas.proc_aut_no_cruza_amb and not alertas.cups_noestandar_sin_aut and not alertas.hosp_cups_duplicado and not alertas.hosp_proc_cod_no_cruza %}
         <section class="card alert-card alert-card-ok">
             <div class="card-label label-ok">
                 <svg viewBox="0 0 20 20" fill="currentColor">
@@ -861,6 +1237,38 @@ function _fmtFecha(ts) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// OVERLAY DE CLASIFICACIÓN
+// ═══════════════════════════════════════════════════════════════
+let _clasBarraTimer = null;
+
+function _mostrarClasificando(titulo, sub) {
+    document.getElementById('clasTitulo').textContent  = titulo || 'Clasificando archivos RIPS';
+    document.getElementById('clasSub').innerHTML       =
+        (sub || 'Leyendo y organizando por fecha') +
+        '<span class="clas-dots"><span>.</span><span>.</span><span>.</span></span>';
+    document.getElementById('clasDetalle').textContent = '';
+    const barra = document.getElementById('clasBarra');
+    barra.style.width = '0%';
+    document.getElementById('clasOverlay').classList.add('clas-active');
+    // Animación de barra indeterminada
+    let p = 0;
+    if (_clasBarraTimer) clearInterval(_clasBarraTimer);
+    _clasBarraTimer = setInterval(() => {
+        p = p < 85 ? p + (Math.random() * 3 + 1) : p + 0.1;
+        barra.style.width = Math.min(p, 92) + '%';
+    }, 80);
+}
+
+function _ocultarClasificando(detalle) {
+    if (_clasBarraTimer) { clearInterval(_clasBarraTimer); _clasBarraTimer = null; }
+    document.getElementById('clasBarra').style.width = '100%';
+    if (detalle) document.getElementById('clasDetalle').textContent = detalle;
+    setTimeout(() => {
+        document.getElementById('clasOverlay').classList.remove('clas-active');
+    }, 320);
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MODO AUTOMÁTICO
 // ═══════════════════════════════════════════════════════════════
 function onCarpetaAuto(input) {
@@ -869,52 +1277,66 @@ function onCarpetaAuto(input) {
     _ripsFiltrados = [];
     document.getElementById('autoResumen').style.display = 'none';
 
-    const todos = Array.from(input.files).filter(f =>
-        f.name.endsWith('.json') && f.name.startsWith(RIPS_PREFIJO)
-    );
+    // Mostrar overlay de clasificación antes de hacer el trabajo pesado
+    _mostrarClasificando('Cargando archivos RIPS', 'Leyendo carpeta y filtrando archivos');
 
-    if (todos.length === 0) {
-        _setContador(0, 'No se encontraron archivos Rips_SL*.json en la carpeta seleccionada.');
-        return;
-    }
+    // Defer para que el navegador pinte el overlay antes de ejecutar
+    setTimeout(() => {
+        const todos = Array.from(input.files).filter(f =>
+            f.name.endsWith('.json') && f.name.startsWith(RIPS_PREFIJO)
+        );
 
-    // Ordenar más reciente → más antiguo
-    todos.sort((a, b) => b.lastModified - a.lastModified);
-    _autoTodos = todos;
+        if (todos.length === 0) {
+            _ocultarClasificando();
+            _setContador(0, 'No se encontraron archivos Rips_SL*.json en la carpeta seleccionada.');
+            return;
+        }
 
-    // Construir tabla resumen por día
-    const porDia = {};
-    todos.forEach(f => {
-        const dia = _fmtFecha(f.lastModified);
-        porDia[dia] = (porDia[dia] || 0) + 1;
-    });
-    const diasOrdenados = Object.keys(porDia).sort((a, b) => b.localeCompare(a));
+        document.getElementById('clasSub').innerHTML =
+            `Clasificando ${todos.length} archivos por fecha` +
+            '<span class="clas-dots"><span>.</span><span>.</span><span>.</span></span>';
 
-    const cuerpo = document.getElementById('tablaDiasCuerpo');
-    cuerpo.innerHTML = '';
-    diasOrdenados.forEach(dia => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${dia}</td><td>${porDia[dia]}</td>`;
-        cuerpo.appendChild(tr);
-    });
+        // Defer nuevamente para actualizar el mensaje antes de ordenar
+        setTimeout(() => {
+            // Ordenar más reciente → más antiguo
+            todos.sort((a, b) => b.lastModified - a.lastModified);
+            _autoTodos = todos;
 
-    // Precargar fechas: más antigua → más reciente
-    const fechaMasAntigua  = diasOrdenados[diasOrdenados.length - 1];
-    const fechaMasReciente = diasOrdenados[0];
-    document.getElementById('fechaDesde').value = fechaMasAntigua;
-    document.getElementById('fechaHasta').value = fechaMasReciente;
+            // Construir tabla resumen por día
+            const porDia = {};
+            todos.forEach(f => {
+                const dia = _fmtFecha(f.lastModified);
+                porDia[dia] = (porDia[dia] || 0) + 1;
+            });
+            const diasOrdenados = Object.keys(porDia).sort((a, b) => b.localeCompare(a));
 
-    // Número máximo de archivos para el filtro por número
-    document.getElementById('numDesde').max   = todos.length;
-    document.getElementById('numDesde').value = 1;
-    document.getElementById('numHint').textContent =
-        `(1 = más reciente, ${todos.length} = más antiguo)`;
+            const cuerpo = document.getElementById('tablaDiasCuerpo');
+            cuerpo.innerHTML = '';
+            diasOrdenados.forEach(dia => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${dia}</td><td>${porDia[dia]}</td>`;
+                cuerpo.appendChild(tr);
+            });
 
-    document.getElementById('autoTotalEncontrados').textContent =
-        `Se encontraron ${todos.length} archivo(s) Rips_SL*.json`;
+            // Precargar fechas
+            document.getElementById('fechaDesde').value = diasOrdenados[diasOrdenados.length - 1];
+            document.getElementById('fechaHasta').value = diasOrdenados[0];
 
-    document.getElementById('autoResumen').style.display = '';
-    aplicarFiltroAuto();
+            // Filtro por número
+            document.getElementById('numDesde').max   = todos.length;
+            document.getElementById('numDesde').value = 1;
+            document.getElementById('numHint').textContent =
+                `(1 = más reciente, ${todos.length} = más antiguo)`;
+
+            document.getElementById('autoTotalEncontrados').textContent =
+                `Se encontraron ${todos.length} archivo(s) Rips_SL*.json`;
+
+            document.getElementById('autoResumen').style.display = '';
+            aplicarFiltroAuto();
+
+            _ocultarClasificando(`${todos.length} archivos clasificados en ${diasOrdenados.length} día(s)`);
+        }, 60);
+    }, 40);
 }
 
 function aplicarFiltroAuto() {
@@ -1021,8 +1443,40 @@ function _pararOverlay() {
 }
 
 function iniciarExport(btn) {
+    if (!_hayResultados) {
+        alert('Primero procesar Archivos antes de exportar excel.');
+        return false;
+    }
     localStorage.setItem(LS_KEY, 'si');
-    _enviarFormulario('excel');
+
+    // Enviar solo action=excel sin archivos: el servidor exporta desde caché.
+    // No usar _enviarFormulario porque éste re-adjunta los archivos JSON y el
+    // input de Excel ya fue borrado por el DOM-update, lo que vaciaba las alertas.
+    iniciarCarga(1, true);
+    const fd = new FormData();
+    fd.append('action', 'excel');
+    fetch(window.location.pathname, { method: 'POST', body: fd })
+        .then(r => {
+            const ct = r.headers.get('content-type') || '';
+            if (ct.includes('spreadsheetml') || ct.includes('octet-stream')) {
+                return r.blob().then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a   = document.createElement('a');
+                    a.href     = url;
+                    a.download = 'Resultados_RIPS.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    _pararOverlay();
+                });
+            }
+            _pararOverlay();
+        })
+        .catch(() => {
+            _pararOverlay();
+            alert('Error al exportar. Intente nuevamente.');
+        });
     return false;
 }
 
@@ -1031,12 +1485,20 @@ function confirmarProcesar(e) {
     if (_modoActual === 'auto') {
         const warnEl = document.getElementById('counterJsonWarn');
         if (warnEl.style.display !== 'none' && warnEl.textContent.includes('supera el límite')) {
-            alert('El rango seleccionado supera los ' + RIPS_MAX + ' archivos permitidos.\nAjuste el rango de fechas o el número de archivo antes de procesar.');
+            _mostrarClasificando('Verificando rango de archivos', 'Validando límite máximo permitido');
+            setTimeout(() => {
+                _ocultarClasificando();
+                alert('El rango seleccionado supera los ' + RIPS_MAX + ' archivos permitidos.\nAjuste el rango de fechas o el número de archivo antes de procesar.');
+            }, 500);
             return false;
         }
     }
     if (_ripsFiltrados.length === 0) {
-        alert('No hay archivos RIPS seleccionados. Seleccione una carpeta o archivos antes de procesar.');
+        _mostrarClasificando('Verificando selección', 'Revisando archivos seleccionados');
+        setTimeout(() => {
+            _ocultarClasificando();
+            alert('No hay archivos RIPS seleccionados. Seleccione una carpeta o archivos antes de procesar.');
+        }, 400);
         return false;
     }
     const exportado = localStorage.getItem(LS_KEY);

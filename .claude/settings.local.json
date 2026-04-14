@@ -6,7 +6,15 @@
       "Bash(python -c \":*)",
       "Bash(python -c \"import app_medicamentos_control; print\\('OK'\\)\")",
       "Bash(python -c ':*)",
-      "Bash(python -c \"import auditoria; print\\('OK'\\)\")"
+      "Bash(python -c \"import auditoria; print\\('OK'\\)\")",
+      "Bash(python3 -c ':*)",
+      "Read(//c/Users/HAUDITORIA42/Downloads/**)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app_medicamentos_control.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK - sin errores de sintaxis'\\)\")",
+      "Read(//c/Users/HAUDITORIA42/Documents/Didier Potosi/pruebas malla/**)",
+      "Bash(python -c \"import py_compile; py_compile.compile\\('app_medicamentos_control.py'\\); print\\('Syntax OK'\\)\")",
+      "Read(//u/202604/FACTURAS_SALUD/SL550075/RIPS/**)",
+      "Bash(python -m py_compile app_medicamentos_control.py)",
+      "Read(//u/202604/FACTURAS_SALUD/SL549928/RIPS/**)"
     ]
   }
 }
