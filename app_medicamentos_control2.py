@@ -9,7 +9,6 @@ import json
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, Alignment, PatternFill
-from auditoria import validar_auditoria
  
 app = Flask(__name__)
  
@@ -324,69 +323,35 @@ def extraer_autorizaciones_rips(data, nombre_archivo=""):
                 # Fechas de hospitalización para cálculo de días de estancia
                 "fecha_inicio_hosp":    None,
                 "fecha_egreso_hosp":    None,
-                "fecha_inicio_urg":     None,
-                "fecha_egreso_urg":     None,
-                # Internacion: autorizaciones y conteo de registros hospitalizacion
-                "auths_hosp":           set(),
-                "n_hosp_regs":          0,
             }
 
         p = pacientes[num_doc]
 
-        # ── Extraer fechas y autorizaciones de hospitalización ───────────────
+        # ── Extraer fechas de hospitalización ────────────────────────────────
         if tiene_hosp:
             hosp_regs = servicios.get("hospitalizacion", [])
             if isinstance(hosp_regs, list):
                 for hreg in hosp_regs:
                     if not isinstance(hreg, dict):
                         continue
-                    p["n_hosp_regs"] += 1
-                    fi   = hreg.get("fechaInicioAtencion") or hreg.get("fechaInicio")
-                    fe   = hreg.get("fechaEgreso")
-                    na_h = normalizar_str(hreg.get("numAutorizacion", ""))
+                    fi = hreg.get("fechaInicioAtencion") or hreg.get("fechaInicio")
+                    fe = hreg.get("fechaEgreso")
                     if fi and not p["fecha_inicio_hosp"]:
                         p["fecha_inicio_hosp"] = normalizar_str(fi)
                     if fe and not p["fecha_egreso_hosp"]:
                         p["fecha_egreso_hosp"] = normalizar_str(fe)
-                    if na_h:
-                        p["auths_hosp"].add(na_h)
 
-        # ── Extraer fechas de urgencias ──────────────────────────────
+        # ── Extraer procedimientos para regla de urgencias ───────────────────
         if tiene_urg:
-            urg_regs = servicios.get("urgencias", [])
-            if isinstance(urg_regs, list):
-                for ureg in urg_regs:
-                    if not isinstance(ureg, dict):
+            proc_regs = servicios.get("procedimientos", [])
+            if isinstance(proc_regs, list):
+                for preg in proc_regs:
+                    if not isinstance(preg, dict):
                         continue
-                    fi_u = ureg.get("fechaInicioAtencion") or ureg.get("fechaInicio")
-                    fe_u = ureg.get("fechaEgreso")
-                    if fi_u and not p["fecha_inicio_urg"]:
-                        p["fecha_inicio_urg"] = normalizar_str(fi_u)
-                    if fe_u:
-                        p["fecha_egreso_urg"] = normalizar_str(fe_u)
- 
-        # ── Extraer procedimientos (todas las atenciones) ─────────────────
-        proc_regs = servicios.get("procedimientos", [])
-        if isinstance(proc_regs, list):
-            for preg in proc_regs:
-                if not isinstance(preg, dict):
-                    continue
-                cod_p = normalizar_str(preg.get("codProcedimiento", ""))
-                na_p  = normalizar_str(preg.get("numAutorizacion", ""))
-                if cod_p:
-                    p["procedimientos_pac"].append({"cod": cod_p, "num_aut": na_p})
- 
-        # ── Reclasificar a cirugía ambulatoria si aplica ─────────────────
-        # Condición: tiene hospitalizacion SIN urgencias + al menos un codProcedimiento < 870000
-        # Si hay urgencias el paciente es siempre hospitalario (ingreso de emergencia).
-        if tiene_hosp and not tiene_urg and p["procedimientos_pac"]:
-            for _pr in p["procedimientos_pac"]:
-                try:
-                    if int(_pr.get("cod", "")) < 870000:
-                        p["tipo_atencion"] = "cirugia_ambulatoria"
-                        break
-                except (ValueError, TypeError):
-                    pass
+                    cod_p = normalizar_str(preg.get("codProcedimiento", ""))
+                    na_p  = normalizar_str(preg.get("numAutorizacion", ""))
+                    if cod_p:
+                        p["procedimientos_pac"].append({"cod": cod_p, "num_aut": na_p})
 
         # ── Recopilar autorizaciones de todas las secciones ──────────────────
         for sec_name, cod_field in SECCIONES:
@@ -533,74 +498,56 @@ TIPOS_OS_VALIDOS          = {"01","02","03","04","05","06"}
 
 def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
     """
-    Valida autorizaciones comparando RIPS JSON contra base de datos EPS (Excel).
+    pacientes_rips: dict { num_doc → {tipo_doc, num_factura, archivo_rips,
+                                       tipo_atencion, tiene_urg, tiene_hosp,
+                                       tiene_solo_urgencias, set_auths,
+                                       codigos_por_auth, procedimientos_pac,
+                                       fecha_inicio_hosp, fecha_egreso_hosp} }
+    registros_excel: dict { num_doc → list[{tipo_doc, numero_aut, codigo,
+                                             archivo, dias_autorizados, fecha_emision}] }
 
-    REGLAS (nueva lógica unificada):
-    ─ Identificación  : solo procesa pacientes cuyo num_doc esté en el Excel.
-    ─ Tipo documento  : alerta si tipo_doc RIPS != tipo_doc Excel.
-    ─ Clasificación   :
-        cirugia_ambulatoria  → tiene hospitalizacion + procedimientos con codProcedimiento < 870000
-        hospitalario         → tiene urgencias y/o hospitalizacion (sin ser cirugia_amb)
-        ambulatorio          → sin urgencias ni hospitalizacion
-    ─ Ambulatorio / Cirugía ambulatoria:
-        Por cada (numAutorizacion, codProcedimiento) en procedimientos del RIPS:
-        verificar que el par exista en la base del paciente.
-        Alerta: "Ambulatorio - La autorización o el código del procedimiento
-                 no coinciden con la base de Nueva EPS según RIPS"
-    ─ Hospitalario:
-        Extraer fechaIngresoInicial y fechaEgresoFinal del episodio.
-        Por cada procedimiento: buscar (auth + cod) en base dentro del rango de fechas.
-        Alerta: "hospitalario - La autorización y/o el procedimiento no coinciden
-                 con la base dentro del rango de fechas de la atención hospitalaria"
-        Adicionalmente: auths de la base en ese rango que NO estén en el RIPS.
-        Alerta: "Hospitalario - Existen autorizaciones no relacionadas en el RIPS Json."
+    FLUJO POR PACIENTE:
+    1. Buscar num_doc del RIPS en Excel. Si no está → ignorar.
+    2. Validar tipo_doc (RIPS vs Excel).
+    3. Construir índice de auths del Excel para el paciente.
+
+    HOSPITALARIO — SOLO URGENCIAS (tiene_urg=True, tiene_hosp=False):
+      · Si tiene al menos una autorización en RIPS → OK, sin alerta de urgencias.
+      · Si no tiene ninguna autorización → alerta urgencias_sin_aut.
+      · Para cada procedimiento del paciente:
+          - codProcedimiento > 870000 → no requiere auth, sin alerta.
+          - codProcedimiento < 870000 → alerta procedimiento_sin_aut si no tiene auth en Excel.
+      · NO se ejecuta la lógica cruzada estándar de hospitalario para evitar falsas alertas.
+
+    HOSPITALARIO — CON HOSPITALIZACIÓN (tiene_hosp=True):
+      · Lógica estándar existente (auth_urgencias base + cruces de auth > base).
+      · Regla de procedimientos urgencias (> / < 870000) si también tiene urgencias.
+      · Cálculo de días de estancia con fechaInicioAtencion y fechaEgreso:
+          - dias_facturables vs dias_autorizados del Excel → alerta hosp_dias_excedidos.
+          - fecha_emision > fecha_egreso + 24h → alerta hosp_aut_fuera_plazo.
+
+    AMBULATORIO (sin urgencias ni hospitalizacion):
+      · Lógica cruzada original: auths RIPS vs Excel, códigos CUPS.
     """
-
     alertas = {
-        'tipo_doc_mismatch':       [],   # Tipo de documento difiere entre RIPS y EPS
-        'amb_par_no_cruza':        [],   # Ambulatorio/CirAmb: par (auth+cod) no encontrado en base
-        'hosp_proc_no_cruza':      [],   # Hospitalario: (auth+cod) no cruza dentro del rango de fechas
-        'hosp_aut_no_relacionada': [],   # Hospitalario: auth en base dentro del rango pero sin RIPS
-        # Reglas de internación
-        'estancia_sin_aut':        [],   # Hospitalizacion sin auth válida en Excel
-        'proc_qx_misma_aut_hosp':  [],   # Proc quirúrgico (<870000) usa misma auth que estancia
-        'sin_num_aut_relacionado': [],   # Sin ningún numAutorizacion (ni estancia ni proc <870000)
+        'tipo_doc_mismatch':     [],  # Tipo de documento difiere entre RIPS y EPS
+        'aut_excel_no_rips':     [],  # EPS tiene auth que no está en RIPS
+        'aut_rips_no_excel':     [],  # RIPS tiene auth que no está en EPS
+        'codigo_no_cruza':       [],  # Auth OK pero CUPS de EPS no en RIPS
+        'urgencias_sin_aut':     [],  # NUEVO: urgencias sin ninguna autorización
+        'procedimiento_sin_aut': [],  # NUEVO: procedimiento < 870000 sin auth
+        'hosp_dias_excedidos':   [],  # NUEVO: días de estancia > días autorizados
+        'hosp_aut_fuera_plazo':  [],  # NUEVO: fecha_emision > fecha_egreso + 24h
     }
 
-    def parse_fecha(valor):
-        """Intenta parsear fecha/datetime en varios formatos. Retorna datetime o None."""
-        if valor is None:
-            return None
-        if isinstance(valor, __import__('datetime').datetime):
-            return valor
-        s = str(valor).strip()
-        for fmt in (
-            "%Y-%m-%d %H:%M:%S",
-            "%Y-%m-%d %H:%M",
-            "%Y-%m-%d",
-            "%d/%m/%Y %H:%M:%S",
-            "%d/%m/%Y %H:%M",
-            "%d/%m/%Y",
-        ):
-            try:
-                return datetime.strptime(s[:len(fmt)], fmt)
-            except ValueError:
-                pass
-        if len(s) >= 16:
-            try:
-                return datetime.strptime(s[:16], "%Y-%m-%d %H:%M")
-            except ValueError:
-                pass
-        if len(s) >= 10:
-            try:
-                return datetime.strptime(s[:10], "%Y-%m-%d")
-            except ValueError:
-                pass
-        return None
+    def to_int(s):
+        try:
+            return int(str(s).strip())
+        except Exception:
+            return 0
 
     for num_doc, p in pacientes_rips.items():
-
-        # ── 1. Identificación: el paciente debe existir en el Excel ──────
+        # ── 1. ¿Existe el paciente en Excel? ─────────────────────────────
         if num_doc not in registros_excel:
             continue
 
@@ -611,15 +558,12 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
         tipo_atencion     = p.get('tipo_atencion', 'ambulatorio')
         tiene_urg         = p.get('tiene_urg', False)
         tiene_hosp        = p.get('tiene_hosp', False)
-        procedimientos_pac = p.get('procedimientos_pac', [])
+        tiene_solo_urg    = p.get('tiene_solo_urgencias', False)
         set_auths         = p.get('set_auths', set())
-
-        fecha_inicio_hosp = p.get('fecha_inicio_hosp')
-        fecha_egreso_hosp = p.get('fecha_egreso_hosp')
-        fecha_inicio_urg  = p.get('fecha_inicio_urg')
-        fecha_egreso_urg  = p.get('fecha_egreso_urg')
-        auths_hosp        = p.get('auths_hosp', set())
-        n_hosp_regs       = p.get('n_hosp_regs', 0)
+        cod_por_auth      = p.get('codigos_por_auth', {})
+        procedimientos_pac = p.get('procedimientos_pac', [])
+        fecha_inicio_hosp  = p.get('fecha_inicio_hosp')
+        fecha_egreso_hosp  = p.get('fecha_egreso_hosp')
 
         archivo_eps_def = regs_pac[0].get('archivo', '') if regs_pac else ''
 
@@ -632,270 +576,251 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
                     'num_doc':      num_doc,
                     'tipo_rips':    tipo_rips,
                     'tipo_eps':     tipo_eps,
+                    'num_aut':      next(iter(set_auths), ''),
                     'num_factura':  num_factura,
                     'archivo_rips': archivo_rips,
                     'archivo_eps':  archivo_eps_def,
-                    'mensaje':      "El tipo de identificación no coincide con la base",
                 })
 
-        # ── 3. Construir índice de auths del Excel para este paciente ────
-        # auths_excel_pac: {num_aut → {codigos: set, archivo, fecha_emision}}
+        # ── 3. Construir índice auths del Excel para este paciente ────────
+        # { numero_aut → {codigos: set, archivo: str,
+        #                 dias_autorizados: str, fecha_emision: any} }
         auths_excel_pac = {}
         for reg in regs_pac:
             na   = reg['numero_aut']
             cod  = reg.get('codigo', '')
             arc  = reg.get('archivo', '')
+            dias = reg.get('dias_autorizados', '')
             fem  = reg.get('fecha_emision')
             if not na:
                 continue
             if na not in auths_excel_pac:
                 auths_excel_pac[na] = {
-                    'codigos':       set(),
-                    'archivo':       arc,
-                    'fecha_emision': None,
+                    'codigos':          set(),
+                    'archivo':          arc,
+                    'dias_autorizados': '',
+                    'fecha_emision':    None,
                 }
             if cod:
                 auths_excel_pac[na]['codigos'].add(cod)
+            if dias and not auths_excel_pac[na]['dias_autorizados']:
+                auths_excel_pac[na]['dias_autorizados'] = dias
             if fem and not auths_excel_pac[na]['fecha_emision']:
                 auths_excel_pac[na]['fecha_emision'] = fem
 
-        # ════════════════════════════════════════════════════════════════
-        # AMBULATORIO o CIRUGÍA AMBULATORIA
-        # Verifica que cada par (numAutorizacion + codProcedimiento) del RIPS
-        # exista en la base de datos del paciente.
-        # ════════════════════════════════════════════════════════════════
-        if tipo_atencion in ('ambulatorio', 'cirugia_ambulatoria'):
-            vistos_par = set()
-            for proc in procedimientos_pac:
-                cod_proc = proc.get('cod', '')
-                na_proc  = proc.get('num_aut', '')
-                if not cod_proc or not na_proc:
-                    continue
-                # Buscar par (auth + cod) en la base del paciente
-                par_valido = False
-                if na_proc in auths_excel_pac:
-                    codigos_base = auths_excel_pac[na_proc]['codigos']
-                    # Sin códigos en base → dato incompleto, se acepta
-                    if not codigos_base or cod_proc in codigos_base:
-                        par_valido = True
-                if not par_valido:
-                    clave = (num_doc, cod_proc, na_proc)
-                    if clave not in vistos_par:
-                        vistos_par.add(clave)
-                        alertas['amb_par_no_cruza'].append({
-                            'cod_proc':     cod_proc,
-                            'num_aut':      na_proc,
-                            'num_doc':      num_doc,
-                            'num_factura':  num_factura,
-                            'archivo_rips': archivo_rips,
-                            'archivo_eps':  (auths_excel_pac[na_proc]['archivo']
-                                             if na_proc in auths_excel_pac
-                                             else archivo_eps_def),
-                            'mensaje': (
-                                "La autorizacion o el codigo del procedimiento "
-                                "no coinciden con la base de Nueva EPS segun RIPS"
-                            ),
-                        })
+        # Sets de deduplicación
+        vistos_auth     = set()
+        vistos_auth_cod = set()
+        vistos_proc     = set()
+        vistos_dias     = set()
+        vistos_plazo    = set()
 
         # ════════════════════════════════════════════════════════════════
         # HOSPITALARIO
         # ════════════════════════════════════════════════════════════════
-        elif tipo_atencion == 'hospitalario':
+        if tipo_atencion == 'hospitalario':
 
-            # 5a. Determinar fechas de ingreso y egreso del episodio
-            if tiene_urg and not tiene_hosp:
-                # Solo urgencias: fechas desde urgencias
-                fecha_ingreso_str = fecha_inicio_urg
-                fecha_egreso_str  = fecha_egreso_urg
-            elif tiene_urg and tiene_hosp:
-                # Urgencias + hospitalización: ingreso desde urgencias (primer punto de atención),
-                # egreso desde hospitalización (alta definitiva)
-                fecha_ingreso_str = fecha_inicio_urg or fecha_inicio_hosp
-                fecha_egreso_str  = fecha_egreso_hosp
-            else:
-                # Solo hospitalización sin urgencias previas
-                fecha_ingreso_str = fecha_inicio_hosp
-                fecha_egreso_str  = fecha_egreso_hosp
-
-            fecha_ingreso_dt = parse_fecha(fecha_ingreso_str)
-            fecha_egreso_dt  = parse_fecha(fecha_egreso_str)
-
-            # 5b. Validación por procedimiento:
-            # Para cada numAutorizacion del RIPS verificar que:
-            #   - el auth exista en la base del paciente
-            #   - la fechaEmision de la base esté en [fechaIngreso, fechaEgreso]
-            # (Sin filtro por código: en hospitalario la auth cubre el episodio completo)
-            if fecha_ingreso_dt and fecha_egreso_dt:
-                vistos_hosp = set()
+            # ── Regla de procedimientos (aplica si tiene urgencias) ──────
+            # codProcedimiento > 870000 → no requiere auth (sin alerta)
+            # codProcedimiento < 870000 → requiere auth; alertar si no tiene en Excel 
+            if tiene_urg:
                 for proc in procedimientos_pac:
                     cod_proc = proc.get('cod', '')
                     na_proc  = proc.get('num_aut', '')
-                    if not cod_proc or not na_proc:
+                    try:
+                        cod_int = int(cod_proc)
+                    except (ValueError, TypeError):
                         continue
-                    par_en_rango = False
-                    if na_proc in auths_excel_pac:
-                        info   = auths_excel_pac[na_proc]
-                        # Hospitalario: solo verifica que auth exista y fecha_emision esté en rango.
-                        # No se filtra por código: la autorización cubre el episodio completo.
-                        fem_dt = parse_fecha(info.get('fecha_emision'))
-                        if fem_dt is None:
-                            # Sin fecha en base → no se puede verificar → acepta
-                            par_en_rango = True
-                        elif fecha_ingreso_dt <= fem_dt <= fecha_egreso_dt:
-                            par_en_rango = True
-                    if not par_en_rango:
-                        clave_h = (num_doc, cod_proc, na_proc)
-                        if clave_h not in vistos_hosp:
-                            vistos_hosp.add(clave_h)
-                            alertas['hosp_proc_no_cruza'].append({
+                    if cod_int > 870000:
+                        continue  # No requiere autorización, omitir
+                    # Procedimiento < 877932: verificar que tenga auth en Excel
+                    if not na_proc or na_proc not in auths_excel_pac:
+                        clave_proc = (num_doc, cod_proc)
+                        if clave_proc not in vistos_proc:
+                            vistos_proc.add(clave_proc)
+                            alertas['procedimiento_sin_aut'].append({
                                 'cod_proc':     cod_proc,
-                                'num_aut':      na_proc,
+                                'mensaje':      f"El procedimiento {cod_proc} no cuenta con autorización.",
                                 'num_doc':      num_doc,
                                 'num_factura':  num_factura,
                                 'archivo_rips': archivo_rips,
-                                'archivo_eps':  (auths_excel_pac[na_proc]['archivo']
-                                                 if na_proc in auths_excel_pac
-                                                 else archivo_eps_def),
-                                'seccion':      'procedimientos',
-                                'fecha_ingreso': str(fecha_ingreso_str or ''),
-                                'fecha_egreso':  str(fecha_egreso_str or ''),
-                                'mensaje': (
-                                    "La autorizacion y/o el procedimiento no coinciden "
-                                    "con la base dentro del rango de fechas "
-                                    "de la atencion hospitalaria"
-                                ),
+                                'archivo_eps':  archivo_eps_def,
                             })
 
-            # 5c. Auths en base dentro del rango que NO están en el RIPS
-            if fecha_ingreso_dt and fecha_egreso_dt:
-                vistos_no_rel = set()
-                for reg in regs_pac:
-                    na_base = reg.get('numero_aut', '')
-                    if not na_base:
-                        continue
-                    fem_dt = parse_fecha(reg.get('fecha_emision'))
-                    if fem_dt is None:
-                        continue
-                    if fecha_ingreso_dt <= fem_dt <= fecha_egreso_dt:
-                        if na_base not in set_auths:
-                            if na_base not in vistos_no_rel:
-                                vistos_no_rel.add(na_base)
-                                alertas['hosp_aut_no_relacionada'].append({
-                                    'num_aut':      na_base,
-                                    'num_doc':      num_doc,
-                                    'num_factura':  num_factura,
-                                    'archivo_rips': archivo_rips,
-                                    'archivo_eps':  reg.get('archivo', archivo_eps_def),
-                                    'fecha_emision': str(fem_dt)[:16],
-                                    'fecha_ingreso': str(fecha_ingreso_str or ''),
-                                    'fecha_egreso':  str(fecha_egreso_str or ''),
-                                    'mensaje': (
-                                        "Existen autorizaciones no "
-                                        "relacionadas en el RIPS Json."
-                                    ),
-                                })
+            # ── SOLO URGENCIAS (sin hospitalización) ─────────────────────
+            # Regla: si tiene auth → OK sin alerta. Si no → alertar.
+            # No se ejecuta la lógica cruzada estándar para evitar falsas alertas.
+            if tiene_solo_urg:
+                if not set_auths:
+                    ya = any(a['num_doc'] == num_doc for a in alertas['urgencias_sin_aut'])
+                    if not ya:
+                        alertas['urgencias_sin_aut'].append({
+                            'num_doc':      num_doc,
+                            'num_factura':  num_factura,
+                            'archivo_rips': archivo_rips,
+                            'archivo_eps':  archivo_eps_def,
+                        })
+                # Si tiene auth → sin alerta, y no se corre lógica estándar
+                continue  # Pasar al siguiente paciente
 
-        # ════════════════════════════════════════════════════════════════
-        # REGLAS DE INTERNACIÓN (aplica a todo paciente con hospitalizacion)
-        # ════════════════════════════════════════════════════════════════
-        if n_hosp_regs > 0:
-            _internacion_reglas(
-                num_doc, num_factura, archivo_rips, archivo_eps_def,
-                auths_hosp, n_hosp_regs, auths_excel_pac,
-                procedimientos_pac, alertas,
-            )
+            # ── CON HOSPITALIZACIÓN: lógica estándar + días de estancia ──
+            # a. Buscar auth de urgencias en Excel (CÓDIGO = 890701)
+            auth_urgencias = ''
+            for na, info_na in auths_excel_pac.items():
+                if CODIGO_URGENCIAS in info_na['codigos']:
+                    if not auth_urgencias or to_int(na) < to_int(auth_urgencias):
+                        auth_urgencias = na
 
-    return alertas
+            # Si no encontramos el código 890701 en Excel, usamos el mínimo auth del RIPS
+            if not auth_urgencias and set_auths:
+                auth_urgencias = min(set_auths, key=to_int)
 
+            auth_urgencias_int = to_int(auth_urgencias)
 
-def _internacion_reglas(
-    num_doc, num_factura, archivo_rips, archivo_eps_def,
-    auths_hosp, n_hosp_regs, auths_excel_pac,
-    procedimientos_pac, alertas,
-):
-    """
-    Reglas de internacion (hospitalizacion):
-    1. Si n_hosp == 1 : la auth de estancia debe existir en el Excel.
-       Si n_hosp > 1  : al menos una auth de estancia debe existir en el Excel.
-       Si no          : alerta 'Estancia no cuenta con autorizaciones relacionadas en base de datos'
-    2. Procedimientos con codProcedimiento < 870000 deben tener numAutorizacion
-       DIFERENTE al numAutorizacion de la estancia.
-       Si coincide    : alerta 'Procedimiento quirurgico detectado igual al numero de autorizacion de estancia'
-    3. Si no hay numAutorizacion ni en estancia ni en procedimientos < 870000:
-       alerta 'No se ha relacionado numeros de autorizacion'
-    """
-    # ── Regla 1: auth de estancia en Excel ──────────────────────────────
-    auths_hosp_en_excel = {a for a in auths_hosp if a in auths_excel_pac}
-
-    if n_hosp_regs == 1:
-        if not auths_hosp or not auths_hosp_en_excel:
-            alertas['estancia_sin_aut'].append({
-                'num_doc':      num_doc,
-                'num_factura':  num_factura,
-                'archivo_rips': archivo_rips,
-                'archivo_eps':  archivo_eps_def,
-                'auths_hosp':   ', '.join(sorted(auths_hosp)) if auths_hosp else '(ninguna)',
-                'mensaje':      "Estancia no cuenta con autorizaciones relacionadas en base de datos",
-            })
-    elif n_hosp_regs > 1:
-        if not auths_hosp_en_excel:
-            alertas['estancia_sin_aut'].append({
-                'num_doc':      num_doc,
-                'num_factura':  num_factura,
-                'archivo_rips': archivo_rips,
-                'archivo_eps':  archivo_eps_def,
-                'auths_hosp':   ', '.join(sorted(auths_hosp)) if auths_hosp else '(ninguna)',
-                'mensaje':      "Estancia no cuenta con autorizaciones relacionadas en base de datos",
-            })
-
-    # ── Regla 2: proc quirúrgico no debe compartir auth con la estancia ─
-    vistos_qx = set()
-    for proc in procedimientos_pac:
-        cod = proc.get('cod', '')
-        na  = proc.get('num_aut', '')
-        if not na or not cod:
-            continue
-        try:
-            if int(cod) < 870000 and na in auths_hosp:
-                clave = (num_doc, cod, na)
-                if clave not in vistos_qx:
-                    vistos_qx.add(clave)
-                    alertas['proc_qx_misma_aut_hosp'].append({
-                        'cod_proc':     cod,
+            # b. Auths Excel MAYORES al auth de urgencias → validar contra RIPS
+            vistos_alerta = set()
+            for na, info_na in auths_excel_pac.items():
+                if to_int(na) <= auth_urgencias_int:
+                    continue
+                archivo_eps_na = info_na['archivo']
+                if na not in set_auths and na not in vistos_alerta:
+                    vistos_alerta.add(na)
+                    alertas['aut_excel_no_rips'].append({
                         'num_aut':      na,
                         'num_doc':      num_doc,
                         'num_factura':  num_factura,
                         'archivo_rips': archivo_rips,
-                        'archivo_eps':  (auths_excel_pac[na]['archivo']
-                                         if na in auths_excel_pac else archivo_eps_def),
-                        'mensaje': (
-                            "Procedimiento quirurgico detectado igual al numero "
-                            "de autorizacion de estancia"
-                        ),
+                        'archivo_eps':  archivo_eps_na,
                     })
-        except (ValueError, TypeError):
-            pass
 
-    # ── Regla 3: sin ninguna auth (ni estancia ni proc < 870000) ────────
-    procs_lt870_con_aut = False
-    for pr in procedimientos_pac:
-        try:
-            if pr.get('num_aut') and int(pr.get('cod', '0')) < 870000:
-                procs_lt870_con_aut = True
-                break
-        except (ValueError, TypeError):
-            pass
+            # c. Auths RIPS mayores al auth urgencias → validar contra Excel
+            for na in set_auths:
+                if to_int(na) <= auth_urgencias_int:
+                    continue
+                if na not in auths_excel_pac:
+                    alertas['aut_rips_no_excel'].append({
+                        'num_aut':      na,
+                        'num_doc':      num_doc,
+                        'num_factura':  num_factura,
+                        'archivo_rips': archivo_rips,
+                        'archivo_eps':  archivo_eps_def,
+                    })
 
-    if not auths_hosp and not procs_lt870_con_aut:
-        alertas['sin_num_aut_relacionado'].append({
-            'num_doc':      num_doc,
-            'num_factura':  num_factura,
-            'archivo_rips': archivo_rips,
-            'archivo_eps':  archivo_eps_def,
-            'mensaje':      "No se ha relacionado numeros de autorizacion",
-        })
+            # ── Validación de días de estancia ───────────────────────────
+            if tiene_hosp and fecha_inicio_hosp and fecha_egreso_hosp:
+                dias_facturables = calcular_dias_estancia(fecha_inicio_hosp, fecha_egreso_hosp)
+
+                if dias_facturables is not None:
+                    # Solo revisar auths mayores al base (hospitalización, no urgencias)
+                    for na, info_na in auths_excel_pac.items():
+                        if to_int(na) <= auth_urgencias_int:
+                            continue
+
+                        # Días autorizados vs días facturables
+                        dias_aut_str = info_na.get('dias_autorizados', '')
+                        try:
+                            dias_aut = int(str(dias_aut_str).strip())
+                            if dias_facturables > dias_aut:
+                                clave_d = (num_doc, na)
+                                if clave_d not in vistos_dias:
+                                    vistos_dias.add(clave_d)
+                                    alertas['hosp_dias_excedidos'].append({
+                                        'num_aut':          na,
+                                        'num_doc':          num_doc,
+                                        'num_factura':      num_factura,
+                                        'dias_facturables': dias_facturables,
+                                        'dias_autorizados': dias_aut,
+                                        'archivo_rips':     archivo_rips,
+                                        'archivo_eps':      info_na['archivo'],
+                                    })
+                        except (ValueError, TypeError):
+                            pass
+
+                        # Fecha de emisión: no debe superar 24h después del egreso
+                        fecha_emision = info_na.get('fecha_emision')
+                        if fecha_emision and fecha_egreso_hosp:
+                            try:
+                                fe_dt = datetime.strptime(
+                                    str(fecha_egreso_hosp).strip()[:16], "%Y-%m-%d %H:%M"
+                                )
+                                if isinstance(fecha_emision, datetime):
+                                    emision_dt = fecha_emision
+                                else:
+                                    emision_dt = datetime.strptime(
+                                        str(fecha_emision).strip()[:16], "%Y-%m-%d %H:%M"
+                                    )
+                                diff_seg = (emision_dt - fe_dt).total_seconds()
+                                if diff_seg > 86400:  # Más de 24 horas después del egreso
+                                    clave_p = (num_doc, na)
+                                    if clave_p not in vistos_plazo:
+                                        vistos_plazo.add(clave_p)
+                                        alertas['hosp_aut_fuera_plazo'].append({
+                                            'num_aut':       na,
+                                            'num_doc':       num_doc,
+                                            'num_factura':   num_factura,
+                                            'fecha_egreso':  str(fecha_egreso_hosp)[:16],
+                                            'fecha_emision': str(emision_dt)[:16],
+                                            'horas_diff':    round(diff_seg / 3600, 1),
+                                            'archivo_rips':  archivo_rips,
+                                            'archivo_eps':   info_na['archivo'],
+                                        })
+                            except Exception:
+                                pass
+
+        # ════════════════════════════════════════════════════════════════
+        # AMBULATORIO
+        # Flujo RIPS → Excel:
+        #   · Auth RIPS en Excel + código CUPS en Excel → OK, sin alerta.
+        #   · Auth RIPS en Excel pero código NO en Excel → alerta código.
+        #   · Auth RIPS NO en Excel → alerta auth no en base EPS.
+        # ════════════════════════════════════════════════════════════════
+        else:
+            for na_rips in set_auths:
+                codigos_rips = cod_por_auth.get(na_rips, set())
+
+                if na_rips in auths_excel_pac:
+                    info_na        = auths_excel_pac[na_rips]
+                    codigos_eps    = info_na['codigos']
+                    archivo_eps_na = info_na['archivo']
+
+                    for cod_r in codigos_rips:
+                        # Códigos de dispositivos médicos (DM + más de 6 chars) no se cruzan
+                        if cod_r and len(cod_r) > 6 and cod_r.upper().startswith("DM"):
+                            continue
+                        if cod_r and codigos_eps and cod_r not in codigos_eps:
+                            clave = (na_rips, cod_r)
+                            if clave not in vistos_auth_cod:
+                                vistos_auth_cod.add(clave)
+                                alertas['codigo_no_cruza'].append({
+                                    'num_aut':      na_rips,
+                                    'cod_rips':     cod_r,
+                                    'num_doc':      num_doc,
+                                    'num_factura':  num_factura,
+                                    'archivo_rips': archivo_rips,
+                                    'archivo_eps':  archivo_eps_na,
+                                })
+                else:
+                    if na_rips not in vistos_auth:
+                        vistos_auth.add(na_rips)
+                        archivo_eps_na = (
+                            auths_excel_pac[next(iter(auths_excel_pac))]['archivo']
+                            if auths_excel_pac else archivo_eps_def
+                        )
+                        alertas['aut_rips_no_excel'].append({
+                            'num_aut':      na_rips,
+                            'num_doc':      num_doc,
+                            'num_factura':  num_factura,
+                            'archivo_rips': archivo_rips,
+                            'archivo_eps':  archivo_eps_na,
+                        })
+
+    return alertas
 
 
+
+# ══════════════════════════════════════════════════════════════
+# VALIDACIONES MALLA 2275/2023 – BLOQUE M: MEDICAMENTOS
+# ══════════════════════════════════════════════════════════════
 
 def validar_medicamentos_malla_2275(data, nombre_archivo=""):
     """
@@ -2942,9 +2867,9 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
                 item.get('archivo_eps', '')
             ])
  
-        for item in alertas.get('amb_par_no_cruza', []):
+        for item in alertas.get('aut_excel_no_rips', []):
             ws2.append([
-                item.get("mensaje", "Ambulatorio - Par auth/cod no cruza"),
+                "Existen números de autorización generados por la EPS que no han sido asociados al archivo Json.",
                 item.get('num_aut', ''),
                 item.get('num_doc', ''),
                 item.get('num_factura', ''),
@@ -2952,19 +2877,19 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
                 item.get('archivo_eps', ''),
             ])
  
-        for item in alertas.get('hosp_proc_no_cruza', []):
+        for item in alertas.get('aut_rips_no_excel', []):
             ws2.append([
-                item.get("mensaje", "Hospitalario - proc no cruza en rango fechas"),
+                "Autorización RIPS NO encontrada en base EPS",
                 item.get('num_aut', ''),
                 item.get('num_doc', ''),
                 item.get('num_factura', ''),
                 item.get('archivo_rips', ''),
                 item.get('archivo_eps', ''),
             ])
- 
-        for item in alertas.get('hosp_aut_no_relacionada', []):
+        for item in alertas.get('codigo_no_cruza', []):
+            cod = item.get('cod_rips', '') or item.get('cod_excel', '')
             ws2.append([
-                item.get("mensaje", "Hospitalario - auth no relacionada en RIPS"),
+                f"Código {cod} del RIPS no se encuentra en las autorizaciones de la EPS para esa autorización.",
                 item.get('num_aut', ''),
                 item.get('num_doc', ''),
                 item.get('num_factura', ''),
@@ -3144,18 +3069,11 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
  
  
 # ══════════════════════════════════════════════════════════════
-# CACHÉ DEL ÚLTIMO RESULTADO (permite exportar sin re-procesar)
-# ══════════════════════════════════════════════════════════════
-_ultimo_resultado = {}
-
-
-# ══════════════════════════════════════════════════════════════
 # RUTAS FLASK
 # ══════════════════════════════════════════════════════════════
  
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    global _ultimo_resultado
     registros          = []
     alertas            = None
     error              = None
@@ -3165,31 +3083,7 @@ def index():
         action          = request.form.get("action", "view")
         archivos_json   = request.files.getlist('json_files')
         archivos_excel  = request.files.getlist('excel_files')
-
-        # ── Exportar desde caché ─────────────────────────────────────────
-        # El frontend envía action=excel sin archivos (el input Excel se
-        # pierde tras el DOM-update del AJAX). El servidor usa el último
-        # resultado procesado para construir el Excel.
-        if action == "excel":
-            if _ultimo_resultado.get('stats'):
-                output = construir_excel(
-                    _ultimo_resultado['registros'],
-                    _ultimo_resultado['alertas'],
-                    _ultimo_resultado['validaciones_malla'],
-                    _ultimo_resultado['validaciones_general'],
-                )
-                nombre = f"Alertas_Malla_Validadora_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
-                return send_file(
-                    output,
-                    as_attachment=True,
-                    download_name=nombre,
-                    mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-            else:
-                error = "No hay resultados procesados. Primero procese los archivos RIPS."
-                return render_template('index.html', registros=None, alertas=None,
-                                       error=error, stats={})
-
+ 
         if not archivos_json or all(a.filename == "" for a in archivos_json):
             error = "Por favor seleccione uno o más archivos JSON (RIPS)."
             return render_template('index.html', registros=None, alertas=None,
@@ -3266,13 +3160,14 @@ def index():
             'med_invalidos':        len(registros),
             'auts_rips':            total_auths_rips,
             'auts_excel':           len(set_aut_excel),
-            'tipo_mismatch':     len(alertas['tipo_doc_mismatch'])       if alertas else 0,
-            'amb_par_nc':        len(alertas['amb_par_no_cruza'])         if alertas else 0,
-            'hosp_proc_nc':      len(alertas['hosp_proc_no_cruza'])       if alertas else 0,
-            'hosp_aut_no_rel':   len(alertas['hosp_aut_no_relacionada'])  if alertas else 0,
-            'estancia_sin_aut':  len(alertas['estancia_sin_aut'])         if alertas else 0,
-            'proc_qx_aut_hosp':  len(alertas['proc_qx_misma_aut_hosp'])  if alertas else 0,
-            'sin_aut_rel':       len(alertas['sin_num_aut_relacionado'])  if alertas else 0,
+            'tipo_mismatch':        len(alertas['tipo_doc_mismatch'])      if alertas else 0,
+            'excel_no_rips':        len(alertas['aut_excel_no_rips'])      if alertas else 0,
+            'rips_no_excel':        len(alertas['aut_rips_no_excel'])      if alertas else 0,
+            'codigo_no_cruza':      len(alertas['codigo_no_cruza'])        if alertas else 0,
+            'urgencias_sin_aut':    len(alertas['urgencias_sin_aut'])      if alertas else 0,
+            'proc_sin_aut':         len(alertas['procedimiento_sin_aut'])  if alertas else 0,
+            'hosp_dias_excedidos':  len(alertas['hosp_dias_excedidos'])    if alertas else 0,
+            'hosp_fuera_plazo':     len(alertas['hosp_aut_fuera_plazo'])   if alertas else 0,
             'malla_total':          len(validaciones_malla),
             'malla_criticas':       sum(1 for v in validaciones_malla if v.get('severidad') == 'critica'),
             'malla_notificaciones': sum(1 for v in validaciones_malla if v.get('severidad') in {'media', 'alta'}),
@@ -3283,15 +3178,18 @@ def index():
  
         if errores_acum:
             error = " | ".join(errores_acum)
-
-        # ── Guardar resultado en caché para exportar sin re-procesar ─────
-        _ultimo_resultado = {
-            'registros':           registros,
-            'alertas':             alertas,
-            'validaciones_malla':  validaciones_malla,
-            'validaciones_general': validaciones_general,
-            'stats':               stats,
-        }
+ 
+        # ── Exportar a Excel ─────────────────────────────────────────────
+        if action == "excel":
+            output = construir_excel(registros, alertas, validaciones_malla,
+                                     validaciones_general)
+            nombre = f"reporte_rips_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            return send_file(
+                output,
+                as_attachment=True,
+                download_name=nombre,
+                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
  
     return render_template(
         'index.html',

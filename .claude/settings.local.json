@@ -14,7 +14,12 @@
       "Bash(python -c \"import py_compile; py_compile.compile\\('app_medicamentos_control.py'\\); print\\('Syntax OK'\\)\")",
       "Read(//u/202604/FACTURAS_SALUD/SL550075/RIPS/**)",
       "Bash(python -m py_compile app_medicamentos_control.py)",
-      "Read(//u/202604/FACTURAS_SALUD/SL549928/RIPS/**)"
+      "Read(//u/202604/FACTURAS_SALUD/SL549928/RIPS/**)",
+      "Bash(set PYTHONIOENCODING=utf-8)",
+      "Bash(python _patch_autorizaciones.py)",
+      "Bash(del _patch_autorizaciones.py _patch_html.py)",
+      "Read(//u/202604/FACTURAS_SALUD/SL550494/RIPS/**)",
+      "Read(//u/202604/FACTURAS_SALUD/SL550495/RIPS/**)"
     ]
   }
 }
