@@ -94,6 +94,28 @@
 <!-- ══════════════════════════════════════════════════════════
      OVERLAY DE CLASIFICACIÓN (carga de carpeta JSON)
      ══════════════════════════════════════════════════════════ -->
+<!-- ── Modal de confirmación de carga RIPS ───────────────────────── -->
+<div id="confirmCargaModal" class="ccm-bg">
+    <div class="ccm-card">
+        <div class="ccm-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+            </svg>
+        </div>
+        <div class="ccm-title">Archivos RIPS listos</div>
+        <p class="ccm-body" id="ccmBody"></p>
+        <div class="ccm-actions">
+            <button class="btn btn-primary ccm-btn-yes" id="ccmYes">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;vertical-align:-3px;margin-right:6px">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+                Sí, cargar archivos
+            </button>
+            <button class="btn ccm-btn-no" id="ccmNo">Cancelar</button>
+        </div>
+    </div>
+</div>
+
 <div class="clas-overlay" id="clasOverlay">
     <div class="clas-card">
         <div class="clas-spinner">
@@ -184,9 +206,10 @@
                     <!-- ── MODO AUTOMÁTICO ── -->
                     <div id="panelAuto">
                         <p class="upload-zone-sub">Seleccione la carpeta con archivos <code>Rips_SL*.json</code></p>
-                        <button type="button" class="btn-file"
-                                onclick="document.getElementById('json_files_auto').click()">
-                            Cargue RIPS JSON
+                        <button type="button" class="btn-file" id="btnCargueRips"
+                                onclick="_iniciarCargueRips()">
+                            <span id="btnCargueRipsTxt">Cargue RIPS JSON</span>
+                            <span class="btn-cargando-spin" id="spnCargue" style="display:none"></span>
                         </button>
                         <input id="json_files_auto" type="file"
                                webkitdirectory mozdirectory
@@ -1208,6 +1231,61 @@
     {% endif %}
 
     <!-- ══════════════════════════════════════════════════════
+         AUDITORÍA CLÍNICA — DETALLE
+         ══════════════════════════════════════════════════════ -->
+    {% if validaciones_auditoria %}
+    <section class="card results-card">
+        <div class="card-label label-danger">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>
+            Auditoría Clínica — Hallazgos
+            <span class="badge-count badge-danger">{{ validaciones_auditoria|length }}</span>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>ID Regla</th>
+                        <th>Severidad</th>
+                        <th>N° Documento</th>
+                        <th>Factura</th>
+                        <th>Campo</th>
+                        <th>Mensaje</th>
+                        <th>Valor Actual</th>
+                        <th>Archivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in validaciones_auditoria %}
+                    <tr class="{% if v.severidad == 'critica' %}row-critica{% elif v.severidad == 'alta' %}row-alta{% elif v.severidad == 'media' %}row-media{% endif %}">
+                        <td class="text-muted">{{ loop.index }}</td>
+                        <td><span class="tag tag-code">{{ v.id_regla }}</span></td>
+                        <td>
+                            {% if v.severidad == 'critica' %}
+                                <span class="badge-sev sev-critica">Crítica</span>
+                            {% elif v.severidad == 'alta' %}
+                                <span class="badge-sev sev-alta">Alta</span>
+                            {% else %}
+                                <span class="badge-sev sev-media">Media</span>
+                            {% endif %}
+                        </td>
+                        <td class="mono">{{ v.num_doc }}</td>
+                        <td class="mono">{{ v.num_factura }}</td>
+                        <td class="text-muted small">{{ v.campo }}</td>
+                        <td>{{ v.mensaje }}</td>
+                        <td class="mono">{{ v.valor_actual }}</td>
+                        <td class="text-muted small">{{ v.archivo }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
          TABLA MEDICAMENTOS INVÁLIDOS
          ══════════════════════════════════════════════════════ -->
     {% if registros %}
@@ -1271,6 +1349,64 @@ let _ripsFiltrados   = [];   // archivos que se enviarán al servidor
 let _autoTodos       = [];   // todos los Rips_SL*.json encontrados en la carpeta (ordenados desc)
 let _modoActual      = 'auto';
 let _filtroActual    = 'fecha';
+
+// ═══════════════════════════════════════════════════════════════
+// BOTÓN "CARGUE RIPS JSON" — animación + modal de confirmación
+// ═══════════════════════════════════════════════════════════════
+let _cargueWinFocus = null;
+
+function _resetBtnCargue() {
+    const btn = document.getElementById('btnCargueRips');
+    const spn = document.getElementById('spnCargue');
+    if (btn) btn.classList.remove('btn-cargando');
+    if (spn) spn.style.display = 'none';
+}
+
+function _iniciarCargueRips() {
+    const btn = document.getElementById('btnCargueRips');
+    const spn = document.getElementById('spnCargue');
+    btn.classList.add('btn-cargando');
+    if (spn) spn.style.display = 'inline-block';
+
+    // Si el usuario cancela el selector de archivos (sin onchange),
+    // el foco vuelve a la ventana → esperamos 450ms y, si el overlay
+    // de clasificación no está activo, restauramos el botón.
+    if (_cargueWinFocus) window.removeEventListener('focus', _cargueWinFocus);
+    _cargueWinFocus = function() {
+        setTimeout(function() {
+            if (!document.getElementById('clasOverlay').classList.contains('clas-active')) {
+                _resetBtnCargue();
+            }
+        }, 450);
+    };
+    window.addEventListener('focus', _cargueWinFocus, { once: true });
+
+    document.getElementById('json_files_auto').click();
+}
+
+function _mostrarConfirmCarga(nFiles, dias, onYes, onNo) {
+    _resetBtnCargue();   // el overlay ya está visible; el botón vuelve a su estado normal
+
+    const rango = dias.length > 1
+        ? ` entre el <strong>${dias[dias.length - 1]}</strong> y el <strong>${dias[0]}</strong>`
+        : ` del día <strong>${dias[0]}</strong>`;
+
+    document.getElementById('ccmBody').innerHTML =
+        `Se encontraron <strong>${nFiles}</strong> archivo(s) RIPS${rango}.<br>
+         ¿Desea cargarlos para procesar?`;
+
+    const modal = document.getElementById('confirmCargaModal');
+    modal.classList.add('ccm-active');
+
+    document.getElementById('ccmYes').onclick = function() {
+        modal.classList.remove('ccm-active');
+        onYes();
+    };
+    document.getElementById('ccmNo').onclick = function() {
+        modal.classList.remove('ccm-active');
+        onNo();
+    };
+}
 
 // ── Cambiar modo Auto / Manual ────────────────────────────────
 function cambiarModo(modo) {
@@ -1368,6 +1504,7 @@ function onCarpetaAuto(input) {
 
         if (todos.length === 0) {
             _ocultarClasificando();
+            _resetBtnCargue();
             _setContador(0, 'No se encontraron archivos Rips_SL*.json en la carpeta seleccionada.');
             return;
         }
@@ -1411,10 +1548,21 @@ function onCarpetaAuto(input) {
             document.getElementById('autoTotalEncontrados').textContent =
                 `Se encontraron ${todos.length} archivo(s) Rips_SL*.json`;
 
-            document.getElementById('autoResumen').style.display = '';
-            aplicarFiltroAuto();
+            _ocultarClasificando('');
 
-            _ocultarClasificando(`${todos.length} archivos clasificados en ${diasOrdenados.length} día(s)`);
+            // Mostrar modal de confirmación antes de revelar el resumen
+            _mostrarConfirmCarga(
+                todos.length, diasOrdenados,
+                function() {   // ── Sí, cargar ──
+                    document.getElementById('autoResumen').style.display = '';
+                    aplicarFiltroAuto();
+                },
+                function() {   // ── Cancelar ──
+                    _resetContador();
+                    _autoTodos     = [];
+                    _ripsFiltrados = [];
+                }
+            );
         }, 60);
     }, 40);
 }

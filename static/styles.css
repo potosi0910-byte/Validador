@@ -2085,3 +2085,95 @@ select {
 
   .card-label { font-size: 0.72rem; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL DE CONFIRMACIÓN DE CARGA RIPS
+   ══════════════════════════════════════════════════════════════ */
+.ccm-bg {
+  position: fixed; inset: 0;
+  background: rgba(5, 20, 50, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10000;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.ccm-bg.ccm-active {
+  opacity: 1; pointer-events: auto;
+}
+.ccm-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 36px 40px 32px;
+  max-width: 440px; width: 92%;
+  box-shadow: 0 28px 80px rgba(5,20,50,0.22), 0 4px 16px rgba(0,0,0,0.10);
+  text-align: center;
+  transform: translateY(28px) scale(0.97);
+  transition: transform 0.26s cubic-bezier(.25,.8,.25,1);
+}
+.ccm-bg.ccm-active .ccm-card {
+  transform: translateY(0) scale(1);
+}
+.ccm-icon {
+  width: 60px; height: 60px;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 18px;
+}
+.ccm-icon svg { width: 30px; height: 30px; color: #1e40af; stroke: #1e40af; }
+.ccm-title {
+  font-size: 1.12rem; font-weight: 700; color: #0B3B76;
+  margin: 0 0 10px;
+}
+.ccm-body {
+  font-size: 0.90rem; color: #374151; line-height: 1.65;
+  margin: 0 0 26px;
+}
+.ccm-body strong { color: #0B3B76; }
+.ccm-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.ccm-btn-yes { min-width: 160px; }
+.ccm-btn-no {
+  background: #f3f4f6; color: #374151;
+  border: 1px solid #d1d5db; border-radius: 8px;
+  padding: 10px 24px; font-size: 0.87rem; font-weight: 600;
+  cursor: pointer; min-width: 100px;
+  transition: background 0.15s;
+}
+.ccm-btn-no:hover { background: #e5e7eb; }
+
+/* ── Botón "Cargue RIPS JSON" en estado de espera ──────────── */
+.btn-file.btn-cargando {
+  opacity: 0.80;
+  cursor: wait;
+  pointer-events: none;
+}
+.btn-cargando-spin {
+  display: inline-block;
+  width: 13px; height: 13px;
+  border: 2px solid rgba(255,255,255,0.30);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Badges de severidad para auditoría clínica ──────────────────── */
+.badge-sev {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.sev-critica { background: #C00000; color: #fff; }
+.sev-alta    { background: #E26B0A; color: #fff; }
+.sev-media   { background: #F0AD00; color: #1a1a1a; }
+
+/* ── Color de fila según severidad ──────────────────────────────── */
+tr.row-critica td { background: rgba(192, 0, 0, 0.07); }
+tr.row-alta    td { background: rgba(226, 107, 10, 0.07); }
+tr.row-media   td { background: rgba(240, 173, 0, 0.06); }

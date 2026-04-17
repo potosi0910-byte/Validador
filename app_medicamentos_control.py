@@ -2868,7 +2868,7 @@ def validar_otros_servicios_malla_2275(data, nombre_archivo=""):
 # ══════════════════════════════════════════════════════════════
  
 def construir_excel(registros, alertas=None, validaciones_malla=None,
-                    validaciones_general=None):
+                    validaciones_general=None, validaciones_auditoria=None):
     wb  = Workbook()
  
     # ── Hoja 1: Medicamentos inválidos ───────────────────────────────────
@@ -3137,6 +3137,56 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
             )
             ws4.column_dimensions[get_column_letter(i)].width = min(max_len + 3, 80)
 
+    # ── Hoja 5: Auditoría clínica ────────────────────────────────────────
+    if validaciones_auditoria:
+        ws5 = wb.create_sheet("Auditoria_Clinica")
+        headers5 = [
+            "Archivo", "Factura", "N° Doc Paciente",
+            "ID Regla", "Severidad", "Campo", "Mensaje", "Valor Actual"
+        ]
+        ws5.append(headers5)
+
+        fill_critica5 = PatternFill("solid", fgColor="C00000")
+        fill_alta5    = PatternFill("solid", fgColor="E26B0A")
+        fill_media5   = PatternFill("solid", fgColor="F0AD00")
+        fill_head5    = PatternFill("solid", fgColor="1F4E79")
+
+        for col in range(1, len(headers5) + 1):
+            c = ws5.cell(row=1, column=col)
+            c.font      = Font(bold=True, color="FFFFFF")
+            c.alignment = Alignment(horizontal="center")
+            c.fill      = fill_head5
+
+        for v in validaciones_auditoria:
+            sev  = v.get("severidad", "")
+            fila = [
+                v.get("archivo",      ""),
+                v.get("num_factura",  ""),
+                v.get("num_doc",      ""),
+                v.get("id_regla",     ""),
+                sev,
+                v.get("campo",        ""),
+                v.get("mensaje",      ""),
+                v.get("valor_actual", ""),
+            ]
+            ws5.append(fila)
+            row_fill = (fill_critica5 if sev == "critica"
+                        else fill_alta5  if sev == "alta"
+                        else fill_media5 if sev == "media"
+                        else None)
+            if row_fill:
+                for col in range(1, len(headers5) + 1):
+                    cell = ws5.cell(row=ws5.max_row, column=col)
+                    cell.fill = row_fill
+                    cell.font = Font(color="FFFFFF" if sev == "critica" else "000000")
+
+        for i in range(1, len(headers5) + 1):
+            max_len = max(
+                (len(str(ws5.cell(r, i).value or "")) for r in range(1, ws5.max_row + 1)),
+                default=10
+            )
+            ws5.column_dimensions[get_column_letter(i)].width = min(max_len + 3, 80)
+
     bio = BytesIO()
     wb.save(bio)
     bio.seek(0)
@@ -3156,10 +3206,11 @@ _ultimo_resultado = {}
 @app.route('/', methods=['GET', 'POST'])
 def index():
     global _ultimo_resultado
-    registros          = []
-    alertas            = None
-    error              = None
-    stats              = {}
+    registros               = []
+    alertas                 = None
+    validaciones_auditoria  = []
+    error                   = None
+    stats                   = {}
  
     if request.method == 'POST':
         action          = request.form.get("action", "view")
@@ -3177,6 +3228,7 @@ def index():
                     _ultimo_resultado['alertas'],
                     _ultimo_resultado['validaciones_malla'],
                     _ultimo_resultado['validaciones_general'],
+                    _ultimo_resultado.get('validaciones_auditoria'),
                 )
                 nombre = f"Alertas_Malla_Validadora_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
                 return send_file(
@@ -3201,6 +3253,7 @@ def index():
         errores_acum       = []
         validaciones_malla    = []
         validaciones_general  = []
+        validaciones_auditoria = []
 
         # ── Cargar Excel de autorizaciones (opcional) ─────────────────────
         hay_excel = archivos_excel and any(a.filename != "" for a in archivos_excel)
@@ -3249,6 +3302,9 @@ def index():
                 validaciones_general.extend(
                     validar_otros_servicios_malla_2275(data, archivo.filename)
                 )
+                validaciones_auditoria.extend(
+                    validar_auditoria(data, archivo.filename)
+                )
                 archivos_procesados += 1
             except Exception as e:
                 errores_acum.append(f"Error en {archivo.filename}: {e}")
@@ -3259,6 +3315,14 @@ def index():
 
         # Estadísticas resumen
         total_auths_rips = sum(len(p.get('set_auths', set())) for p in pacientes_rips_global.values())
+
+        def _top_reglas(lista, n=5):
+            cnt = {}
+            for v in lista:
+                r = v.get('id_regla', '')
+                cnt[r] = cnt.get(r, 0) + 1
+            return sorted(cnt.items(), key=lambda x: -x[1])[:n]
+
         stats = {
             'archivos_json':        archivos_procesados,
             'total_rips':           total_rips,
@@ -3276,9 +3340,15 @@ def index():
             'malla_total':          len(validaciones_malla),
             'malla_criticas':       sum(1 for v in validaciones_malla if v.get('severidad') == 'critica'),
             'malla_notificaciones': sum(1 for v in validaciones_malla if v.get('severidad') in {'media', 'alta'}),
+            'malla_top_reglas':     _top_reglas(validaciones_malla),
             'general_total':        len(validaciones_general),
             'general_criticas':     sum(1 for v in validaciones_general if v.get('severidad') == 'critica'),
             'general_notificaciones': sum(1 for v in validaciones_general if v.get('severidad') in {'media', 'alta'}),
+            'general_top_reglas':   _top_reglas(validaciones_general),
+            'auditoria_total':          len(validaciones_auditoria),
+            'auditoria_criticas':       sum(1 for v in validaciones_auditoria if v.get('severidad') == 'critica'),
+            'auditoria_notificaciones': sum(1 for v in validaciones_auditoria if v.get('severidad') in {'media', 'alta'}),
+            'auditoria_top_reglas':     _top_reglas(validaciones_auditoria),
         }
  
         if errores_acum:
@@ -3286,17 +3356,19 @@ def index():
 
         # ── Guardar resultado en caché para exportar sin re-procesar ─────
         _ultimo_resultado = {
-            'registros':           registros,
-            'alertas':             alertas,
-            'validaciones_malla':  validaciones_malla,
-            'validaciones_general': validaciones_general,
-            'stats':               stats,
+            'registros':              registros,
+            'alertas':                alertas,
+            'validaciones_malla':     validaciones_malla,
+            'validaciones_general':   validaciones_general,
+            'validaciones_auditoria': validaciones_auditoria,
+            'stats':                  stats,
         }
  
     return render_template(
         'index.html',
         registros=registros if registros else None,
         alertas=alertas,
+        validaciones_auditoria=validaciones_auditoria if validaciones_auditoria else None,
         error=error,
         stats=stats
     )

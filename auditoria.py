@@ -13,6 +13,59 @@ from datetime import datetime, time as dtime
 
 
 # ══════════════════════════════════════════════════════════════
+# TABLA: TIPO USUARIO — FINALIDAD Y CAUSA PERMITIDOS
+# Fuente: RIPSTipoUsuarioVersion2 (Resolución 2275/2023)
+# ══════════════════════════════════════════════════════════════
+
+_FINALIDAD_COMUN = {
+    "15", "16", "17", "18", "24", "25", "26", "27"
+}
+
+_CAUSA_COMUN = {
+    "22", "25", "26", "28", "29", "30", "31", "32",
+    "33", "34", "35", "36", "37", "38", "42", "49"
+}
+
+RELACION_TIPO_USUARIO = {
+    "01": {"finalidad": _FINALIDAD_COMUN, "causa": _CAUSA_COMUN},
+    "02": {"finalidad": _FINALIDAD_COMUN, "causa": _CAUSA_COMUN},
+    "03": {"finalidad": _FINALIDAD_COMUN, "causa": _CAUSA_COMUN},
+    "04": {"finalidad": _FINALIDAD_COMUN, "causa": _CAUSA_COMUN},
+    "05": {
+        "finalidad": _FINALIDAD_COMUN,
+        "causa":     {"23", "27", "43", "44", "45", "46", "47", "48"},
+    },
+    "06": {"finalidad": _FINALIDAD_COMUN, "causa": _CAUSA_COMUN},
+    "07": {"finalidad": _FINALIDAD_COMUN, "causa": _CAUSA_COMUN},
+    "08": {"finalidad": _FINALIDAD_COMUN, "causa": _CAUSA_COMUN},
+    "09": {
+        "finalidad": {"15", "16", "17", "18"},
+        "causa":     {"21", "24", "39"},
+    },
+    "10": {
+        "finalidad": {"15", "16", "17", "18"},
+        "causa":     {"23", "24"},
+    },
+    "11": {
+        "finalidad": {"15", "16", "17", "18"},
+        "causa":     {"25", "26"},
+    },
+    "12": {"finalidad": _FINALIDAD_COMUN, "causa": _CAUSA_COMUN},
+    "13": {
+        "finalidad": {"15", "16", "17", "18", "23", "24", "25", "26", "27"},
+        "causa": {
+            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
+            "31", "32", "33", "34", "35", "36", "37", "38", "39", "40",
+            "41", "42", "43", "44", "45", "46", "47", "48", "49"
+        },
+    },
+}
+
+# finalidadTecnologiaSalud que corresponde a IVE — causa obligatoria: "24"
+_FINALIDAD_IVE = {"34", "35", "36", "49"}
+
+
+# ══════════════════════════════════════════════════════════════
 # HELPERS INTERNOS
 # ══════════════════════════════════════════════════════════════
 
@@ -169,7 +222,7 @@ def validar_auditoria(data, nombre_archivo=""):
         if horas_est is not None:
 
             # ── EST-24H-01: Estancia < 24h sin observación ni hospitalización ──
-            if horas_est < 24:
+            if 14 <= horas_est < 24:
                 tiene_obs  = ("5DSM01" in cod_otros or "5DSM01" in cod_procs)
                 tiene_hosp = bool(hosps)
 
@@ -181,7 +234,7 @@ def validar_auditoria(data, nombre_archivo=""):
                        "Debe facturarse al menos uno de los dos.")
 
             # ── EST-DIAS-01/02: Estancia >= 24h — validar días facturados ─────
-            else:
+            elif horas_est >= 24:
                 # Contar líneas de estancia en otrosServicios (tipoOS = "03")
                 total_fac = 0
                 for rec in otros:
@@ -460,5 +513,110 @@ def validar_auditoria(data, nombre_archivo=""):
                    ", ".join(
                        cod for cod in COMPLEMENTARIOS if n_proc(cod) == 0
                    ))
+
+        # ════════════════════════════════════════════════════════════════════
+        # BLOQUE: TIPO USUARIO / FINALIDAD / CAUSA / DIAGNÓSTICOS
+        # ════════════════════════════════════════════════════════════════════
+
+        tipo_usuario = _nstr(usuario.get("tipoUsuario"))
+
+        # ── TU-01: tipoUsuario vacío ──────────────────────────────────────
+        if not tipo_usuario:
+            _e("TU-01", "alta", "tipoUsuario",
+               "El campo tipoUsuario viene vacío.", "")
+            relacion_tu = None
+        else:
+            relacion_tu = RELACION_TIPO_USUARIO.get(tipo_usuario)
+            # tipoUsuario sin configuración en la tabla → no se valida (por diseño)
+
+        # Definición de servicios a recorrer:
+        #   (nombre, lista, tiene_finalidad, tiene_causa, campos_diagnostico_relacionado)
+        _svcs = [
+            ("consultas",       cons,  True,  True,
+             ["codDiagnosticoRelacionado1",
+              "codDiagnosticoRelacionado2",
+              "codDiagnosticoRelacionado3"]),
+            ("procedimientos",  procs, True,  False,
+             ["codDiagnosticoRelacionado"]),
+            ("urgencias",       urgs,  False, True,
+             ["codDiagnosticoRelacionadoE1",
+              "codDiagnosticoRelacionadoE2",
+              "codDiagnosticoRelacionadoE3"]),
+            ("hospitalizacion", hosps, True,  True,
+             ["codDiagnosticoRelacionado1",
+              "codDiagnosticoRelacionado2",
+              "codDiagnosticoRelacionado3"]),
+            ("otrosServicios",  otros, True,  True,  []),
+        ]
+
+        for svc_name, svc_list, tiene_final, tiene_causa_f, campos_rel in _svcs:
+            for idx, rec in enumerate(svc_list, 1):
+                if not isinstance(rec, dict):
+                    continue
+
+                consec = _nstr(rec.get("consecutivo") or idx)
+
+                # Leer valores: distinguir "campo ausente" de "campo presente pero vacío"
+                finalidad = _nstr(rec.get("finalidadTecnologiaSalud")) if tiene_final   else ""
+                causa     = _nstr(rec.get("causaMotivoAtencion"))      if tiene_causa_f else ""
+                final_en_rec = tiene_final   and "finalidadTecnologiaSalud" in rec
+                causa_en_rec = tiene_causa_f and "causaMotivoAtencion"      in rec
+
+                # ── TU-FINALIDAD-01: finalidad presente-y-vacía, o valor fuera de rango ──
+                if tiene_final:
+                    if final_en_rec and not finalidad:
+                        # Campo existe en el JSON pero viene nulo/vacío
+                        _e("TU-FINALIDAD-01", "media", "finalidadTecnologiaSalud",
+                           f"El campo finalidadTecnologiaSalud viene vacío en {svc_name} "
+                           f"(consecutivo {consec}).", "")
+                    elif finalidad and relacion_tu is not None:
+                        if finalidad not in relacion_tu["finalidad"]:
+                            _e("TU-FINALIDAD-01", "alta", "finalidadTecnologiaSalud",
+                               f"La finalidadTecnologiaSalud '{finalidad}' no se relaciona con el "
+                               f"tipoUsuario '{tipo_usuario}' según la tabla "
+                               "RIPSTipoUsuarioVersion2.",
+                               finalidad)
+
+                # ── TU-CAUSA-01: causa presente-y-vacía, o valor fuera de rango ────────
+                if tiene_causa_f:
+                    if causa_en_rec and not causa:
+                        # Campo existe en el JSON pero viene nulo/vacío
+                        _e("TU-CAUSA-01", "media", "causaMotivoAtencion",
+                           f"El campo causaMotivoAtencion viene vacío en {svc_name} "
+                           f"(consecutivo {consec}).", "")
+                    elif causa and relacion_tu is not None:
+                        if causa not in relacion_tu["causa"]:
+                            _e("TU-CAUSA-01", "alta", "causaMotivoAtencion",
+                               f"La causaMotivoAtencion '{causa}' no se relaciona con el "
+                               f"tipoUsuario '{tipo_usuario}' según la tabla "
+                               "RIPSTipoUsuarioVersion2.",
+                               causa)
+
+                # ── FINALIDAD-CAUSA-01: IVE — finalidad 34/35/36/49 → causa 24 ─
+                if tiene_final and tiene_causa_f and finalidad in _FINALIDAD_IVE:
+                    if causa and causa != "24":
+                        _e("FINALIDAD-CAUSA-01", "alta",
+                           "finalidadTecnologiaSalud / causaMotivoAtencion",
+                           f"La finalidadTecnologiaSalud '{finalidad}' no se relaciona con la "
+                           f"causaMotivoAtencion '{causa}' - IVE",
+                           f"finalidad={finalidad}, causa={causa}")
+
+                # ── DIAG-INICIAL-01: Y, R o Z no pueden ser diagnóstico principal ─
+                diag_ppal = _nstr(rec.get("codDiagnosticoPrincipal"))
+                if diag_ppal:
+                    if diag_ppal[0].upper() in {"Y", "R", "Z"}:
+                        _e("DIAG-INICIAL-01", "alta", "codDiagnosticoPrincipal",
+                           "Los diagnósticos Y, R o Z no pueden ser definidos como principal.",
+                           diag_ppal)
+
+                    # ── DIAG-SIMILAR-01: principal igual a algún relacionado ──────
+                    coincidencias = [
+                        campo for campo in campos_rel
+                        if _nstr(rec.get(campo)) and _nstr(rec.get(campo)) == diag_ppal
+                    ]
+                    if coincidencias:
+                        _e("DIAG-SIMILAR-01", "media", "codDiagnosticoPrincipal",
+                           "El código diagnóstico principal es similar al relacionado.",
+                           f"principal={diag_ppal}, campo(s): {', '.join(coincidencias)}")
 
     return errores

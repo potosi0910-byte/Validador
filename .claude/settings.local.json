@@ -19,7 +19,9 @@
       "Bash(python _patch_autorizaciones.py)",
       "Bash(del _patch_autorizaciones.py _patch_html.py)",
       "Read(//u/202604/FACTURAS_SALUD/SL550494/RIPS/**)",
-      "Read(//u/202604/FACTURAS_SALUD/SL550495/RIPS/**)"
+      "Read(//u/202604/FACTURAS_SALUD/SL550495/RIPS/**)",
+      "Read(//u/202604/FACTURAS_SALUD/SL551051/RIPS/**)",
+      "Bash(python -c ' *)"
     ]
   }
 }
