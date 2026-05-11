@@ -260,7 +260,7 @@
 
                     <!-- ── MODO MANUAL ── -->
                     <div id="panelManual" style="display:none">
-                        <p class="upload-zone-sub">Seleccione los archivos <code>Rips_SL*.json</code> que desea procesar (máx. 700)</p>
+                        <p class="upload-zone-sub">Seleccione los archivos <code>Rips_SL*.json</code> que desea procesar (máx. 800)</p>
                         <button type="button" class="btn-file"
                                 onclick="document.getElementById('json_files_manual').click()">
                             Seleccionar archivos
@@ -1331,6 +1331,8 @@
 
     <footer class="footer">
         HSLV · Sistema de Validación RIPS &amp; Auditoría Clínica &nbsp;·&nbsp; Resoluciones 2275 y 2284 de 2023
+        <br>
+        <small>Desarrollado por Didier Potosi derechos reservados 2026</small>
     </footer>
 
 </div><!-- /shell -->
@@ -1343,7 +1345,7 @@
 // CARGA RIPS JSON — MODO AUTOMÁTICO / MANUAL
 // ═══════════════════════════════════════════════════════════════
 const RIPS_PREFIJO = 'Rips_SL';
-const RIPS_MAX     = 700;
+const RIPS_MAX     = 800;
 
 let _ripsFiltrados   = [];   // archivos que se enviarán al servidor
 let _autoTodos       = [];   // todos los Rips_SL*.json encontrados en la carpeta (ordenados desc)

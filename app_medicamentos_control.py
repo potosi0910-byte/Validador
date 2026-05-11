@@ -5,7 +5,7 @@ import re
  
 from flask import Flask, render_template, request, send_file
 import json
- 
+ #Dependencia para manejo de Excel: pip install openpyxl
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, Alignment, PatternFill
@@ -31,7 +31,7 @@ def quitar_tildes(texto):
     """Elimina diacríticos para comparaciones robustas."""
     nfkd = unicodedata.normalize('NFD', str(texto).upper())
     return ''.join(c for c in nfkd if unicodedata.category(c) != 'Mn')
- 
+#Importante: quitar_tildes se usa para matching de encabezados, no para mostrar datos al usuario.
  
 def separar_tipo_num(valor_raw):
     """
@@ -52,6 +52,7 @@ def separar_tipo_num(valor_raw):
 def encontrar_col(headers, palabras_clave):
     """
     Busca el índice de columna cuyo encabezado contenga todas las palabras clave.
+    # Diferencias de encoding pueden causar tildes corruptas, por eso se usa quitar_tildes.
     Usa matching sin tildes + matching parcial por sufijo para tolerar encodings
     corruptos (p.ej. 'NÃšMERO' → se detecta por sufijo 'MERO').
     """
@@ -85,6 +86,7 @@ def _tipo_doc(obj):
     return normalizar_str(
         obj.get("tipoDocumentoldentificacion") or
         obj.get("tipoDocumentoIdentificacion") or ""
+#Importante: el tipo de documento se muestra al usuario sin normalizar, para respetar tildes y mayúsculas originales. La normalización se usa solo para matching entre RIPS y Excel, no para mostrar datos.
     )
 
 def _num_doc_val(obj):
@@ -139,6 +141,7 @@ def cargar_excel_autorizaciones(archivos_excel):
             col_fecha_emision = encontrar_col(headers, ["FECHA", "EMISION"])
 
             if col_tipo_id is None:
+#Error handling mejorado: si no se encuentra una columna requerida, se agrega un mensaje de error específico que incluye el nombre del archivo y los encabezados encontrados. Esto ayuda a identificar rápidamente problemas de formato en los archivos Excel cargados.
                 errores.append(
                     f"[{archivo.filename}] No se encontró la columna 'TIPO ID AFILIADO'. "
                     f"Encabezados: {[h for h in headers if h]}"
@@ -217,6 +220,7 @@ def extraer_medicamentos_invalidos(data, nombre_archivo=""):
         if isinstance(nodo, dict):
             f = buscar_factura(nodo)
             if f:
+#RIPS puede tener facturas a nivel raíz o dentro de secciones, así que se actualiza factura_actual cada vez que se encuentra una nueva factura en el nodo actual. Esto asegura que los medicamentos extraídos se asocien con la factura correcta, incluso si hay múltiples facturas en el mismo JSON.                
                 factura_actual = f
  
             if en_medicamentos and "vrServicio" in nodo and "consecutivo" in nodo:
@@ -329,6 +333,8 @@ def extraer_autorizaciones_rips(data, nombre_archivo=""):
                 # Internacion: autorizaciones y conteo de registros hospitalizacion
                 "auths_hosp":           set(),
                 "n_hosp_regs":          0,
+                # Lista detallada de registros hospitalización {na, fecha_ini}
+                "hosp_regs_lista":      [],
             }
 
         p = pacientes[num_doc]
@@ -350,6 +356,10 @@ def extraer_autorizaciones_rips(data, nombre_archivo=""):
                         p["fecha_egreso_hosp"] = normalizar_str(fe)
                     if na_h:
                         p["auths_hosp"].add(na_h)
+                    p["hosp_regs_lista"].append({
+                        "na":        na_h,
+                        "fecha_ini": normalizar_str(fi or ""),
+                    })
 
         # ── Extraer fechas de urgencias ──────────────────────────────
         if tiene_urg:
@@ -370,11 +380,13 @@ def extraer_autorizaciones_rips(data, nombre_archivo=""):
         if isinstance(proc_regs, list):
             for preg in proc_regs:
                 if not isinstance(preg, dict):
+#Para la regla de cirugía ambulatoria solo se consideran procedimientos con código válido, por eso se omiten registros sin codProcedimiento o con código vacío. Esto evita que registros incompletos o mal formateados afecten la clasificación de tipo de atención.
                     continue
-                cod_p = normalizar_str(preg.get("codProcedimiento", ""))
-                na_p  = normalizar_str(preg.get("numAutorizacion", ""))
+                cod_p   = normalizar_str(preg.get("codProcedimiento", ""))
+                na_p    = normalizar_str(preg.get("numAutorizacion", ""))
+                fi_p    = normalizar_str(preg.get("fechaInicioAtencion") or preg.get("fechaInicio") or "")
                 if cod_p:
-                    p["procedimientos_pac"].append({"cod": cod_p, "num_aut": na_p})
+                    p["procedimientos_pac"].append({"cod": cod_p, "num_aut": na_p, "fecha_inicio": fi_p})
  
         # ── Reclasificar a cirugía ambulatoria si aplica ─────────────────
         # Condición: tiene hospitalizacion SIN urgencias + al menos un codProcedimiento < 870000
@@ -565,6 +577,14 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
         'estancia_sin_aut':        [],   # Hospitalizacion sin auth válida en Excel
         'proc_qx_misma_aut_hosp':  [],   # Proc quirúrgico (<870000) usa misma auth que estancia
         'sin_num_aut_relacionado': [],   # Sin ningún numAutorizacion (ni estancia ni proc <870000)
+        # Nuevas validaciones
+        'amb_aut_emision_posterior': [],  # Ambulatorio: auth emitida DESPUÉS del servicio
+        'hosp_cod_sin_aut':          [],  # Hosp: registro de hospitalización sin numAutorizacion
+        'hosp_proc_cod_no_cruza':    [],  # Hosp+Procs: cod <870000 no coincide con auth en base
+        'hosp_cups_duplicado':       [],  # Hosp: código CUPS repetido más de una vez
+        'proc_sin_aut_amb':          [],  # Ambulatorio: procedimiento sin numAutorizacion
+        'proc_aut_no_cruza_amb':     [],  # Ambulatorio: auth no corresponde al CUPS según base EPS
+        'cups_noestandar_sin_aut':   [],  # Código no estándar (>6 chars o con letras) sin auth
     }
 
     def parse_fecha(valor):
@@ -602,6 +622,7 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
 
         # ── 1. Identificación: el paciente debe existir en el Excel ──────
         if num_doc not in registros_excel:
+#otro enfoque: alertar que el paciente del RIPS no tiene registros en el Excel, lo que podría indicar un problema de identificación o un paciente no registrado en la base. Esto ayudaría a detectar casos donde el RIPS contiene pacientes que no están en la base de autorizaciones, lo cual también es relevante para la auditoría.
             continue
 
         regs_pac          = registros_excel[num_doc]
@@ -620,6 +641,7 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
         fecha_egreso_urg  = p.get('fecha_egreso_urg')
         auths_hosp        = p.get('auths_hosp', set())
         n_hosp_regs       = p.get('n_hosp_regs', 0)
+        hosp_regs_lista   = p.get('hosp_regs_lista', [])
 
         archivo_eps_def = regs_pac[0].get('archivo', '') if regs_pac else ''
 
@@ -794,6 +816,165 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
                                         "relacionadas en el RIPS Json."
                                     ),
                                 })
+
+        # ════════════════════════════════════════════════════════════════
+        # NUEVAS VALIDACIONES AMBULATORIAS
+        # ════════════════════════════════════════════════════════════════
+        if tipo_atencion in ('ambulatorio', 'cirugia_ambulatoria'):
+            # Construir índice inverso: cod → set(auths) desde la base EPS
+            cod_a_auths_base: dict = {}
+            for na_b, info_b in auths_excel_pac.items():
+                for cod_b in info_b.get('codigos', set()):
+                    if cod_b not in cod_a_auths_base:
+                        cod_a_auths_base[cod_b] = set()
+                    cod_a_auths_base[cod_b].add(na_b)
+
+            vistos_proc = set()
+            for proc in procedimientos_pac:
+                cod_p  = proc.get('cod', '')
+                na_p   = proc.get('num_aut', '')
+                fi_p   = proc.get('fecha_inicio', '')
+                if not cod_p:
+                    continue
+                clave_p = (num_doc, cod_p, na_p)
+
+                # ── proc_sin_aut_amb: procedimiento sin autorización ────
+                if not na_p and clave_p not in vistos_proc:
+                    # Determinar si el código es estándar (solo dígitos y ≤6 chars)
+                    es_estandar = cod_p.isdigit() and len(cod_p) <= 6
+                    if es_estandar:
+                        alertas['proc_sin_aut_amb'].append({
+                            'cod_proc':     cod_p,
+                            'num_doc':      num_doc,
+                            'num_factura':  num_factura,
+                            'fecha_inicio': fi_p,
+                            'seccion':      'procedimientos',
+                            'archivo_rips': archivo_rips,
+                        })
+                    else:
+                        # ── cups_noestandar_sin_aut: CUPS no estándar sin auth ─
+                        alertas['cups_noestandar_sin_aut'].append({
+                            'cod_proc':     cod_p,
+                            'num_doc':      num_doc,
+                            'num_factura':  num_factura,
+                            'fecha_inicio': fi_p,
+                            'seccion':      'procedimientos',
+                            'archivo_rips': archivo_rips,
+                        })
+                    vistos_proc.add(clave_p)
+                    continue
+
+                if not na_p:
+                    continue
+
+                # ── amb_aut_emision_posterior: auth emitida después del servicio ──
+                if na_p in auths_excel_pac and fi_p:
+                    fem_info = auths_excel_pac[na_p].get('fecha_emision')
+                    fem_dt   = parse_fecha(fem_info)
+                    fi_dt    = parse_fecha(fi_p)
+                    if fem_dt and fi_dt and fem_dt.date() > fi_dt.date():
+                        clave_e = (num_doc, na_p, cod_p)
+                        if clave_e not in vistos_proc:
+                            vistos_proc.add(clave_e)
+                            alertas['amb_aut_emision_posterior'].append({
+                                'num_aut':      na_p,
+                                'num_doc':      num_doc,
+                                'num_factura':  num_factura,
+                                'fecha_servicio': fi_p[:10],
+                                'fecha_emision':  str(fem_dt)[:10],
+                                'archivo_rips':   archivo_rips,
+                                'archivo_eps':    auths_excel_pac[na_p].get('archivo', archivo_eps_def),
+                            })
+
+                # ── proc_aut_no_cruza_amb: auth no corresponde al CUPS según base ──
+                if na_p and cod_p in cod_a_auths_base:
+                    auths_correctas = cod_a_auths_base[cod_p]
+                    if na_p not in auths_correctas:
+                        clave_nc = (num_doc, cod_p, na_p)
+                        if clave_nc not in vistos_proc:
+                            vistos_proc.add(clave_nc)
+                            alertas['proc_aut_no_cruza_amb'].append({
+                                'cod_proc':     cod_p,
+                                'num_aut':      na_p,
+                                'num_doc':      num_doc,
+                                'num_factura':  num_factura,
+                                'fecha_inicio': fi_p,
+                                'archivo_rips': archivo_rips,
+                                'archivo_eps':  archivo_eps_def,
+                            })
+
+        # ════════════════════════════════════════════════════════════════
+        # NUEVAS VALIDACIONES HOSPITALARIAS
+        # ════════════════════════════════════════════════════════════════
+        if n_hosp_regs > 0:
+            # ── hosp_cod_sin_aut: registros hospitalización sin numAutorizacion ──
+            for hreg in hosp_regs_lista:
+                if not hreg.get('na'):
+                    alertas['hosp_cod_sin_aut'].append({
+                        'num_doc':      num_doc,
+                        'num_factura':  num_factura,
+                        'archivo_rips': archivo_rips,
+                        'archivo_eps':  archivo_eps_def,
+                        'mensaje':      "Registro de hospitalización sin numAutorizacion",
+                    })
+
+            # ── hosp_proc_cod_no_cruza: procs < 870000 sin coincidencia auth+cod en base ──
+            vistos_hpc = set()
+            for proc in procedimientos_pac:
+                cod_p = proc.get('cod', '')
+                na_p  = proc.get('num_aut', '')
+                if not cod_p or not na_p:
+                    continue
+                try:
+                    if int(cod_p) >= 870000:
+                        continue
+                except (ValueError, TypeError):
+                    continue
+                par_ok = False
+                if na_p in auths_excel_pac:
+                    codigos_base = auths_excel_pac[na_p].get('codigos', set())
+                    if not codigos_base or cod_p in codigos_base:
+                        par_ok = True
+                if not par_ok:
+                    clave_hpc = (num_doc, cod_p, na_p)
+                    if clave_hpc not in vistos_hpc:
+                        vistos_hpc.add(clave_hpc)
+                        alertas['hosp_proc_cod_no_cruza'].append({
+                            'cod_proc':     cod_p,
+                            'num_aut':      na_p,
+                            'num_doc':      num_doc,
+                            'num_factura':  num_factura,
+                            'archivo_rips': archivo_rips,
+                            'archivo_eps':  (auths_excel_pac[na_p]['archivo']
+                                             if na_p in auths_excel_pac else archivo_eps_def),
+                            'mensaje': (
+                                "El codProcedimiento (<870000) con su numAutorizacion "
+                                "no coincide con la base de datos EPS"
+                            ),
+                        })
+
+            # ── hosp_cups_duplicado: código CUPS repetido ────────────────────
+            conteo_cups: dict = {}
+            for proc in procedimientos_pac:
+                cod_p = proc.get('cod', '')
+                if not cod_p:
+                    continue
+                try:
+                    if int(cod_p) >= 870000:
+                        continue
+                except (ValueError, TypeError):
+                    continue
+                conteo_cups[cod_p] = conteo_cups.get(cod_p, 0) + 1
+            for cod_dup, cnt in conteo_cups.items():
+                if cnt > 1:
+                    alertas['hosp_cups_duplicado'].append({
+                        'cod_proc':     cod_dup,
+                        'repeticiones': cnt,
+                        'num_doc':      num_doc,
+                        'num_factura':  num_factura,
+                        'archivo_rips': archivo_rips,
+                        'mensaje':      f"Código {cod_dup} reportado {cnt} veces en hospitalización",
+                    })
 
         # ════════════════════════════════════════════════════════════════
         # REGLAS DE INTERNACIÓN (aplica a todo paciente con hospitalizacion)
@@ -978,6 +1159,7 @@ def validar_medicamentos_malla_2275(data, nombre_archivo=""):
             )
             nom       = normalizar_str(med.get("nomTecnologiaSalud") or "")
             es_mag    = (tipo_med == "03")
+#TOdo: revisar si es necesario normalizar otros campos (ej. codTecnologiaSalud) para evitar falsos positivos por espacios o mayúsculas. Por ejemplo, si el código de tecnología de salud tiene espacios adicionales o diferencias de mayúsculas, podría generar errores que no reflejan un problema real en los datos. Normalizar estos campos antes de las validaciones ayudaría a reducir este tipo de falsos positivos y hacer las reglas más robustas frente a inconsistencias menores en el formato de los datos.
             consec_s  = normalizar_str(consec)
 
             def _err(id_regla, severidad, campo, mensaje, valor_actual=""):
@@ -1587,6 +1769,7 @@ def _validar_fecha_atencion_campo(fecha_raw, campo, fecha_hoy, errores_list, ctx
     except ValueError:
         errores_list.append({**ctx, "id_regla": regla, "severidad": "critica",
                              "campo": campo,
+#segunda parte del mensaje corregida para no repetir "formato" dos veces
                              "mensaje": f"{campo} no es una fecha/hora válida (AAAA-MM-DD HH:MM).",
                              "valor_actual": fecha_raw})
         return None
@@ -2573,6 +2756,7 @@ def validar_recien_nacidos_malla_2275(data, nombre_archivo=""):
         for u in data_obj.get("usuarios", []):
             if not isinstance(u, dict):
                 continue
+#if not isinstance(u, dict):
             svc = u.get("servicios", {})
             if not isinstance(svc, dict):
                 continue

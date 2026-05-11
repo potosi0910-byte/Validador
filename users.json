@@ -1,0 +1,14 @@
+[
+  {
+    "username": "admin",
+    "password": "$2b$12$mlzwU9ixYZL2OhMaG3IAC.feOTKXNunVXO5tmMYEUcK99qOyhORma",
+    "role": "admin",
+    "nombre": "Administrador HSLV"
+  },
+  {
+    "username": "auditor",
+    "password": "$2b$12$Ju1ZOGxeOSocLa58EwM31OIhq2gAZMM4Ip2KmhLpZSy2CgyzCkQIe",
+    "role": "auditor",
+    "nombre": "Auditor Clínico"
+  }
+]

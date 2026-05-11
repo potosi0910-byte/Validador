@@ -21,7 +21,12 @@
       "Read(//u/202604/FACTURAS_SALUD/SL550494/RIPS/**)",
       "Read(//u/202604/FACTURAS_SALUD/SL550495/RIPS/**)",
       "Read(//u/202604/FACTURAS_SALUD/SL551051/RIPS/**)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "PowerShell(npm --version)",
+      "PowerShell(node --version)",
+      "PowerShell($env:PATH = $env:PATH + \";C:\\\\Program Files\\\\nodejs\"; npm --version)",
+      "PowerShell($env:PATH = $env:PATH + \";C:\\\\Program Files\\\\nodejs\"; Set-Location \"c:\\\\Users\\\\HAUDITORIA42\\\\Documents\\\\Didier Potosi\\\\Malla Validadora HSLV\\\\Python\\\\Extractor_rips\\\\frontend\"; npm install 2>&1)",
+      "PowerShell(Copy-Item \"c:\\\\Users\\\\HAUDITORIA42\\\\Documents\\\\Didier Potosi\\\\Malla Validadora HSLV\\\\Python\\\\Extractor_rips\\\\static\\\\styles.css\" \"c:\\\\Users\\\\HAUDITORIA42\\\\Documents\\\\Didier Potosi\\\\Malla Validadora HSLV\\\\Python\\\\Extractor_rips\\\\frontend\\\\public\\\\styles.css\" -Force)"
     ]
   }
 }

@@ -294,20 +294,31 @@ def validar_auditoria(data, nombre_archivo=""):
         rh    = n_proc("911015")   # RH
 
         # ── TRANS-01/02/03: Hemoclasificaciones máx. 1 vez; obligatorias si hay transfusión ─
-        for cod, nombre, conteo in [
-            ("911017", "Hemoclasificación ABO directa",  abo_d),
-            ("911019", "Hemoclasificación ABO inversa",  abo_i),
-            ("911015", "Hemoclasificación RH",           rh),
-        ]:
-            reg = {"911017": "TRANS-01", "911019": "TRANS-02", "911015": "TRANS-03"}[cod]
-            if conteo > 1:
-                _e(reg, "alta", "codProcedimiento",
-                   f"{nombre} ({cod}) facturada {conteo} veces. "
-                   "Solo se permite una vez por estancia.", conteo)
-            if hay_cualquier_transf and conteo == 0:
-                _e(reg, "alta", "codProcedimiento",
-                   f"Se facturó una transfusión pero no se encontró {nombre} ({cod}). "
-                   "Es obligatorio facturarla cuando se realiza transfusión.")
+        # Solo aplica cuando fechaInicioAtencion - fechaNacimiento < 50 días
+        _edad_dias_trans = None
+        _fn_raw = _nstr(usuario.get("fechaNacimiento") or "")
+        if len(_fn_raw) == 10 and f_ini_dt:
+            try:
+                _fn_dt = datetime.strptime(_fn_raw, "%Y-%m-%d")
+                _edad_dias_trans = (f_ini_dt.date() - _fn_dt.date()).days
+            except ValueError:
+                pass
+
+        if _edad_dias_trans is None or _edad_dias_trans < 50:
+            for cod, nombre, conteo in [
+                ("911017", "Hemoclasificación ABO directa",  abo_d),
+                ("911019", "Hemoclasificación ABO inversa",  abo_i),
+                ("911015", "Hemoclasificación RH",           rh),
+            ]:
+                reg = {"911017": "TRANS-01", "911019": "TRANS-02", "911015": "TRANS-03"}[cod]
+                if conteo > 1:
+                    _e(reg, "alta", "codProcedimiento",
+                       f"{nombre} ({cod}) facturada {conteo} veces. "
+                       "Solo se permite una vez por estancia.", conteo)
+                if hay_cualquier_transf and conteo == 0:
+                    _e(reg, "alta", "codProcedimiento",
+                       f"Se facturó una transfusión pero no se encontró {nombre} ({cod}). "
+                       "Es obligatorio facturarla cuando se realiza transfusión en Neonatos.")
 
         # ── TRANS-04: Fenotipo ABO 911025 ─────────────────────────────────────
         # Siempre genera alerta informativa (solo aplica para grupo A).
