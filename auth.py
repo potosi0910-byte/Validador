@@ -6,6 +6,7 @@ Usuarios almacenados en users.json. Tokens con expiración de 8 horas (jornada l
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
@@ -16,7 +17,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 
 # ── Configuración ─────────────────────────────────────────────────────────────
-SECRET_KEY   = "hslv-malla-validadora-2275-clave-secreta-cambiar-en-produccion"
+SECRET_KEY   = os.environ.get("JWT_SECRET", "drf-malla-validadora-2275-clave-secreta-cambiar-en-produccion")
 ALGORITHM    = "HS256"
 TOKEN_HORAS  = 8
 
@@ -108,7 +109,13 @@ def listar_usuarios() -> list[dict]:
     ]
 
 
+def _validar_password(password: str) -> None:
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 8 caracteres.")
+
+
 def crear_usuario(username: str, password: str, role: str, nombre: str) -> dict:
+    _validar_password(password)
     users = _cargar_usuarios()
     if any(u["username"] == username for u in users):
         raise HTTPException(status_code=400, detail=f"El usuario '{username}' ya existe.")
@@ -134,9 +141,24 @@ def eliminar_usuario(username: str) -> None:
 
 
 def cambiar_password(username: str, nueva: str) -> None:
+    _validar_password(nueva)
     users = _cargar_usuarios()
     for u in users:
         if u["username"] == username:
+            u["password"] = hashear_password(nueva)
+            _guardar_usuarios(users)
+            return
+    raise HTTPException(status_code=404, detail=f"Usuario '{username}' no encontrado.")
+
+
+def cambiar_password_verificado(username: str, actual: str, nueva: str) -> None:
+    """Cambia contraseña verificando la actual. Para uso self-service."""
+    _validar_password(nueva)
+    users = _cargar_usuarios()
+    for u in users:
+        if u["username"] == username:
+            if not verificar_password(actual, u.get("password", "")):
+                raise HTTPException(status_code=400, detail="La contraseña actual es incorrecta.")
             u["password"] = hashear_password(nueva)
             _guardar_usuarios(users)
             return

@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HSLV · Validador RIPS — Malla 2275</title>
+    <title>Dr. Factory · Validador RIPS — Malla 2275</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=30">
 </head>
 <body data-has-results="{{ 'true' if (stats and stats.archivos_json) else 'false' }}">
 
-<!-- Fondo 3D — inspirado en logo HSLV -->
+<!-- Fondo 3D -->
 <div class="bg-glow-top"></div>
 <div class="bg-grid"></div>
 <div class="bg-grid-floor"></div>
@@ -147,7 +147,7 @@
                 </svg>
             </div>
             <div>
-                <span class="brand-name">Hospital Susana López de Valencia</span>
+                <span class="brand-name">Dr. Factory</span>
                 <span class="brand-sub">Plataforma de Validación RIPS &amp; Auditoría Clínica</span>
             </div>
         </div>
@@ -1330,7 +1330,7 @@
     {% endif %}
 
     <footer class="footer">
-        HSLV · Sistema de Validación RIPS &amp; Auditoría Clínica &nbsp;·&nbsp; Resoluciones 2275 y 2284 de 2023
+        Dr. Factory · Sistema de Validación RIPS &amp; Auditoría Clínica &nbsp;·&nbsp; Resoluciones 2275 y 2284 de 2023
         <br>
         <small>Desarrollado por Didier Potosi derechos reservados 2026</small>
     </footer>
@@ -1659,7 +1659,7 @@ function mostrarNombres(input, listaId) {
 }
 
 // ── Control de exportación / procesamiento ───────────────────
-const LS_KEY       = 'hslv_resultados_exportados';
+const LS_KEY       = 'drf_resultados_exportados';
 let _hayResultados = document.body.dataset.hasResults === 'true';
 let _overlayTimer  = null;
 

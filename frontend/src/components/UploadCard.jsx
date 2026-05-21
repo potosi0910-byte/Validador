@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 
 const RIPS_PREFIJO = 'Rips_SL'
-const RIPS_MAX     = 800
+const RIPS_MAX     = 999
 
 function fmtFecha(ts) {
   return new Date(ts).toISOString().slice(0, 10)
@@ -21,12 +21,14 @@ export default function UploadCard({
   const [fechaHasta, setFechaHasta]   = useState('')
   const [numDesde, setNumDesde]       = useState(1)
   const [mostrarResumen, setMostrarResumen] = useState(false)
-  const [clasActivo, setClasActivo]   = useState(false)
-  const [btnCargando, setBtnCargando] = useState(false)
+  const [clasActivo, setClasActivo]       = useState(false)
+  const [btnCargando, setBtnCargando]     = useState(false)
+  const [esperandoCarpeta, setEsperandoCarpeta] = useState(false)
 
-  const inputAutoRef   = useRef()
-  const inputManualRef = useRef()
-  const inputExcelRef  = useRef()
+  const inputAutoRef      = useRef()
+  const inputManualRef    = useRef()
+  const inputExcelRef     = useRef()
+  const carpetaOkRef      = useRef(false)  // true cuando onChange disparó (carpeta confirmada)
 
   // ── Aplicar filtro ────────────────────────────────────────────────────────
   function aplicarFiltro(todos, fd, fh, nd, flt) {
@@ -44,8 +46,25 @@ export default function UploadCard({
     return filtrados
   }
 
+  // ── Abrir selector de carpeta (muestra msg inmediato antes del diálogo OS) ──
+  function onClickCargarAuto() {
+    carpetaOkRef.current = false
+    setEsperandoCarpeta(true)
+    inputAutoRef.current.click()
+    // Sólo apaga el mensaje si el usuario canceló el diálogo (onChange nunca dispara)
+    const onFoco = () => {
+      setTimeout(() => {
+        if (!carpetaOkRef.current) setEsperandoCarpeta(false)
+      }, 600)
+      window.removeEventListener('focus', onFoco)
+    }
+    window.addEventListener('focus', onFoco)
+  }
+
   // ── Carpeta automática ────────────────────────────────────────────────────
   function onCarpetaAuto(e) {
+    carpetaOkRef.current = true   // carpeta confirmada — bloquea el focus-timeout
+    setEsperandoCarpeta(false)
     setMostrarResumen(false)
     onJsonChange([])
     setBtnCargando(true)
@@ -133,8 +152,8 @@ export default function UploadCard({
                 <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
               </svg>
             </div>
-            <div className="clas-title">Clasificando archivos RIPS</div>
-            <div className="clas-sub">Leyendo y organizando por fecha<span className="clas-dots"><span>.</span><span>.</span><span>.</span></span></div>
+            <div className="clas-title">Espera un momento por favor</div>
+            <div className="clas-sub">Estamos procesando la información<span className="clas-dots"><span>.</span><span>.</span><span>.</span></span></div>
           </div>
         </div>
       )}
@@ -167,13 +186,23 @@ export default function UploadCard({
           {modo === 'auto' && (
             <div>
               <p className="upload-zone-sub">Seleccione la carpeta con archivos <code>Rips_SL*.json</code></p>
-              <button type="button" className={`btn-file ${btnCargando ? 'btn-cargando' : ''}`}
-                onClick={() => inputAutoRef.current.click()}>
+              <button type="button"
+                className={`btn-file ${(btnCargando || esperandoCarpeta) ? 'btn-cargando' : ''}`}
+                onClick={onClickCargarAuto}
+                disabled={esperandoCarpeta || btnCargando}>
                 Cargue RIPS JSON
-                {btnCargando && <span className="btn-cargando-spin"></span>}
+                {(btnCargando || esperandoCarpeta) && <span className="btn-cargando-spin"></span>}
               </button>
               <input ref={inputAutoRef} type="file" webkitdirectory="true" mozdirectory="true"
                 style={{ display: 'none' }} onChange={onCarpetaAuto} />
+
+              {esperandoCarpeta && (
+                <div className="uc-procesando-msg">
+                  <span className="uc-procesando-dot"></span>
+                  Estamos en procesamiento de la información
+                  <span className="clas-dots"><span>.</span><span>.</span><span>.</span></span>
+                </div>
+              )}
 
               {mostrarResumen && (
                 <div id="autoResumen">

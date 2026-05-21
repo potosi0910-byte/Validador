@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
-import LoadingOverlay from './components/LoadingOverlay'
-import LoginPage     from './components/LoginPage'
-import UploadCard    from './components/UploadCard'
-import ResultsSection from './components/ResultsSection'
+import LoadingOverlay   from './components/LoadingOverlay'
+import LoginPage        from './components/LoginPage'
+import UploadCard       from './components/UploadCard'
+import ResultsSection   from './components/ResultsSection'
+import Sidebar          from './components/Sidebar'
+import MachineLearning  from './components/MachineLearning'
+import Admin            from './components/Admin'
 import { procesar, exportarExcel, logout, getUsuarioGuardado } from './api/client'
 
-const IcoHSLV = () => (
+const IcoFactory = () => (
   <svg viewBox="0 0 24 24" fill="currentColor">
     <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
   </svg>
@@ -15,6 +18,7 @@ const ROLE_LABEL = { admin: 'Administrador', auditor: 'Auditor Clínico' }
 
 export default function App() {
   const [usuario, setUsuario]       = useState(null)
+  const [section, setSection]       = useState('malla')
   const [loading, setLoading]       = useState(false)
   const [loadingPct, setLoadingPct] = useState(0)
   const [resultado, setResultado]   = useState(null)
@@ -22,7 +26,6 @@ export default function App() {
   const [jsonFiles, setJsonFiles]   = useState([])
   const [excelFiles, setExcelFiles] = useState([])
 
-  // Restaurar sesión guardada al montar
   useEffect(() => {
     const u = getUsuarioGuardado()
     if (u) setUsuario(u)
@@ -39,6 +42,7 @@ export default function App() {
     setError(null)
     setJsonFiles([])
     setExcelFiles([])
+    setSection('malla')
   }
 
   const handleProcesar = async () => {
@@ -65,7 +69,6 @@ export default function App() {
     }
   }
 
-  // ── Sin sesión → pantalla de login ──────────────────────────────────────────
   if (!usuario) {
     return <LoginPage onLogin={handleLogin} />
   }
@@ -74,13 +77,13 @@ export default function App() {
 
   return (
     <>
-      {/* Fondo 3D */}
+      {/* Fondo 3D — compartido por todas las secciones */}
       <div className="bg-glow-top"></div>
       <div className="bg-grid"></div>
       <div className="bg-grid-floor"></div>
-      <div className="bg-cross bg-cross-1"><IcoHSLV /></div>
-      <div className="bg-cross bg-cross-2"><IcoHSLV /></div>
-      <div className="bg-cross bg-cross-3"><IcoHSLV /></div>
+      <div className="bg-cross bg-cross-1"><IcoFactory /></div>
+      <div className="bg-cross bg-cross-2"><IcoFactory /></div>
+      <div className="bg-cross bg-cross-3"><IcoFactory /></div>
       <div className="orb orb-1"></div>
       <div className="orb orb-2"></div>
       <div className="orb orb-3"></div>
@@ -92,9 +95,9 @@ export default function App() {
         {/* Header */}
         <header className="topbar">
           <div className="topbar-brand">
-            <div className="brand-icon"><IcoHSLV /></div>
+            <div className="brand-icon"><IcoFactory /></div>
             <div>
-              <span className="brand-name">Hospital Susana López de Valencia</span>
+              <span className="brand-name">Dr. Factory</span>
               <span className="brand-sub">Plataforma de Validación RIPS &amp; Auditoría Clínica</span>
             </div>
           </div>
@@ -109,8 +112,6 @@ export default function App() {
               </svg>
               IA Activa
             </div>
-
-            {/* Usuario logueado */}
             <div className="topbar-badge topbar-user">
               <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: '0.9rem', height: '0.9rem' }}>
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"/>
@@ -127,24 +128,42 @@ export default function App() {
           </div>
         </header>
 
-        {/* Panel de carga */}
-        <UploadCard
-          jsonFiles={jsonFiles}
-          excelFiles={excelFiles}
-          onJsonChange={setJsonFiles}
-          onExcelChange={setExcelFiles}
-          onProcesar={handleProcesar}
-          onExportar={handleExportar}
-          hasResults={hasResults}
-          error={error}
-          loading={loading}
-        />
+        {/* Cuerpo: sidebar izquierdo + contenido principal */}
+        <div className="app-body">
 
-        {/* Dashboard */}
-        {hasResults && <ResultsSection resultado={resultado} />}
+          <Sidebar active={section} onSelect={setSection} usuario={usuario} />
+
+          <main className="main-content">
+
+            {/* ── Sección: Malla Validadora RIPS ── */}
+            {section === 'malla' && (
+              <>
+                <UploadCard
+                  jsonFiles={jsonFiles}
+                  excelFiles={excelFiles}
+                  onJsonChange={setJsonFiles}
+                  onExcelChange={setExcelFiles}
+                  onProcesar={handleProcesar}
+                  onExportar={handleExportar}
+                  hasResults={hasResults}
+                  error={error}
+                  loading={loading}
+                />
+                {hasResults && <ResultsSection resultado={resultado} />}
+              </>
+            )}
+
+            {/* ── Sección: Machine Learning ── */}
+            {section === 'ml' && <MachineLearning />}
+
+            {/* ── Sección: Administración ── */}
+            {section === 'admin' && <Admin usuario={usuario} />}
+
+          </main>
+        </div>
 
         <footer className="footer">
-          HSLV · Sistema de Validación RIPS &amp; Auditoría Clínica &nbsp;·&nbsp; Resoluciones 2275 y 2284 de 2023
+          Dr Factory — Sistema de Validación RIPS &amp; Auditoría Clínica &nbsp;·&nbsp; Resoluciones 2275 y 2284 de 2023
           <br />
           <small>Desarrollado por Didier Potosi derechos reservados 2026</small>
         </footer>

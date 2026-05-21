@@ -1,9 +1,9 @@
 [
   {
     "username": "admin",
-    "password": "$2b$12$mlzwU9ixYZL2OhMaG3IAC.feOTKXNunVXO5tmMYEUcK99qOyhORma",
+    "password": "$2b$12$BjoVB2Iho41rcW65Cr.YWOpoojtZ4CLzTGL.EOSkAxPFjG/dfo.kS",
     "role": "admin",
-    "nombre": "Administrador HSLV"
+    "nombre": "Administrador Dr. Factory"
   },
   {
     "username": "auditor",

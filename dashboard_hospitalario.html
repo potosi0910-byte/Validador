@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Hospitalario · Dr. Factory IA Analytics</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── VARIABLES ─────────────────────────────────────────────── */
+:root{
+  --bg:#080812;--bg2:#0e0e1e;--bg3:#13132a;--bg4:#181830;
+  --b:rgba(80,220,200,.13);--bh:rgba(80,220,200,.3);
+  --acc:#3DF5CA;--acc2:#38C4FF;--warn:#FFE040;--pink:#FF5FAA;
+  --red:#FF3B3B;--grn:#00C875;--pur:#A855F7;--ora:#FF7A00;
+  --tx:#DDE4F0;--txd:#6B7899;
+  --fn:'Outfit',sans-serif;--mono:'DM Mono',monospace;--r:12px;--rs:7px;
+  /* servicios */
+  --ucia:#38C4FF;--ucip:#A855F7;--urgp:#FF7A00;--gine:#FF5FAA;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--tx);font-family:var(--fn);font-size:14px;line-height:1.6;overflow-x:hidden;}
+
+/* ── CANVAS BG ─────────────────────────────────────────────── */
+canvas#bgc{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35;}
+
+/* ── HEADER ────────────────────────────────────────────────── */
+.hdr{position:sticky;top:0;z-index:300;background:rgba(8,8,18,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--b);padding:0 24px;height:54px;display:flex;align-items:center;}
+.hdr-in{width:100%;max-width:1600px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.logo{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.logo-mark{width:30px;height:30px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#000;}
+.logo-t{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--acc);}
+.logo-s{font-size:10px;color:var(--txd);}
+nav{display:flex;gap:1px;flex-wrap:wrap;}
+.np{padding:3px 9px;border-radius:14px;font-size:11px;font-weight:500;color:var(--txd);border:1px solid transparent;transition:all .2s;cursor:pointer;background:none;white-space:nowrap;}
+.np:hover,.np.on{color:var(--acc);border-color:var(--bh);background:rgba(61,245,202,.06);}
+.np.s-ucia{color:var(--txd);}.np.s-ucia:hover,.np.s-ucia.on{color:var(--ucia);border-color:rgba(56,196,255,.4);background:rgba(56,196,255,.07);}
+.np.s-ucip:hover,.np.s-ucip.on{color:var(--pur);border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.07);}
+.np.s-urgp:hover,.np.s-urgp.on{color:var(--ora);border-color:rgba(255,122,0,.4);background:rgba(255,122,0,.07);}
+.np.s-gine:hover,.np.s-gine.on{color:var(--pink);border-color:rgba(255,95,170,.4);background:rgba(255,95,170,.07);}
+.bml{display:inline-block;padding:1px 5px;background:rgba(168,85,247,.2);border:1px solid rgba(168,85,247,.4);border-radius:6px;font-size:9px;color:var(--pur);margin-left:2px;vertical-align:middle;}
+
+/* ── FILTER BAR ────────────────────────────────────────────── */
+.fbar{position:sticky;top:54px;z-index:200;background:rgba(13,13,30,.96);backdrop-filter:blur(16px);border-bottom:1px solid rgba(80,220,200,.08);padding:7px 24px;}
+.fbar-in{max-width:1600px;margin:0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.fbar-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--txd);white-space:nowrap;}
+.fsel{background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--tx);font-family:var(--fn);font-size:11px;padding:4px 7px;outline:none;cursor:pointer;transition:border-color .2s;min-width:130px;}
+.fsel:focus{border-color:var(--bh);}
+.fsel:hover{border-color:rgba(80,220,200,.22);}
+.btn-apply{padding:4px 14px;background:linear-gradient(90deg,rgba(61,245,202,.18),rgba(56,196,255,.12));border:1px solid var(--bh);border-radius:14px;color:var(--acc);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-apply:hover{background:linear-gradient(90deg,rgba(61,245,202,.28),rgba(56,196,255,.2));}
+.btn-clear{padding:4px 12px;background:transparent;border:1px solid rgba(255,255,255,.08);border-radius:14px;color:var(--txd);font-size:11px;cursor:pointer;transition:all .2s;}
+.btn-clear:hover{border-color:rgba(255,59,59,.3);color:var(--red);}
+.fbar-info{font-family:var(--mono);font-size:10px;color:var(--txd);margin-left:auto;white-space:nowrap;}
+.fbar-info span{color:var(--acc);}
+
+/* ── MAIN LAYOUT ───────────────────────────────────────────── */
+main{position:relative;z-index:1;max-width:1600px;margin:0 auto;padding:24px 24px 80px;}
+.sec{margin-bottom:60px;scroll-margin-top:110px;}
+.sec-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--acc);opacity:.7;margin-bottom:4px;}
+.sec-h{font-size:20px;font-weight:700;letter-spacing:-.02em;margin-bottom:16px;}
+.sec-h::after{content:'';display:block;width:28px;height:2px;background:linear-gradient(90deg,var(--sec-acc,var(--acc)),transparent);margin-top:4px;}
+.sec-h.c-ucia{--sec-acc:var(--ucia);}
+.sec-h.c-ucip{--sec-acc:var(--pur);}
+.sec-h.c-urgp{--sec-acc:var(--ora);}
+.sec-h.c-gine{--sec-acc:var(--pink);}
+
+/* ── UPLOAD ─────────────────────────────────────────────────── */
+#load-zone{border:2px dashed var(--bh);border-radius:16px;padding:44px 32px;text-align:center;cursor:pointer;transition:all .3s;background:rgba(61,245,202,.02);}
+#load-zone:hover,#load-zone.drag{border-color:var(--acc);background:rgba(61,245,202,.05);box-shadow:0 0 50px rgba(61,245,202,.08);}
+.lz-icon{font-size:44px;margin-bottom:12px;}
+.lz-title{font-size:18px;font-weight:600;margin-bottom:5px;}
+.lz-sub{font-size:12px;color:var(--txd);max-width:440px;margin:0 auto;}
+.lz-btns{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;}
+.btn-xl{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;background:rgba(61,245,202,.1);border:1px solid var(--bh);border-radius:22px;color:var(--acc);font-weight:600;font-size:12px;cursor:pointer;transition:all .2s;}
+.btn-xl:hover{background:rgba(61,245,202,.2);}
+#lz-st{margin-top:10px;font-size:12px;color:var(--txd);}
+#lz-st.ok{color:var(--grn);}#lz-st.err{color:var(--red);}
+.pb{height:3px;background:var(--bg3);border-radius:2px;margin-top:8px;overflow:hidden;display:none;}
+.pf{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));width:0%;transition:width .5s;}
+input[type=file]{display:none;}
+
+/* ── KPI CARDS ─────────────────────────────────────────────── */
+.kpi-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:9px;margin-bottom:18px;}
+.kpi{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:14px 12px;transition:all .2s;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--kc,var(--acc)),transparent);}
+.kpi:hover{border-color:var(--bh);transform:translateY(-2px);}
+.kpi-v{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--kc,var(--acc));}
+.kpi-l{font-size:10px;color:var(--txd);margin-top:2px;line-height:1.3;}
+.kpi-s{font-size:9px;color:var(--txd);margin-top:1px;font-family:var(--mono);}
+.kw{--kc:var(--warn);}.kp{--kc:var(--pink);}.kg{--kc:var(--grn);}.kr{--kc:var(--red);}.kpu{--kc:var(--pur);}
+.k-ucia{--kc:var(--ucia);}.k-ucip{--kc:var(--pur);}.k-urgp{--kc:var(--ora);}.k-gine{--kc:var(--pink);}
+
+/* ── GRIDS ─────────────────────────────────────────────────── */
+.g1{margin-bottom:12px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;}
+.g25{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px;}
+.cc{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:15px;transition:border-color .2s;}
+.cc:hover{border-color:var(--bh);}
+.cc-lbl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--txd);margin-bottom:10px;}
+.cc canvas{max-height:260px;}
+
+/* ── TABLE ─────────────────────────────────────────────────── */
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--bg3);color:var(--txd);font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:7px 9px;text-align:left;border-bottom:1px solid var(--b);}
+tbody td{padding:6px 9px;border-bottom:1px solid rgba(255,255,255,.04);}
+tbody tr:hover td{background:rgba(61,245,202,.03);}
+.badge{display:inline-block;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:600;}
+.bg{background:rgba(0,200,117,.12);color:var(--grn);border:1px solid rgba(0,200,117,.25);}
+.br{background:rgba(255,59,59,.12);color:var(--red);border:1px solid rgba(255,59,59,.25);}
+.bw{background:rgba(255,224,64,.12);color:var(--warn);border:1px solid rgba(255,224,64,.25);}
+.ba{background:rgba(61,245,202,.1);color:var(--acc);border:1px solid rgba(61,245,202,.25);}
+.bp{background:rgba(168,85,247,.12);color:var(--pur);border:1px solid rgba(168,85,247,.25);}
+.mono{font-family:var(--mono);}
+
+/* ── TABS ──────────────────────────────────────────────────── */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--b);margin-bottom:13px;}
+.tab{padding:6px 13px;font-size:12px;font-weight:500;color:var(--txd);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-1px;}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc);}
+
+/* ── PREDICTOR ─────────────────────────────────────────────── */
+.pred-lay{display:grid;grid-template-columns:1fr 350px;gap:14px;align-items:start;}
+.pred-note{background:rgba(61,245,202,.03);border-left:3px solid var(--acc);border-radius:0 var(--r) var(--r) 0;padding:10px 13px;font-size:12px;color:var(--txd);margin-bottom:16px;}
+.pform{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:18px;}
+.fs-t{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);opacity:.8;margin-bottom:8px;}
+.fsec{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.05);}
+.fsec:last-child{border-bottom:none;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.fg label{display:block;font-size:11px;color:var(--txd);margin-bottom:3px;}
+.finp,.fsel2{width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:var(--rs);color:var(--tx);font-family:var(--fn);font-size:12px;padding:6px 8px;outline:none;transition:border-color .2s;}
+.finp:focus,.fsel2:focus{border-color:var(--bh);}
+.sli{display:flex;align-items:center;gap:6px;}
+.sli input[type=range]{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;background:var(--bg4);outline:none;cursor:pointer;}
+.sli input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--acc);border:2px solid var(--bg2);cursor:pointer;}
+.nin{width:50px;background:var(--bg3);border:1px solid var(--b);border-radius:var(--rs);color:var(--tx);font-family:var(--mono);font-size:11px;padding:4px;text-align:center;outline:none;}
+.tgg{display:flex;gap:3px;flex-wrap:wrap;}
+.tg{background:var(--bg3);border:1px solid var(--b);border-radius:14px;color:var(--txd);font-size:11px;padding:3px 9px;cursor:pointer;transition:all .2s;}
+.tg.on{color:var(--acc);border-color:var(--bh);background:rgba(61,245,202,.07);}
+.dx-wrap{position:relative;}
+.dx-inp{width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:var(--rs);color:var(--tx);font-size:12px;padding:6px 8px;outline:none;}
+.dx-inp:focus{border-color:var(--bh);}
+.dx-dd{position:absolute;top:calc(100% + 3px);left:0;right:0;background:var(--bg3);border:1px solid var(--bh);border-radius:var(--rs);z-index:150;max-height:170px;overflow-y:auto;display:none;}
+.dx-dd.open{display:block;}
+.dx-it{padding:6px 9px;cursor:pointer;font-size:11px;border-bottom:1px solid rgba(255,255,255,.04);}
+.dx-it:hover{background:rgba(61,245,202,.07);color:var(--acc);}
+.dx-cod{font-family:var(--mono);font-size:10px;color:var(--txd);margin-right:6px;}
+.dx-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(61,245,202,.08);border:1px solid rgba(61,245,202,.22);border-radius:9px;padding:2px 8px;font-size:11px;margin-top:4px;}
+.dx-del{cursor:pointer;color:var(--txd);font-size:13px;line-height:1;}
+.dx-del:hover{color:var(--red);}
+.btn-add{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;background:rgba(61,245,202,.07);border:1px solid rgba(61,245,202,.2);border-radius:14px;color:var(--acc);font-size:11px;cursor:pointer;margin-top:5px;transition:all .2s;}
+.btn-add:hover{background:rgba(61,245,202,.14);}
+.btn-pred{width:100%;padding:11px;background:linear-gradient(135deg,rgba(61,245,202,.15),rgba(56,196,255,.1));border:1px solid var(--bh);border-radius:var(--r);color:var(--acc);font-size:13px;font-weight:700;cursor:pointer;transition:all .3s;margin-top:4px;}
+.btn-pred:hover{background:linear-gradient(135deg,rgba(61,245,202,.25),rgba(56,196,255,.18));box-shadow:0 0 24px rgba(61,245,202,.15);}
+.pr-box{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:16px;}
+.pr-empty{text-align:center;color:var(--txd);padding:36px 14px;font-size:12px;}
+.pr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.pr-blk{background:var(--bg3);border:1px solid var(--b);border-radius:var(--rs);padding:12px;text-align:center;}
+.pr-blk.hl{border-color:var(--bh);background:rgba(61,245,202,.04);}
+.pr-val{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--acc);}
+.pr-val.big{font-size:28px;}
+.pr-lbl{font-size:10px;color:var(--txd);margin-top:2px;}
+.pr-bar-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--txd);margin-bottom:3px;margin-top:10px;}
+.pr-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:8px;}
+.pr-bar-f{height:100%;border-radius:2px;transition:width .8s ease;}
+.pr-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;}
+.pr-k{color:var(--txd);}
+
+/* ── REPORT ────────────────────────────────────────────────── */
+.rpt-wrap{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:24px;}
+.rpt-actions{display:flex;gap:7px;margin-bottom:16px;}
+.btn-rpt{padding:5px 14px;background:rgba(61,245,202,.08);border:1px solid rgba(61,245,202,.25);border-radius:16px;color:var(--acc);font-size:12px;cursor:pointer;transition:all .2s;}
+.btn-rpt:hover{background:rgba(61,245,202,.15);}
+.rh1{font-size:16px;font-weight:700;color:var(--acc);margin-bottom:5px;padding-bottom:7px;border-bottom:1px solid var(--b);}
+.rh2{font-size:13px;font-weight:700;color:var(--acc2);margin:16px 0 6px;}
+.rp{color:var(--txd);font-size:12px;margin-bottom:6px;line-height:1.8;}
+.rkv{display:flex;gap:7px;margin-bottom:3px;font-size:12px;}
+.rk{color:var(--txd);min-width:170px;}
+.rv{font-family:var(--mono);color:var(--acc);}
+.rgood{background:rgba(0,200,117,.05);border-left:3px solid var(--grn);padding:8px 11px;border-radius:0 5px 5px 0;margin:6px 0;font-size:12px;color:var(--grn);}
+.rwarn{background:rgba(255,224,64,.05);border-left:3px solid var(--warn);padding:8px 11px;border-radius:0 5px 5px 0;margin:6px 0;font-size:12px;color:var(--warn);}
+
+/* ── EMPTY STATE ───────────────────────────────────────────── */
+.empty-sec{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:36px;text-align:center;color:var(--txd);font-size:13px;}
+.empty-sec strong{color:var(--acc);}
+
+/* ── MISC ──────────────────────────────────────────────────── */
+.hidden{display:none!important;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
+@media(max-width:960px){.pred-lay,.g2,.g3,.g4,.g25{grid-template-columns:1fr;}}
+@media print{.hdr,.fbar,nav,#carga,#bgc,.rpt-actions{display:none!important;}body{background:#fff!important;color:#000!important;}}
+</style>
+</head>
+<body>
+<canvas id="bgc"></canvas>
+
+<!-- ══ HEADER ══════════════════════════════════════════════ -->
+<header class="hdr">
+  <div class="hdr-in">
+    <div class="logo">
+      <div class="logo-mark">H</div>
+      <div><div class="logo-t">Dr. Factory · ANALYTICS</div><div class="logo-s">Motor IA · Auditoría EPS-IPS</div></div>
+    </div>
+    <nav id="nav">
+      <button class="np on"    onclick="goS('carga',this)">Carga</button>
+      <button class="np"       onclick="goS('overview',this)">Overview</button>
+      <button class="np"       onclick="goS('hosp',this)">Hospitalización</button>
+      <button class="np"       onclick="goS('cups',this)">CUPS</button>
+      <button class="np"       onclick="goS('costos',this)">Costos</button>
+      <button class="np"       onclick="goS('ml',this)">ML<span class="bml">IA</span></button>
+      <button class="np s-ucia" onclick="goS('uci-adultos',this)">UCI Adultos</button>
+      <button class="np s-ucip" onclick="goS('uci-ped',this)">UCI Pediátrica</button>
+      <button class="np s-urgp" onclick="goS('urg-ped',this)">Urg. Pediátrica</button>
+      <button class="np s-gine" onclick="goS('ginecologia',this)">Ginecología</button>
+      <button class="np"       onclick="goS('predictor',this)">Predictor</button>
+      <button class="np"       onclick="goS('informe',this)">Informe</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ══ FILTER BAR ═══════════════════════════════════════════ -->
+<div class="fbar" id="fbar" style="display:none">
+  <div class="fbar-in">
+    <span class="fbar-label">FILTROS</span>
+    <select class="fsel" id="f-eps"><option value="">Todas las EPS</option></select>
+    <select class="fsel" id="f-ano"><option value="">Todos los años</option></select>
+    <select class="fsel" id="f-serv"><option value="">Todos los servicios</option></select>
+    <select class="fsel" id="f-cont"><option value="">Todos los contratos</option></select>
+    <button class="btn-apply" onclick="applyFilters()">Aplicar</button>
+    <button class="btn-clear" onclick="clearFilters()">Limpiar</button>
+    <span class="fbar-info" id="fbar-info"></span>
+  </div>
+</div>
+
+<!-- ══ MAIN ═════════════════════════════════════════════════ -->
+<main>
+
+<!-- ── CARGA ──────────────────────────────────────────────── -->
+<section class="sec" id="carga">
+  <div class="sec-lbl">INICIO</div>
+  <h2 class="sec-h">Cargar Datos</h2>
+  <div id="load-zone"
+       ondragover="event.preventDefault();this.classList.add('drag')"
+       ondragleave="this.classList.remove('drag')"
+       ondrop="dropFile(event)">
+    <div class="lz-icon">🏥</div>
+    <div class="lz-title">Motor Analítico Hospitalario · Dr. Factory</div>
+    <div class="lz-sub">Carga el archivo Excel con datos del hospital. Compatible con datos_prueba_v3.xlsx y datos_prueba_hospitalario.xlsx.</div>
+    <div class="lz-btns">
+      <label class="btn-xl" for="xl-inp">📊 Cargar Excel (.xlsx / .xls)</label>
+    </div>
+    <div id="lz-st">Sin datos cargados</div>
+    <div class="pb" id="pb"><div class="pf" id="pf"></div></div>
+  </div>
+  <input type="file" id="xl-inp" accept=".xlsx,.xls" onchange="loadXL(this)">
+</section>
+
+<!-- ── OVERVIEW ───────────────────────────────────────────── -->
+<section class="sec hidden" id="overview">
+  <div class="sec-lbl">RESUMEN GLOBAL</div>
+  <h2 class="sec-h">Overview · KPIs</h2>
+  <div class="kpi-g" id="kpi-g"></div>
+  <div class="g3">
+    <div class="cc"><div class="cc-lbl">Estadísticas Estancia (días)</div><canvas id="ch-est-stats"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Distribución por Régimen</div><canvas id="ch-regimen"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Sexo y Zona (apilado)</div><canvas id="ch-sex-zona"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Top 10 Diagnósticos — Frecuencia</div><canvas id="ch-dx-frec"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Top 10 Diagnósticos — Estancia Media (días)</div><canvas id="ch-dx-est"></canvas></div>
+  </div>
+</section>
+
+<!-- ── HOSPITALIZACIÓN ────────────────────────────────────── -->
+<section class="sec hidden" id="hosp">
+  <div class="sec-lbl">MÓDULO 1</div>
+  <h2 class="sec-h">Análisis de Hospitalización</h2>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Histograma de Estancia (días)</div><canvas id="ch-hist-est"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Ingresos por Vía de Ingreso</div><canvas id="ch-via"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Volumen por Especialidad</div><canvas id="ch-esp-vol"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Estancia Media por Especialidad (días)</div><canvas id="ch-esp-est"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Top 10 EPS — Volumen</div><canvas id="ch-eps-vol"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Estancia Media por EPS</div><canvas id="ch-eps-est"></canvas></div>
+  </div>
+  <div class="g3">
+    <div class="cc"><div class="cc-lbl">Triage por Color</div><canvas id="ch-color"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Mortalidad y Reingreso</div><canvas id="ch-mort-reing"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Top Municipios</div><canvas id="ch-mun"></canvas></div>
+  </div>
+  <!-- v3 charts -->
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Distribución por Grupo Etario</div><canvas id="ch-edad-dist"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Estancia Media por Grupo Etario</div><canvas id="ch-edad-est"></canvas></div>
+  </div>
+  <div class="g3">
+    <div class="cc"><div class="cc-lbl">Ingresos por Día de Semana</div><canvas id="ch-dia-sem"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Ruralidad (Zona)</div><canvas id="ch-zona-rural"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Tendencia Mensual de Ingresos</div><canvas id="ch-tend-mes"></canvas></div>
+  </div>
+  <div class="g1">
+    <div class="cc"><div class="cc-lbl">Volumen por EPS y Año (apilado)</div><canvas id="ch-eps-ano"></canvas></div>
+  </div>
+</section>
+
+<!-- ── CUPS ───────────────────────────────────────────────── -->
+<section class="sec hidden" id="cups">
+  <div class="sec-lbl">MÓDULO 2</div>
+  <h2 class="sec-h">Procedimientos CUPS</h2>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Top 12 Procedimientos por Frecuencia</div><canvas id="ch-cups-frec"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Procedimientos por Especialidad</div><canvas id="ch-cups-esp"></canvas></div>
+  </div>
+  <div class="cc g1">
+    <div class="cc-lbl">Tabla Top 15 Procedimientos</div>
+    <div class="tw"><table><thead><tr><th>Código</th><th>Procedimiento</th><th>Especialidad</th><th>Frecuencia</th><th>% Total</th></tr></thead>
+    <tbody id="cups-tbody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- ── COSTOS ─────────────────────────────────────────────── -->
+<section class="sec hidden" id="costos">
+  <div class="sec-lbl">MÓDULO 3</div>
+  <h2 class="sec-h">Costos, Facturación y Utilidad</h2>
+  <div class="kpi-g" id="fin-kpi-g"></div>
+  <div class="g3">
+    <div class="cc"><div class="cc-lbl">Desglose Financiero Global</div><canvas id="ch-fin-desg"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Top EPS por Facturación (M$)</div><canvas id="ch-fin-eps"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Utilidad Media por Especialidad</div><canvas id="ch-fin-esp"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Facturado vs Utilidad — Top 5 EPS (M$)</div><canvas id="ch-fin-eps2"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Distribución Valor Facturado</div><canvas id="ch-fin-dist"></canvas></div>
+  </div>
+</section>
+
+<!-- ── ML ─────────────────────────────────────────────────── -->
+<section class="sec hidden" id="ml">
+  <div class="sec-lbl">MÓDULO 4 · IA</div>
+  <h2 class="sec-h">Machine Learning · K-Means Clustering</h2>
+  <div class="kpi-g" id="ml-kpi-g"></div>
+  <div class="tabs">
+    <div class="tab on" onclick="mlTab(0,this)">Perfiles Clústeres</div>
+    <div class="tab"    onclick="mlTab(1,this)">Scatter Edad / Estancia</div>
+    <div class="tab"    onclick="mlTab(2,this)">Análisis por Clúster</div>
+    <div class="tab"    onclick="mlTab(3,this)">Correlaciones</div>
+  </div>
+  <div id="ml-t0">
+    <div class="g2">
+      <div class="cc"><div class="cc-lbl">Estancia Media por Clúster</div><canvas id="ch-cl-est"></canvas></div>
+      <div class="cc"><div class="cc-lbl">Edad Media por Clúster</div><canvas id="ch-cl-edad"></canvas></div>
+    </div>
+    <div class="cc g1">
+      <div class="cc-lbl">Tabla de Perfiles</div>
+      <div class="tw"><table><thead><tr><th>Clúster</th><th>N</th><th>Edad media</th><th>Estancia (d)</th><th>Facturado medio</th><th>Mortalidad %</th><th>Zona</th></tr></thead>
+      <tbody id="cl-tbody"></tbody></table></div>
+    </div>
+  </div>
+  <div id="ml-t1" class="hidden">
+    <div class="g2">
+      <div class="cc"><div class="cc-lbl">Clústeres — Edad vs Estancia</div><canvas id="ch-cl-scatter"></canvas></div>
+      <div class="cc"><div class="cc-lbl">Mortalidad por Clúster (%)</div><canvas id="ch-cl-mort"></canvas></div>
+    </div>
+  </div>
+  <div id="ml-t2" class="hidden">
+    <div class="g2">
+      <div class="cc"><div class="cc-lbl">Estancia Media por Clúster</div><canvas id="ch-cl-box"></canvas></div>
+      <div class="cc"><div class="cc-lbl">Facturado Medio por Clúster (k$)</div><canvas id="ch-cl-val"></canvas></div>
+    </div>
+  </div>
+  <div id="ml-t3" class="hidden">
+    <div class="g2">
+      <div class="cc"><div class="cc-lbl">Correlación Edad vs Estancia</div><canvas id="ch-cor-edad-est"></canvas></div>
+      <div class="cc"><div class="cc-lbl">Correlación Estancia vs Valor</div><canvas id="ch-cor-est-val"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── UCI ADULTOS ────────────────────────────────────────── -->
+<section class="sec hidden" id="uci-adultos">
+  <div class="sec-lbl" style="color:var(--ucia)">SERVICIO · UCI</div>
+  <h2 class="sec-h c-ucia">UCI Adultos</h2>
+  <div class="kpi-g" id="kpi-ucia"></div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Top 8 Diagnósticos</div><canvas id="ch-ucia-dx"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Histograma de Estancia (días)</div><canvas id="ch-ucia-hist"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Ingresos por EPS</div><canvas id="ch-ucia-eps"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Tendencia Mensual</div><canvas id="ch-ucia-tend"></canvas></div>
+  </div>
+</section>
+
+<!-- ── UCI PEDIÁTRICA ─────────────────────────────────────── -->
+<section class="sec hidden" id="uci-ped">
+  <div class="sec-lbl" style="color:var(--pur)">SERVICIO · UCI</div>
+  <h2 class="sec-h c-ucip">UCI Pediátrica</h2>
+  <div class="kpi-g" id="kpi-ucip"></div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Top 8 Diagnósticos</div><canvas id="ch-ucip-dx"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Histograma de Estancia (días)</div><canvas id="ch-ucip-hist"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Ingresos por EPS</div><canvas id="ch-ucip-eps"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Tendencia Mensual</div><canvas id="ch-ucip-tend"></canvas></div>
+  </div>
+</section>
+
+<!-- ── URGENCIAS PEDIÁTRICAS ──────────────────────────────── -->
+<section class="sec hidden" id="urg-ped">
+  <div class="sec-lbl" style="color:var(--ora)">SERVICIO · URGENCIAS</div>
+  <h2 class="sec-h c-urgp">Urgencias Pediátricas</h2>
+  <div class="kpi-g" id="kpi-urgp"></div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Top 8 Diagnósticos</div><canvas id="ch-urgp-dx"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Histograma de Estancia (días)</div><canvas id="ch-urgp-hist"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Ingresos por EPS</div><canvas id="ch-urgp-eps"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Tendencia Mensual</div><canvas id="ch-urgp-tend"></canvas></div>
+  </div>
+</section>
+
+<!-- ── GINECOLOGÍA ────────────────────────────────────────── -->
+<section class="sec hidden" id="ginecologia">
+  <div class="sec-lbl" style="color:var(--pink)">SERVICIO · GINECOLOGÍA</div>
+  <h2 class="sec-h c-gine">Ginecología y Obstetricia</h2>
+  <div class="kpi-g" id="kpi-gine"></div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Top 8 Diagnósticos</div><canvas id="ch-gine-dx"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Histograma de Estancia (días)</div><canvas id="ch-gine-hist"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-lbl">Ingresos por EPS</div><canvas id="ch-gine-eps"></canvas></div>
+    <div class="cc"><div class="cc-lbl">Tendencia Mensual</div><canvas id="ch-gine-tend"></canvas></div>
+  </div>
+</section>
+
+<!-- ── PREDICTOR ──────────────────────────────────────────── -->
+<section class="sec hidden" id="predictor">
+  <div class="sec-lbl">PREDICTOR CLÍNICO</div>
+  <h2 class="sec-h">Predicción de Estancia y Costo</h2>
+  <div class="pred-lay">
+    <div>
+      <div class="pred-note"><strong>Modelo consenso:</strong> Combina perfil de clúster K-Means, histórico por diagnóstico, especialidad y factores clínicos para estimar estancia y costo esperado.</div>
+      <div class="pform">
+        <div class="fsec">
+          <div class="fs-t">Datos del Paciente</div>
+          <div class="fg2">
+            <div class="fg"><label>Edad (años)</label>
+              <div class="sli"><input type="range" id="s-edad" min="0" max="110" value="45" oninput="syncN('s-edad','n-edad')">
+              <input type="number" class="nin" id="n-edad" value="45" min="0" max="110" oninput="syncS('n-edad','s-edad')"></div>
+            </div>
+            <div class="fg"><label>Sexo</label>
+              <div class="tgg" id="tg-sx">
+                <button class="tg on" data-v="FEMENINO"   onclick="tog('tg-sx',this)">Femenino</button>
+                <button class="tg"    data-v="MASCULINO"  onclick="tog('tg-sx',this)">Masculino</button>
+              </div>
+            </div>
+          </div>
+          <div class="fg2" style="margin-top:9px;">
+            <div class="fg"><label>Régimen</label><select class="fsel2" id="sel-reg"></select></div>
+            <div class="fg"><label>Zona</label>
+              <div class="tgg" id="tg-zona">
+                <button class="tg on" data-v="URBANA" onclick="tog('tg-zona',this)">Urbana</button>
+                <button class="tg"    data-v="RURAL"  onclick="tog('tg-zona',this)">Rural</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="fsec">
+          <div class="fs-t">Datos Clínicos</div>
+          <div class="fg2">
+            <div class="fg"><label>Especialidad</label><select class="fsel2" id="sel-esp"></select></div>
+            <div class="fg"><label>EPS</label><select class="fsel2" id="sel-eps"></select></div>
+          </div>
+          <div class="fg" style="margin-top:9px;"><label>Vía de Ingreso</label>
+            <div class="tgg" id="tg-via">
+              <button class="tg on" data-v="URGENCIAS"  onclick="tog('tg-via',this)">Urgencias</button>
+              <button class="tg"    data-v="REMITIDO"   onclick="tog('tg-via',this)">Remitido</button>
+              <button class="tg"    data-v="PROGRAMADO" onclick="tog('tg-via',this)">Programado</button>
+            </div>
+          </div>
+        </div>
+        <div class="fsec">
+          <div class="fs-t">Diagnósticos CIE-10 (máx. 3)</div>
+          <div class="fg" style="margin-bottom:7px;"><label>Diagnóstico Principal</label>
+            <div class="dx-wrap"><input class="dx-inp" id="dx1-i" placeholder="Buscar código o nombre..." oninput="sDx(1)" onfocus="sDx(1)" autocomplete="off"><div class="dx-dd" id="dx1-d"></div></div>
+            <div id="dx1-tag"></div><input type="hidden" id="dx1-c"><input type="hidden" id="dx1-e"><input type="hidden" id="dx1-v">
+          </div>
+          <div class="fg hidden" id="dx2-blk" style="margin-bottom:7px;"><label>Diagnóstico 2</label>
+            <div class="dx-wrap"><input class="dx-inp" id="dx2-i" placeholder="Buscar Dx 2..." oninput="sDx(2)" onfocus="sDx(2)" autocomplete="off"><div class="dx-dd" id="dx2-d"></div></div>
+            <div id="dx2-tag"></div><input type="hidden" id="dx2-c"><input type="hidden" id="dx2-e"><input type="hidden" id="dx2-v">
+          </div>
+          <div class="fg hidden" id="dx3-blk" style="margin-bottom:7px;"><label>Diagnóstico 3</label>
+            <div class="dx-wrap"><input class="dx-inp" id="dx3-i" placeholder="Buscar Dx 3..." oninput="sDx(3)" onfocus="sDx(3)" autocomplete="off"><div class="dx-dd" id="dx3-d"></div></div>
+            <div id="dx3-tag"></div><input type="hidden" id="dx3-c"><input type="hidden" id="dx3-e"><input type="hidden" id="dx3-v">
+          </div>
+          <button class="btn-add" id="btn-dx2" onclick="showDxB(2)">+ Agregar Dx 2</button>
+          <button class="btn-add hidden" id="btn-dx3" onclick="showDxB(3)">+ Agregar Dx 3</button>
+        </div>
+        <div class="fsec">
+          <div class="fs-t">Signos Vitales (opcional)</div>
+          <div class="fg3">
+            <div class="fg"><label>TAS (mmHg)</label><input class="finp" id="v-tas" type="number" placeholder="120"></div>
+            <div class="fg"><label>TAD (mmHg)</label><input class="finp" id="v-tad" type="number" placeholder="80"></div>
+            <div class="fg"><label>FC (lpm)</label>  <input class="finp" id="v-fc"  type="number" placeholder="80"></div>
+            <div class="fg"><label>FR (rpm)</label>  <input class="finp" id="v-fr"  type="number" placeholder="18"></div>
+            <div class="fg"><label>Temp (°C)</label> <input class="finp" id="v-temp" type="number" step="0.1" placeholder="37.0"></div>
+            <div class="fg"><label>SpO₂ (%)</label>  <input class="finp" id="v-spo2" type="number" placeholder="98"></div>
+          </div>
+        </div>
+        <button class="btn-pred" onclick="predecir()">⚡ Predecir Estancia y Costo</button>
+      </div>
+    </div>
+    <div class="pr-box" id="pr-box">
+      <div class="pr-empty">Complete el formulario y presione<br><strong style="color:var(--acc)">⚡ Predecir</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── INFORME ────────────────────────────────────────────── -->
+<section class="sec hidden" id="informe">
+  <div class="sec-lbl">INFORME EJECUTIVO</div>
+  <h2 class="sec-h">Reporte Automático Estratégico</h2>
+  <div class="rpt-wrap">
+    <div class="rpt-actions">
+      <button class="btn-rpt" onclick="genRpt()">♻ Regenerar</button>
+      <button class="btn-rpt" onclick="navigator.clipboard.writeText(document.getElementById('rpt').innerText).then(()=>{event.target.textContent='✓ Copiado';setTimeout(()=>event.target.textContent='📋 Copiar',2000)})">📋 Copiar</button>
+      <button class="btn-rpt" onclick="window.print()">🖨 Imprimir</button>
+    </div>
+    <div id="rpt"><div class="pr-empty">Carga datos para generar el informe.</div></div>
+  </div>
+</section>
+
+</main>
+<script>
+// ── PALETA Y CONSTANTES ───────────────────────────────────
+const PAL=['#3DF5CA','#38C4FF','#FF5FAA','#FFE040','#A855F7','#FF7A00','#00C875','#0066CC','#CC2E6A','#C4A800','#6A3AAD','#08B0A0'];
+const TXD='#6B7899',BG2='#0e0e1e',BG3='#13132a';
+const CI={};
+
+// ── CANVAS DE FONDO ───────────────────────────────────────
+(()=>{
+  const cv=document.getElementById('bgc'),ctx=cv.getContext('2d');
+  let W,H,pts=[];
+  const init=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight;pts=Array.from({length:40},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2}));};
+  const draw=()=>{ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,1,0,Math.PI*2);ctx.fillStyle='rgba(61,245,202,.55)';ctx.fill();});pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<110){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=`rgba(61,245,202,${(1-d/110)*.09})`;ctx.lineWidth=.5;ctx.stroke();}}));requestAnimationFrame(draw);};
+  addEventListener('resize',init);init();draw();
+})();
+
+// ── ESTADO ────────────────────────────────────────────────
+let D=null;
+
+// ── NAVEGACIÓN ────────────────────────────────────────────
+function goS(id,el){
+  document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
+  document.querySelectorAll('.np').forEach(b=>b.classList.remove('on'));
+  if(el)el.classList.add('on');
+}
+
+// ── HELPERS GENÉRICOS ─────────────────────────────────────
+const fmtM=v=>{if(v==null)return'N/D';const a=Math.abs(v);return a>=1e9?`$${(v/1e9).toFixed(1)}B`:a>=1e6?`$${(v/1e6).toFixed(1)}M`:a>=1e3?`$${(v/1e3).toFixed(0)}k`:`$${v.toFixed(0)}`;};
+const fmtN=(v,d=1)=>v!=null?v.toLocaleString('es',{minimumFractionDigits:d,maximumFractionDigits:d}):'N/D';
+const escH=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function findCol(keys,cands){for(const c of cands)if(keys.includes(c))return c;return null;}
+function valN(v){const n=parseFloat(String(v??'').replace(',','.'));return isNaN(n)?null:n;}
+function median(arr){if(!arr.length)return null;const s=[...arr].sort((a,b)=>a-b);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function pctile(arr,p){if(!arr.length)return null;const s=[...arr].sort((a,b)=>a-b);return s[Math.floor(p/100*(s.length-1))];}
+function parseDate(v){if(!v)return null;if(v instanceof Date)return isNaN(v)?null:v;const d=new Date(v);return isNaN(d)?null:d;}
+function kpiCard(v,lbl,cls,s){return`<div class="kpi ${cls||''}"><div class="kpi-v">${v}</div><div class="kpi-l">${lbl}</div>${s?`<div class="kpi-s">${s}</div>`:''}</div>`;}
+function mkChart(id,cfg){if(CI[id])CI[id].destroy();const ctx=document.getElementById(id)?.getContext('2d');if(!ctx)return null;CI[id]=new Chart(ctx,cfg);return CI[id];}
+function hBar(id,labels,data,colors){mkChart(id,{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors||PAL.slice(0,labels.length),borderWidth:0,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:TXD,font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:TXD,font:{size:10}},grid:{display:false}}}}});}
+function vBar(id,labels,data,colors,lbl){mkChart(id,{type:'bar',data:{labels,datasets:[{label:lbl||'',data,backgroundColor:colors||PAL.slice(0,labels.length),borderWidth:0,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:!!lbl,labels:{color:TXD,font:{size:10}}}},scales:{x:{ticks:{color:TXD,font:{size:9},maxRotation:35},grid:{display:false}},y:{ticks:{color:TXD,font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}}}}});}
+function donut(id,labels,data,colors){mkChart(id,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors||PAL.slice(0,labels.length),borderWidth:0}]},options:{cutout:'60%',responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{color:TXD,font:{size:10},boxWidth:11}}}}});}
+function lineChart(id,labels,datasets){mkChart(id,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:TXD,font:{size:10}}}},scales:{x:{ticks:{color:TXD,font:{size:9},maxRotation:35},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:TXD,font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}}}}});}
+
+// ── K-MEANS (JS) ──────────────────────────────────────────
+function kMeans(data,k,maxIter=80){
+  if(!data.length)return{labels:[],centers:[]};
+  const step=Math.max(1,Math.floor(data.length/k));
+  let centers=Array.from({length:k},(_,i)=>({e:data[Math.min(i*step,data.length-1)].e,s:data[Math.min(i*step,data.length-1)].s}));
+  let labels=new Array(data.length).fill(0);
+  for(let it=0;it<maxIter;it++){
+    let ch=false;
+    for(let i=0;i<data.length;i++){let best=0,minD=Infinity;for(let ki=0;ki<k;ki++){const d=(data[i].e-centers[ki].e)**2+(data[i].s-centers[ki].s)**2;if(d<minD){minD=d;best=ki;}}if(labels[i]!==best){labels[i]=best;ch=true;}}
+    if(!ch)break;
+    for(let ki=0;ki<k;ki++){const pts=data.filter((_,i)=>labels[i]===ki);if(pts.length){centers[ki].e=pts.reduce((s,p)=>s+p.e,0)/pts.length;centers[ki].s=pts.reduce((s,p)=>s+p.s,0)/pts.length;}}
+  }
+  return{labels,centers};
+}
+
+// ── CARGA EXCEL ───────────────────────────────────────────
+function dropFile(ev){ev.preventDefault();document.getElementById('load-zone').classList.remove('drag');const f=ev.dataTransfer.files[0];if(f)loadXL({files:[f]});}
+function loadXL(inp){
+  if(!inp.files[0])return;
+  setPB(true);setSt('Leyendo Excel...','');
+  const fr=new FileReader();
+  fr.onload=e=>{
+    try{const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});setSt('Procesando...','');setPB(true,50);setTimeout(()=>processExcel(wb,inp.files[0].name),60);}
+    catch(err){setSt('Error: '+err.message,'err');setPB(false);}
+  };
+  fr.readAsArrayBuffer(inp.files[0]);
+}
+function setSt(msg,cls){const el=document.getElementById('lz-st');if(!el)return;el.textContent=msg;el.className=cls?'lz-st '+cls:'lz-st';}
+function setPB(show,pct){const pb=document.getElementById('pb'),pf=document.getElementById('pf');if(pb)pb.style.display=show?'block':'none';if(pf&&pct)pf.style.width=pct+'%';}
+
+// ── PROCESS EXCEL ─────────────────────────────────────────
+function processExcel(wb,fname){
+  const snames=wb.SheetNames;
+  const findSheet=cands=>{for(const c of cands)for(const s of snames)if(s.toUpperCase().includes(c.toUpperCase()))return wb.Sheets[s];return null;};
+
+  const hospS=findSheet(['HOSPITALIZACION','DX_TRIAGE','PRINCIPAL','EGRESO','DATOS','MAIN']);
+  const cupsS=findSheet(['CUPS','PROCEDIMIENTOS']);
+  if(!hospS){setSt('No se encontró hoja principal','err');setPB(false);return;}
+
+  const raw=XLSX.utils.sheet_to_json(hospS,{defval:null});
+  if(!raw.length){setSt('Hoja vacía','err');setPB(false);return;}
+
+  const keys=Object.keys(raw[0]);
+  const CM={
+    INGRESO:   findCol(keys,['INGRESO','ID_INGRESO','NUM_INGRESO','ID','LLAVE']),
+    EDAD:      findCol(keys,['EDAD','EDAD_ANOS','AGE']),
+    SEXO:      findCol(keys,['SEXO','GENERO','GENDER']),
+    REGIMEN:   findCol(keys,['REGIMEN','REGIMEN_AFILIACION','TIPO_AFILIACION']),
+    EPS:       findCol(keys,['EAPB_NOMBRE','EPS','EPS_NOMBRE','ASEGURADORA','ENTIDAD']),
+    CONTRATO:  findCol(keys,['NUMERO_CONTRATO','CONTRATO','NUM_CONTRATO','NRO_CONTRATO']),
+    ANO:       findCol(keys,['AÑO','ANO','YEAR','AÑO_INGRESO']),
+    MUNICIPIO: findCol(keys,['MUNICIPIO_RESIDENCIA','MUNICIPIO','MUN_RESIDENCIA','CIUDAD']),
+    ZONA:      findCol(keys,['ZONA','AREA_PROCEDENCIA','AREA','RURALIDAD']),
+    VIA:       findCol(keys,['VIA_INGRESO','TIPO_INGRESO','CAUSA_INGRESO']),
+    COLOR:     findCol(keys,['COLOR','COLOR_TRIAGE','TRIAGE_COLOR']),
+    COD_DX:    findCol(keys,['COD_CIE10','COD_CIE_10','CIE10','COD_DX']),
+    NOM_DX:    findCol(keys,['NOM_DIAGNOSTICO','NOM_DX','DIAGNOSTICO','DX_PRINCIPAL']),
+    ESP:       findCol(keys,['ESPECIALIDAD_TRATANTE','ESPECIALIDAD','NOMBRE_ESPECIALIDAD']),
+    SERVICIO:  findCol(keys,['SERVICIO_HOSPITALARIO','SERVICIO','COD_SERVICIO','SALA']),
+    ESTANCIA:  findCol(keys,['DIAS_ESTANCIA_REDONDEADOS','DIAS_ESTANCIA','ESTANCIA_DIAS','LOS','ESTANCIA']),
+    MORTALIDAD:findCol(keys,['MORTALIDAD','MUERTE','OBITO','FALLECIMIENTO']),
+    REINGRESO: findCol(keys,['REINGRESO_30_DIAS','REINGRESO','READMISION']),
+    VALOR:     findCol(keys,['VALOR_FACTURADO','VALOR_TOTAL_FACTURA','VALOR_TOTAL','VALOR']),
+    COSTO:     findCol(keys,['COSTO_ESTIMADO','COSTO_TOTAL','COSTO']),
+    UTILIDAD:  findCol(keys,['UTILIDAD_NETA','UTILIDAD','MARGEN_UTILIDAD']),
+    TAS:       findCol(keys,['TA_SISTOLICA','TENSION_SISTOLICA','T_SISTOLICA']),
+    TAD:       findCol(keys,['TA_DIASTOLICA','TENSION_DIASTOLICA','T_DIASTOLICA']),
+    FC:        findCol(keys,['FRECUENCIA_CARDIACA','F_CARDIACA','FC']),
+    TEMP:      findCol(keys,['TEMPERATURA','TEMP']),
+    SPO2:      findCol(keys,['SATUROMETRIA','SPO2','SATURACION_O2']),
+    FECHA_ING: findCol(keys,['FECHA_INGRESO','FECHA_ING','FECHA_ADMISION','FECHA_INICIO']),
+  };
+
+  // Filtrar solo primarios si existe TIPO_DX (formato v3)
+  const tipoCol=findCol(keys,['TIPO_DX']);
+  const rows=tipoCol?raw.filter(r=>String(r[tipoCol]||'').toUpperCase()==='PRIMARIO'):raw;
+
+  const get=(r,k)=>CM[k]?r[CM[k]]:null;
+  const getN=(r,k)=>valN(get(r,k));
+  const getS=(r,k)=>{const v=get(r,k);return v!=null?String(v).trim()||null:null;};
+  const isSi=v=>['SI','SÍ','YES','1','TRUE','FALLECIDO','MUERTO'].includes(String(v||'').toUpperCase().trim());
+  const DIAS=['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'];
+
+  const typed=rows.map(r=>{
+    const fd=parseDate(get(r,'FECHA_ING'));
+    const edad=getN(r,'EDAD');
+    const ano=getN(r,'ANO')||(fd?fd.getFullYear():null);
+    return{
+      ingreso:getS(r,'INGRESO'),edad,sexo:getS(r,'SEXO'),
+      regimen:getS(r,'REGIMEN'),eps:getS(r,'EPS'),
+      contrato:getS(r,'CONTRATO'),ano,
+      mun:getS(r,'MUNICIPIO'),zona:getS(r,'ZONA'),
+      via:getS(r,'VIA'),color:getS(r,'COLOR'),
+      cod_dx:getS(r,'COD_DX'),nom_dx:getS(r,'NOM_DX'),
+      esp:getS(r,'ESP'),serv:getS(r,'SERVICIO'),
+      estancia:getN(r,'ESTANCIA'),
+      mort:isSi(get(r,'MORTALIDAD'))?1:0,
+      reing:isSi(get(r,'REINGRESO'))?1:0,
+      valor:getN(r,'VALOR'),costo:getN(r,'COSTO'),utilidad:getN(r,'UTILIDAD'),
+      tas:getN(r,'TAS'),tad:getN(r,'TAD'),fc:getN(r,'FC'),
+      temp:getN(r,'TEMP'),spo2:getN(r,'SPO2'),
+      fecha_ing:fd,
+      ano_mes:fd?`${fd.getFullYear()}-${String(fd.getMonth()+1).padStart(2,'0')}`:null,
+      dia_semana:fd?DIAS[fd.getDay()]:null,
+    };
+  });
+
+  const ests=typed.map(r=>r.estancia).filter(v=>v!=null&&v>=0&&v<=365);
+  const edades=typed.map(r=>r.edad).filter(v=>v!=null&&v>=0&&v<=120);
+  const vals=typed.map(r=>r.valor).filter(v=>v!=null&&v>0);
+  const costos=typed.map(r=>r.costo).filter(v=>v!=null&&v>0);
+  const utils=typed.map(r=>r.utilidad).filter(v=>v!=null);
+  const n=typed.length;
+
+  const kpis={
+    total_ingresos:n,
+    edad_media:edades.length?Math.round(edades.reduce((s,v)=>s+v,0)/edades.length*10)/10:null,
+    estancia_media:ests.length?Math.round(ests.reduce((s,v)=>s+v,0)/ests.length*10)/10:null,
+    estancia_max:ests.length?Math.max(...ests):null,
+    pct_femenino:n?Math.round(typed.filter(r=>r.sexo&&r.sexo.toUpperCase().includes('FEM')).length/n*1000)/10:null,
+    mortalidad_pct:n?Math.round(typed.reduce((s,r)=>s+r.mort,0)/n*1000)/10:null,
+    reingreso_pct:n?Math.round(typed.reduce((s,r)=>s+r.reing,0)/n*1000)/10:null,
+    total_facturado:vals.length?vals.reduce((s,v)=>s+v,0):null,
+    total_costo:costos.length?costos.reduce((s,v)=>s+v,0):null,
+    total_utilidad:utils.length?utils.reduce((s,v)=>s+v,0):null,
+    margen_global:null,
+  };
+  if(kpis.total_facturado&&kpis.total_utilidad)
+    kpis.margen_global=Math.round(kpis.total_utilidad/kpis.total_facturado*1000)/10;
+
+  const stats_est={
+    mean:kpis.estancia_media,
+    median:median(ests),
+    p75:pctile(ests,75),
+    p90:pctile(ests,90),
+  };
+
+  // Dx
+  const dxMap={};
+  typed.forEach(r=>{if(!r.cod_dx)return;const k=r.cod_dx;if(!dxMap[k])dxMap[k]={cod:k,nom:r.nom_dx||k,n:0,est_s:0,est_c:0,val_s:0,val_c:0};dxMap[k].n++;if(r.estancia!=null){dxMap[k].est_s+=r.estancia;dxMap[k].est_c++;}if(r.valor!=null){dxMap[k].val_s+=r.valor;dxMap[k].val_c++;}});
+  const dx_list=Object.values(dxMap).map(d=>({cod:d.cod,nom:d.nom,n:d.n,est_media:d.est_c?Math.round(d.est_s/d.est_c*10)/10:0,val_media:d.val_c?Math.round(d.val_s/d.val_c):0})).sort((a,b)=>b.n-a.n);
+
+  // Especialidad
+  const espMap={};
+  typed.forEach(r=>{if(!r.esp)return;if(!espMap[r.esp])espMap[r.esp]={n:0,est_s:0,est_c:0,val_s:0,val_c:0,util_s:0,util_c:0};espMap[r.esp].n++;if(r.estancia!=null){espMap[r.esp].est_s+=r.estancia;espMap[r.esp].est_c++;}if(r.valor!=null){espMap[r.esp].val_s+=r.valor;espMap[r.esp].val_c++;}if(r.utilidad!=null){espMap[r.esp].util_s+=r.utilidad;espMap[r.esp].util_c++;}});
+
+  // EPS
+  const epsMap={};
+  typed.forEach(r=>{if(!r.eps)return;if(!epsMap[r.eps])epsMap[r.eps]={n:0,est_s:0,est_c:0,val:0,util:0};epsMap[r.eps].n++;if(r.estancia!=null){epsMap[r.eps].est_s+=r.estancia;epsMap[r.eps].est_c++;}if(r.valor!=null)epsMap[r.eps].val+=r.valor;if(r.utilidad!=null)epsMap[r.eps].util+=r.utilidad;});
+
+  // Municipios
+  const munMap={};typed.forEach(r=>{if(!r.mun)return;munMap[r.mun]=(munMap[r.mun]||0)+1;});
+
+  // CUPS
+  let cupsRawRows=[];
+  if(cupsS){
+    const cr=XLSX.utils.sheet_to_json(cupsS,{defval:null});
+    if(cr.length){
+      const ck=Object.keys(cr[0]);
+      const cIngreso=findCol(ck,['INGRESO','ID_INGRESO','NUM_INGRESO']);
+      const cCod=findCol(ck,['COD_CUPS','CUPS','CUPS_COD']);
+      const cNom=findCol(ck,['NOMBRE_CUPS','DESCRIPCION_CUPS','NOM_CUPS','DESC_CUPS']);
+      const cEsp=findCol(ck,['NOMBRE_ESPECIALIDAD','ESPECIALIDAD','ESPECIALIDAD_CUPS']);
+      const cVal=findCol(ck,['VALOR_TOTAL','VALOR_UNITARIO','VALOR']);
+      cupsRawRows=cr.map(r=>({
+        ingreso:cIngreso?String(r[cIngreso]||''):'',
+        cod:cCod?String(r[cCod]||''):'',
+        nom:cNom?String(r[cNom]||''):'',
+        esp:cEsp?String(r[cEsp]||''):'',
+        val:cVal?valN(r[cVal]):null,
+      }));
+    }
+  }
+
+  // K-Means
+  const MAX_E=Math.max(...edades,1),MAX_S=Math.max(...ests,1);
+  const kmData=typed.filter(r=>r.edad!=null&&r.estancia!=null).map(r=>({e:r.edad/MAX_E,s:r.estancia/MAX_S,orig:r}));
+  const K=Math.min(4,Math.max(2,Math.floor(kmData.length/80)));
+  const km=kMeans(kmData,K);
+  const clusterProfiles={};
+  for(let ki=0;ki<K;ki++){
+    const pts=kmData.filter((_,i)=>km.labels[i]===ki).map(p=>p.orig);
+    const ce=pts.map(r=>r.edad).filter(v=>v!=null);
+    const cs=pts.map(r=>r.estancia).filter(v=>v!=null);
+    const cv=pts.map(r=>r.valor).filter(v=>v!=null);
+    clusterProfiles[ki]={n:pts.length,edad_media:ce.length?Math.round(ce.reduce((s,v)=>s+v,0)/ce.length*10)/10:0,est_media:cs.length?Math.round(cs.reduce((s,v)=>s+v,0)/cs.length*10)/10:0,valor_fac_media:cv.length?Math.round(cv.reduce((s,v)=>s+v,0)/cv.length):0,mort_pct:pts.length?Math.round(pts.reduce((s,r)=>s+r.mort,0)/pts.length*1000)/10:0,zona_urb:pts.length?Math.round(pts.filter(r=>r.zona&&r.zona.toUpperCase().includes('URB')).length/pts.length*100):0};
+  }
+  kmData.forEach((p,i)=>{p.orig._cluster=km.labels[i];});
+
+  // Opciones para filtros y predictor
+  const opciones={
+    diagnosticos:dx_list,
+    especialidades:Object.keys(espMap).sort(),
+    eps:Object.keys(epsMap).sort(),
+    contratos:[...new Set(typed.map(r=>r.contrato).filter(Boolean))].sort(),
+    anos:[...new Set(typed.map(r=>r.ano).filter(Boolean))].sort(),
+    servicios:[...new Set(typed.map(r=>r.serv).filter(Boolean))].sort(),
+    regimen:[...new Set(typed.map(r=>r.regimen).filter(Boolean))].sort(),
+    zona:[...new Set(typed.map(r=>r.zona).filter(Boolean))].sort(),
+  };
+
+  D={fname,n,kpis,stats_est,espMap,epsMap,munMap,typed,dx_list,cupsRawRows,cluster_profiles:clusterProfiles,K,kmData,km,opciones};
+
+  setPB(true,100);
+  setSt(`✓ ${fname} · ${n.toLocaleString('es')} registros cargados`,'ok');
+  setTimeout(()=>{setPB(false);fillFilters();renderAll();},300);
+}
+
+// ── FILTROS ───────────────────────────────────────────────
+function fillFilters(){
+  if(!D)return;
+  const o=D.opciones;
+  const sel=(id,arr,placeholder)=>{const el=document.getElementById(id);if(!el)return;el.innerHTML=`<option value="">${placeholder}</option>`+arr.map(v=>`<option value="${escH(v)}">${escH(v)}</option>`).join('');};
+  sel('f-eps',o.eps,'Todas las EPS');
+  sel('f-ano',o.anos.map(String),'Todos los años');
+  sel('f-serv',o.servicios,'Todos los servicios');
+  sel('f-cont',o.contratos,'Todos los contratos');
+  document.getElementById('fbar').style.display='';
+  updateFbarInfo();
+}
+
+function getFiltered(){
+  if(!D)return[];
+  const fEps=document.getElementById('f-eps')?.value||'';
+  const fAno=document.getElementById('f-ano')?.value||'';
+  const fServ=document.getElementById('f-serv')?.value||'';
+  const fCont=document.getElementById('f-cont')?.value||'';
+  if(!fEps&&!fAno&&!fServ&&!fCont)return D.typed;
+  return D.typed.filter(r=>{
+    if(fEps&&r.eps!==fEps)return false;
+    if(fAno&&String(r.ano)!==fAno)return false;
+    if(fServ&&r.serv!==fServ)return false;
+    if(fCont&&r.contrato!==fCont)return false;
+    return true;
+  });
+}
+
+function getCupsFiltered(rows){
+  if(!D.cupsRawRows.length)return[];
+  const ids=new Set(rows.map(r=>r.ingreso).filter(Boolean));
+  return ids.size&&ids.size<D.n?D.cupsRawRows.filter(r=>ids.has(r.ingreso)):D.cupsRawRows;
+}
+
+function updateFbarInfo(){
+  const el=document.getElementById('fbar-info');if(!el)return;
+  const f=getFiltered();
+  el.innerHTML=`Mostrando <span>${f.length.toLocaleString('es')}</span> de ${D.n.toLocaleString('es')} registros`;
+}
+
+function applyFilters(){updateFbarInfo();renderAll();}
+function clearFilters(){
+  ['f-eps','f-ano','f-serv','f-cont'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  updateFbarInfo();renderAll();
+}
+
+// ── RENDER ALL ────────────────────────────────────────────
+function renderAll(){
+  if(!D)return;
+  ['overview','hosp','cups','costos','ml','uci-adultos','uci-ped','urg-ped','ginecologia','predictor','informe']
+    .forEach(id=>document.getElementById(id)?.classList.remove('hidden'));
+  const rows=getFiltered();
+  renderOverview(rows);
+  renderHosp(rows);
+  renderCups(rows);
+  renderCostos(rows);
+  renderML();
+  renderUciAdultos(rows);
+  renderUciPed(rows);
+  renderUrgPed(rows);
+  renderGinecologia(rows);
+  fillPredictor();
+  genRpt(rows);
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────
+function renderOverview(rows){
+  const k=D.kpis,se=D.stats_est,n=rows.length,tot=D.n;
+  const ests=rows.map(r=>r.estancia).filter(v=>v!=null&&v>=0);
+  const edades=rows.map(r=>r.edad).filter(v=>v!=null);
+  const estM=ests.length?Math.round(ests.reduce((s,v)=>s+v,0)/ests.length*10)/10:null;
+  const edM=edades.length?Math.round(edades.reduce((s,v)=>s+v,0)/edades.length*10)/10:null;
+  const vals=rows.map(r=>r.valor).filter(v=>v!=null&&v>0);
+  const utils=rows.map(r=>r.utilidad).filter(v=>v!=null);
+  const tfac=vals.length?vals.reduce((s,v)=>s+v,0):null;
+  const tutil=utils.length?utils.reduce((s,v)=>s+v,0):null;
+  const mortN=rows.reduce((s,r)=>s+r.mort,0);
+  const reingN=rows.reduce((s,r)=>s+r.reing,0);
+  document.getElementById('kpi-g').innerHTML=[
+    kpiCard(n.toLocaleString('es'),'Total Ingresos (filtro)',''),
+    kpiCard(estM!=null?fmtN(estM)+'d':'N/D','Estancia Media','kw'),
+    kpiCard(edM!=null?fmtN(edM,0)+' años':'N/D','Edad Media',''),
+    kpiCard(n?fmtN(rows.filter(r=>r.sexo&&r.sexo.toUpperCase().includes('FEM')).length/n*100)+'%':'N/D','% Femenino',''),
+    kpiCard(n?fmtN(mortN/n*100)+'%':'N/D','Mortalidad','kr'),
+    kpiCard(n?fmtN(reingN/n*100)+'%':'N/D','Reingreso 30d','kp'),
+    kpiCard(tfac!=null?fmtM(tfac):'N/D','Total Facturado','kg'),
+    kpiCard(tutil!=null?fmtM(tutil):'N/D','Utilidad Neta',tutil>=0?'kg':'kr'),
+    kpiCard(`K = ${D.K}`,'Clústeres K-Means','kpu'),
+    kpiCard(tot.toLocaleString('es'),'Total en archivo',''),
+  ].join('');
+
+  // Estancia stats
+  vBar('ch-est-stats',['Media','Mediana','P75','P90'],
+    [estM,median(ests),pctile(ests,75),pctile(ests,90)],PAL.slice(0,4),'Días');
+
+  // Régimen donut
+  const regMap={};rows.forEach(r=>{if(r.regimen)regMap[r.regimen]=(regMap[r.regimen]||0)+1;});
+  const regE=Object.entries(regMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  donut('ch-regimen',regE.map(e=>e[0]),regE.map(e=>e[1]),PAL);
+
+  // Sexo + zona apilado
+  const fx=rows.filter(r=>r.sexo&&r.zona);
+  const sexos=[...new Set(fx.map(r=>r.sexo))].slice(0,3);
+  const zonas=[...new Set(fx.map(r=>r.zona))].slice(0,3);
+  mkChart('ch-sex-zona',{type:'bar',data:{labels:zonas,datasets:sexos.map((s,i)=>({label:s,data:zonas.map(z=>fx.filter(r=>r.zona===z&&r.sexo===s).length),backgroundColor:PAL[i]+'CC',borderWidth:0,borderRadius:3}))},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:TXD,font:{size:10}}}},scales:{x:{stacked:true,ticks:{color:TXD}},y:{stacked:true,ticks:{color:TXD},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+  // Top Dx
+  const dxFilt={};rows.forEach(r=>{if(!r.cod_dx)return;if(!dxFilt[r.cod_dx])dxFilt[r.cod_dx]={nom:r.nom_dx||r.cod_dx,n:0,est_s:0,est_c:0};dxFilt[r.cod_dx].n++;if(r.estancia!=null){dxFilt[r.cod_dx].est_s+=r.estancia;dxFilt[r.cod_dx].est_c++;}});
+  const top10=Object.values(dxFilt).sort((a,b)=>b.n-a.n).slice(0,10);
+  hBar('ch-dx-frec',top10.map(d=>d.nom.slice(0,42)),top10.map(d=>d.n),PAL.slice(0,10));
+  const byEst=Object.values(dxFilt).filter(d=>d.est_c>0).sort((a,b)=>(b.est_s/b.est_c)-(a.est_s/a.est_c)).slice(0,10);
+  hBar('ch-dx-est',byEst.map(d=>d.nom.slice(0,42)),byEst.map(d=>Math.round(d.est_s/d.est_c*10)/10),PAL.slice(0,10).reverse());
+}
+
+// ── HOSPITALIZACIÓN ───────────────────────────────────────
+function renderHosp(rows){
+  const ests=rows.map(r=>r.estancia).filter(v=>v!=null&&v>=0&&v<=30);
+  const bins=Array(31).fill(0);ests.forEach(v=>bins[Math.min(30,Math.round(v))]++);
+  mkChart('ch-hist-est',{type:'bar',data:{labels:bins.map((_,i)=>i),datasets:[{data:bins,backgroundColor:bins.map((_,i)=>PAL[i%PAL.length]+'AA'),borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:TXD,font:{size:9}}},y:{ticks:{color:TXD},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+  // Vía ingreso
+  const viaMap={};rows.forEach(r=>{if(r.via)viaMap[r.via]=(viaMap[r.via]||0)+1;});
+  const vE=Object.entries(viaMap).sort((a,b)=>b[1]-a[1]);
+  donut('ch-via',vE.map(e=>e[0]),vE.map(e=>e[1]),PAL);
+
+  // Especialidad
+  const espF={};rows.forEach(r=>{if(!r.esp)return;if(!espF[r.esp])espF[r.esp]={n:0,est_s:0,est_c:0};espF[r.esp].n++;if(r.estancia!=null){espF[r.esp].est_s+=r.estancia;espF[r.esp].est_c++;}});
+  const espE=Object.entries(espF).sort((a,b)=>b[1].n-a[1].n).slice(0,10);
+  hBar('ch-esp-vol',espE.map(e=>e[0].slice(0,30)),espE.map(e=>e[1].n),PAL.slice(0,10));
+  hBar('ch-esp-est',espE.map(e=>e[0].slice(0,30)),espE.map(e=>e[1].est_c?Math.round(e[1].est_s/e[1].est_c*10)/10:0),PAL.slice(0,10).reverse());
+
+  // EPS
+  const epsF={};rows.forEach(r=>{if(!r.eps)return;if(!epsF[r.eps])epsF[r.eps]={n:0,est_s:0,est_c:0};epsF[r.eps].n++;if(r.estancia!=null){epsF[r.eps].est_s+=r.estancia;epsF[r.eps].est_c++;}});
+  const epsE=Object.entries(epsF).sort((a,b)=>b[1].n-a[1].n).slice(0,10);
+  hBar('ch-eps-vol',epsE.map(e=>e[0].slice(0,28)),epsE.map(e=>e[1].n),PAL.slice(0,10));
+  hBar('ch-eps-est',epsE.map(e=>e[0].slice(0,28)),epsE.map(e=>e[1].est_c?Math.round(e[1].est_s/e[1].est_c*10)/10:0),PAL.slice(0,10).reverse());
+
+  // Triage
+  const colMap={};rows.forEach(r=>{if(r.color)colMap[r.color]=(colMap[r.color]||0)+1;});
+  const colE=Object.entries(colMap).sort((a,b)=>b[1]-a[1]);
+  const COL_C={'ROJO':'rgba(255,59,59,.8)','NARANJA':'rgba(255,122,0,.8)','AMARILLO':'rgba(255,224,64,.8)','VERDE':'rgba(0,200,117,.8)','AZUL':'rgba(56,196,255,.8)'};
+  donut('ch-color',colE.map(e=>e[0]),colE.map(e=>e[1]),colE.map(e=>COL_C[e[0]]||PAL[0]));
+
+  // Mortalidad
+  const nm=rows.reduce((s,r)=>s+r.mort,0),nr=rows.reduce((s,r)=>s+r.reing,0);
+  donut('ch-mort-reing',['Mortalidad','Reingreso 30d','Sin evento'],[nm,nr,rows.length-nm-nr],['rgba(255,59,59,.8)','rgba(255,95,170,.8)','rgba(61,245,202,.3)']);
+
+  // Municipios
+  const munF={};rows.forEach(r=>{if(r.mun)munF[r.mun]=(munF[r.mun]||0)+1;});
+  const munE=Object.entries(munF).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  hBar('ch-mun',munE.map(e=>e[0]),munE.map(e=>e[1]),PAL.slice(0,10));
+
+  // ── Gráficas v3 ────────────────────────────────────────
+  // Grupos etarios
+  const GRUPOS=[['0-4',0,4],['5-14',5,14],['15-29',15,29],['30-44',30,44],['45-59',45,59],['60-74',60,74],['75+',75,200]];
+  const gcnts=GRUPOS.map(([,a,b])=>rows.filter(r=>r.edad!=null&&r.edad>=a&&r.edad<=b).length);
+  const gests=GRUPOS.map(([,a,b])=>{const s=rows.filter(r=>r.edad!=null&&r.edad>=a&&r.edad<=b&&r.estancia!=null);return s.length?Math.round(s.reduce((t,r)=>t+r.estancia,0)/s.length*10)/10:0;});
+  vBar('ch-edad-dist',GRUPOS.map(g=>g[0]),gcnts,PAL.slice(0,7),'Ingresos');
+  hBar('ch-edad-est',GRUPOS.map(g=>g[0]),gests,PAL.slice(0,7).reverse());
+
+  // Día de semana
+  const DIAS_ORD=['LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO','DOMINGO'];
+  const diasM={};rows.forEach(r=>{if(r.dia_semana)diasM[r.dia_semana]=(diasM[r.dia_semana]||0)+1;});
+  vBar('ch-dia-sem',DIAS_ORD,DIAS_ORD.map(d=>diasM[d]||0),PAL.slice(0,7),'Ingresos');
+
+  // Ruralidad
+  const zonaM={};rows.forEach(r=>{if(r.zona)zonaM[r.zona]=(zonaM[r.zona]||0)+1;});
+  const zonaE=Object.entries(zonaM).sort((a,b)=>b[1]-a[1]);
+  donut('ch-zona-rural',zonaE.map(e=>e[0]),zonaE.map(e=>e[1]),['rgba(61,245,202,.8)','rgba(255,122,0,.8)','rgba(168,85,247,.8)']);
+
+  // Tendencia mensual
+  const tendM={};rows.forEach(r=>{if(r.ano_mes)tendM[r.ano_mes]=(tendM[r.ano_mes]||0)+1;});
+  const tendE=Object.entries(tendM).sort((a,b)=>a[0].localeCompare(b[0])).slice(-24);
+  lineChart('ch-tend-mes',tendE.map(e=>e[0]),[{label:'Ingresos',data:tendE.map(e=>e[1]),borderColor:PAL[0],backgroundColor:PAL[0]+'22',fill:true,tension:0.4,pointRadius:3}]);
+
+  // EPS × Año apilado
+  const anos=[...new Set(rows.map(r=>r.ano).filter(Boolean))].sort();
+  const epsTop=Object.entries(epsF).sort((a,b)=>b[1].n-a[1].n).slice(0,6).map(e=>e[0]);
+  const epsAnoDS=anos.map((a,i)=>({
+    label:String(a),
+    data:epsTop.map(e=>rows.filter(r=>r.eps===e&&r.ano===a).length),
+    backgroundColor:PAL[i%PAL.length]+'CC',borderWidth:0,borderRadius:2,
+  }));
+  mkChart('ch-eps-ano',{type:'bar',data:{labels:epsTop.map(e=>e.slice(0,22)),datasets:epsAnoDS},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:TXD,font:{size:10}}}},scales:{x:{stacked:true,ticks:{color:TXD,font:{size:9},maxRotation:30}},y:{stacked:true,ticks:{color:TXD},grid:{color:'rgba(255,255,255,.04)'}}}}});
+}
+
+// ── CUPS ──────────────────────────────────────────────────
+function renderCups(rows){
+  const cupsRows=getCupsFiltered(rows);
+  if(!cupsRows.length){
+    document.getElementById('cups-tbody').innerHTML='<tr><td colspan="5" style="color:var(--txd);text-align:center;padding:20px">Sin datos CUPS</td></tr>';return;
+  }
+  const cupsMap={};
+  cupsRows.forEach(r=>{if(!r.nom)return;const k=r.nom.slice(0,60);if(!cupsMap[k])cupsMap[k]={nom:k,cod:r.cod,esp:r.esp,n:0,val:0};cupsMap[k].n++;if(r.val)cupsMap[k].val+=r.val;});
+  const cups_list=Object.values(cupsMap).sort((a,b)=>b.n-a.n);
+
+  hBar('ch-cups-frec',cups_list.slice(0,12).map(c=>c.nom.slice(0,42)),cups_list.slice(0,12).map(c=>c.n),PAL.slice(0,12));
+
+  const espCupsMap={};cupsRows.forEach(r=>{if(r.esp)espCupsMap[r.esp]=(espCupsMap[r.esp]||0)+1;});
+  const espCE=Object.entries(espCupsMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  hBar('ch-cups-esp',espCE.map(e=>e[0].slice(0,30)),espCE.map(e=>e[1]),PAL.slice(0,10));
+
+  const total=cups_list.reduce((s,c)=>s+c.n,0);
+  document.getElementById('cups-tbody').innerHTML=cups_list.slice(0,15).map(c=>`
+    <tr><td class="mono">${c.cod}</td><td>${c.nom.slice(0,45)}</td><td>${c.esp.slice(0,25)}</td>
+    <td class="mono">${c.n.toLocaleString('es')}</td>
+    <td><span class="badge ba">${fmtN(c.n/total*100,1)}%</span></td></tr>`).join('');
+}
+
+// ── COSTOS ────────────────────────────────────────────────
+function renderCostos(rows){
+  const vals=rows.map(r=>r.valor).filter(v=>v!=null&&v>0);
+  const costos=rows.map(r=>r.costo).filter(v=>v!=null&&v>0);
+  const utils=rows.map(r=>r.utilidad).filter(v=>v!=null);
+  const tfac=vals.length?vals.reduce((s,v)=>s+v,0):null;
+  const tcost=costos.length?costos.reduce((s,v)=>s+v,0):null;
+  const tutil=utils.length?utils.reduce((s,v)=>s+v,0):null;
+  const margen=tfac&&tutil?Math.round(tutil/tfac*1000)/10:null;
+  const n=rows.length;
+
+  document.getElementById('fin-kpi-g').innerHTML=[
+    kpiCard(tfac!=null?fmtM(tfac):'N/D','Total Facturado','kg'),
+    kpiCard(tcost!=null?fmtM(tcost):'N/D','Costo Total','kp'),
+    kpiCard(tutil!=null?fmtM(tutil):'N/D','Utilidad Neta',tutil>=0?'kg':'kr'),
+    kpiCard(margen!=null?fmtN(margen)+'%':'N/D','Margen Global',margen>=0?'kg':'kr'),
+    kpiCard(tfac&&n?fmtM(tfac/n):'N/D','Facturado / Ingreso','kw'),
+  ].join('');
+
+  // Desglose
+  vBar('ch-fin-desg',['Facturado','Costo','Utilidad'],
+    [Math.max(0,tfac||0),Math.max(0,tcost||0),tutil||0],
+    ['rgba(61,245,202,.8)','rgba(255,95,170,.8)','rgba(255,224,64,.8)']);
+
+  // EPS por facturación
+  const epsF={};rows.forEach(r=>{if(!r.eps)return;if(!epsF[r.eps])epsF[r.eps]={val:0,util:0};if(r.valor!=null)epsF[r.eps].val+=r.valor;if(r.utilidad!=null)epsF[r.eps].util+=r.utilidad;});
+  const epsSort=Object.entries(epsF).sort((a,b)=>b[1].val-a[1].val).slice(0,8);
+  hBar('ch-fin-eps',epsSort.map(e=>e[0].slice(0,28)),epsSort.map(e=>Math.round(e[1].val/1e6)),PAL.slice(0,8));
+
+  // Utilidad por especialidad
+  const espU={};rows.forEach(r=>{if(!r.esp||r.utilidad==null)return;if(!espU[r.esp])espU[r.esp]={s:0,c:0};espU[r.esp].s+=r.utilidad;espU[r.esp].c++;});
+  const espUS=Object.entries(espU).sort((a,b)=>(b[1].s/b[1].c)-(a[1].s/a[1].c)).slice(0,8);
+  const espUV=espUS.map(e=>Math.round(e[1].s/e[1].c));
+  hBar('ch-fin-esp',espUS.map(e=>e[0].slice(0,28)),espUV,espUV.map(v=>v>=0?'rgba(0,200,117,.7)':'rgba(255,59,59,.7)'));
+
+  // Top 5 EPS: facturado vs utilidad
+  const top5=Object.entries(epsF).sort((a,b)=>b[1].val-a[1].val).slice(0,5);
+  mkChart('ch-fin-eps2',{type:'bar',data:{labels:top5.map(e=>e[0].slice(0,20)),datasets:[
+    {label:'Facturado (M$)',data:top5.map(e=>Math.round(e[1].val/1e6)),backgroundColor:'rgba(61,245,202,.7)',borderWidth:0,borderRadius:3},
+    {label:'Utilidad (M$)',data:top5.map(e=>Math.round(e[1].util/1e6)),backgroundColor:'rgba(255,224,64,.7)',borderWidth:0,borderRadius:3},
+  ]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:TXD,font:{size:10}}}},scales:{x:{ticks:{color:TXD,font:{size:9}}},y:{ticks:{color:TXD,font:{size:10},callback:v=>v+'M'},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+  // Distribución valores
+  const ranges=['<500k','500k-1M','1M-2M','2M-5M','>5M'];
+  const rcnts=[vals.filter(v=>v<5e5).length,vals.filter(v=>v>=5e5&&v<1e6).length,vals.filter(v=>v>=1e6&&v<2e6).length,vals.filter(v=>v>=2e6&&v<5e6).length,vals.filter(v=>v>=5e6).length];
+  vBar('ch-fin-dist',ranges,rcnts,PAL.slice(0,5),'Ingresos');
+}
+
+// ── ML · K-MEANS ──────────────────────────────────────────
+function renderML(){
+  if(!D)return;
+  const cp=D.cluster_profiles;
+  const ckeys=Object.keys(cp).sort((a,b)=>Number(a)-Number(b));
+
+  document.getElementById('ml-kpi-g').innerHTML=[
+    kpiCard(`K = ${D.K}`,'Clústeres encontrados','kpu'),
+    kpiCard(D.kpis.estancia_media!=null?fmtN(D.kpis.estancia_media)+'d':'N/D','Estancia global media','kw'),
+    kpiCard(ckeys.length?fmtN(cp[ckeys.reduce((a,b)=>cp[a].est_media>cp[b].est_media?a:b)].est_media)+'d':'N/D','Mayor estancia (clúster)','kr'),
+    kpiCard(ckeys.length?fmtN(cp[ckeys.reduce((a,b)=>cp[a].est_media<cp[b].est_media?a:b)].est_media)+'d':'N/D','Menor estancia (clúster)','kg'),
+    kpiCard(D.kpis.mortalidad_pct!=null?fmtN(D.kpis.mortalidad_pct)+'%':'N/D','Mortalidad global','kr'),
+    kpiCard(ckeys.length?`${cp[ckeys.reduce((a,b)=>cp[a].mort_pct>cp[b].mort_pct?a:b)].mort_pct}%`:'N/D','Mayor mort. (clúster)','kr'),
+  ].join('');
+
+  // Tab 0 — perfiles
+  vBar('ch-cl-est',ckeys.map(k=>`Clúster ${k}`),ckeys.map(k=>cp[k].est_media),ckeys.map((_,i)=>PAL[i]+'CC'),'Días');
+  vBar('ch-cl-edad',ckeys.map(k=>`Clúster ${k}`),ckeys.map(k=>cp[k].edad_media),ckeys.map((_,i)=>PAL[i]+'99'),'Años');
+
+  document.getElementById('cl-tbody').innerHTML=ckeys.map((k,i)=>{
+    const c=cp[k];
+    return `<tr>
+      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${PAL[i]};margin-right:6px"></span>Clúster ${k}</td>
+      <td class="mono">${c.n.toLocaleString('es')}</td>
+      <td class="mono">${fmtN(c.edad_media,0)} años</td>
+      <td><span class="badge bw">${fmtN(c.est_media,1)}d</span></td>
+      <td class="mono">${fmtM(c.valor_fac_media)}</td>
+      <td><span class="badge ${c.mort_pct>5?'br':'bg'}">${fmtN(c.mort_pct,1)}%</span></td>
+      <td>${c.zona_urb>60?'URBANA':'RURAL'} (${c.zona_urb}%)</td></tr>`;
+  }).join('');
+
+  // Tab 1 — scatter
+  const scDS=ckeys.map((k,i)=>{
+    const pts=D.kmData.filter((_,j)=>D.km.labels[j]===Number(k));
+    return{label:`Clúster ${k}`,data:pts.map(p=>({x:Math.round(p.orig.edad),y:Math.round(p.orig.estancia)})),backgroundColor:PAL[i]+'88',borderColor:PAL[i],pointRadius:4,pointHoverRadius:6};
+  });
+  mkChart('ch-cl-scatter',{type:'scatter',data:{datasets:scDS},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:TXD,font:{size:10}}}},scales:{x:{title:{display:true,text:'Edad',color:TXD},ticks:{color:TXD},grid:{color:'rgba(255,255,255,.04)'}},y:{title:{display:true,text:'Estancia (días)',color:TXD},ticks:{color:TXD},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  hBar('ch-cl-mort',ckeys.map(k=>`Clúster ${k}`),ckeys.map(k=>cp[k].mort_pct),ckeys.map((_,i)=>PAL[i]+'CC'));
+
+  // Tab 2 — análisis
+  vBar('ch-cl-box',ckeys.map(k=>`Clúster ${k}`),ckeys.map(k=>cp[k].est_media),ckeys.map((_,i)=>PAL[i]),'Est. media (d)');
+  vBar('ch-cl-val',ckeys.map(k=>`Clúster ${k}`),ckeys.map(k=>Math.round(cp[k].valor_fac_media/1e3)),ckeys.map((_,i)=>PAL[i]),'Miles $');
+
+  // Tab 3 — correlaciones
+  const s1=D.typed.filter(r=>r.edad!=null&&r.estancia!=null).map(r=>({x:r.edad,y:r.estancia})).slice(0,500);
+  const s2=D.typed.filter(r=>r.estancia!=null&&r.valor!=null).map(r=>({x:r.estancia,y:Math.round(r.valor/1e3)})).slice(0,500);
+  mkChart('ch-cor-edad-est',{type:'scatter',data:{datasets:[{label:'Edad vs Estancia',data:s1,backgroundColor:'rgba(61,245,202,.35)',pointRadius:3}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'Edad',color:TXD},ticks:{color:TXD},grid:{color:'rgba(255,255,255,.04)'}},y:{title:{display:true,text:'Estancia (d)',color:TXD},ticks:{color:TXD},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  mkChart('ch-cor-est-val',{type:'scatter',data:{datasets:[{label:'Estancia vs Valor k$',data:s2,backgroundColor:'rgba(168,85,247,.35)',pointRadius:3}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'Estancia (d)',color:TXD},ticks:{color:TXD},grid:{color:'rgba(255,255,255,.04)'}},y:{title:{display:true,text:'Valor (k$)',color:TXD},ticks:{color:TXD},grid:{color:'rgba(255,255,255,.04)'}}}}});
+}
+
+// ── RENDERIZADOR GENÉRICO DE SERVICIO ─────────────────────
+function renderServicio(secId,rows,accent){
+  const kpiEl=document.getElementById(`kpi-${secId}`);
+  if(!rows.length){
+    if(kpiEl)kpiEl.innerHTML=`<div class="empty-sec" style="grid-column:1/-1">Sin registros para este servicio con el filtro actual.<br><strong>Prueba limpiar los filtros.</strong></div>`;
+    ['dx','hist','eps','tend'].forEach(s=>{const c=document.getElementById(`ch-${secId}-${s}`);if(c){const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);}});
+    return;
+  }
+
+  const n=rows.length,tot=D.n;
+  const ests=rows.map(r=>r.estancia).filter(v=>v!=null&&v>=0&&v<=365);
+  const edades=rows.map(r=>r.edad).filter(v=>v!=null);
+  const estM=ests.length?Math.round(ests.reduce((s,v)=>s+v,0)/ests.length*10)/10:null;
+  const edM=edades.length?Math.round(edades.reduce((s,v)=>s+v,0)/edades.length*10)/10:null;
+  const mortN=rows.reduce((s,r)=>s+r.mort,0);
+  const reingN=rows.reduce((s,r)=>s+r.reing,0);
+
+  const cls={'ucia':'k-ucia','ucip':'k-ucip','urgp':'k-urgp','gine':'k-gine'}[secId]||'';
+  if(kpiEl)kpiEl.innerHTML=[
+    kpiCard(n.toLocaleString('es'),'Total Ingresos',cls),
+    kpiCard(estM!=null?fmtN(estM)+'d':'N/D','Estancia Media','kw'),
+    kpiCard(edM!=null?fmtN(edM,0)+' años':'N/D','Edad Media',''),
+    kpiCard(n?fmtN(mortN/n*100,1)+'%':'N/D','Mortalidad','kr'),
+    kpiCard(n?fmtN(reingN/n*100,1)+'%':'N/D','Reingreso 30d','kp'),
+    kpiCard(tot?fmtN(n/tot*100,1)+'%':'N/D','% del Total Hospital',cls),
+  ].join('');
+
+  // Top 8 Dx
+  const dxM={};rows.forEach(r=>{if(!r.cod_dx)return;if(!dxM[r.cod_dx])dxM[r.cod_dx]={nom:r.nom_dx||r.cod_dx,n:0};dxM[r.cod_dx].n++;});
+  const topDx=Object.entries(dxM).sort((a,b)=>b[1].n-a[1].n).slice(0,8);
+  hBar(`ch-${secId}-dx`,topDx.map(e=>e[1].nom.slice(0,40)),topDx.map(e=>e[1].n),
+    Array(topDx.length).fill(accent||PAL[0]));
+
+  // Histograma estancia
+  const bins=Array(31).fill(0);ests.forEach(v=>bins[Math.min(30,Math.round(v))]++);
+  mkChart(`ch-${secId}-hist`,{type:'bar',data:{labels:bins.map((_,i)=>i+'d'),datasets:[{data:bins,backgroundColor:(accent||PAL[0])+'99',borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:TXD,font:{size:9}}},y:{ticks:{color:TXD},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+  // Por EPS
+  const epsM={};rows.forEach(r=>{if(r.eps)epsM[r.eps]=(epsM[r.eps]||0)+1;});
+  const topEps=Object.entries(epsM).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  hBar(`ch-${secId}-eps`,topEps.map(e=>e[0].slice(0,28)),topEps.map(e=>e[1]),
+    Array(topEps.length).fill((accent||PAL[1])+'CC'));
+
+  // Tendencia mensual
+  const tendM={};rows.forEach(r=>{if(r.ano_mes)tendM[r.ano_mes]=(tendM[r.ano_mes]||0)+1;});
+  const tendE=Object.entries(tendM).sort((a,b)=>a[0].localeCompare(b[0])).slice(-18);
+  mkChart(`ch-${secId}-tend`,{type:'line',data:{labels:tendE.map(e=>e[0]),datasets:[{label:'Ingresos',data:tendE.map(e=>e[1]),borderColor:accent||PAL[0],backgroundColor:(accent||PAL[0])+'22',fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:accent||PAL[0]}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:TXD,font:{size:9},maxRotation:35},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:TXD},grid:{color:'rgba(255,255,255,.04)'}}}}});
+}
+
+// ── 4 SECCIONES DE SERVICIO ───────────────────────────────
+function renderUciAdultos(rows){
+  const sub=rows.filter(r=>{
+    const s=(r.serv||'').toUpperCase();
+    const e=(r.esp||'').toUpperCase();
+    return s.includes('UCI ADULTOS')||s.includes('UCICO')||s.includes('NEURO UCI')||
+           (e.includes('UTICA')||e.includes('UCI'))&&(r.edad==null||r.edad>=18);
+  });
+  renderServicio('ucia',sub,'#38C4FF');
+}
+
+function renderUciPed(rows){
+  const sub=rows.filter(r=>{
+    const s=(r.serv||'').toUpperCase();
+    const e=(r.esp||'').toUpperCase();
+    // Servicios pediátricos explícitos
+    if(s.includes('UCI PEDIATRICA')||s.includes('UCI NEONATAL')||
+       s.includes('UCIN')||s.includes('SALA PEDIATRICA'))return true;
+    // Especialidad pediatría con cualquier edad < 18
+    if(e.includes('PEDIATRI')&&r.edad!=null&&r.edad<18)return true;
+    // UCI + edad < 18 (UCI general con paciente pediátrico)
+    if((s.includes('UCI')||e.includes('UCI')||e.includes('UTICA'))&&r.edad!=null&&r.edad<18)return true;
+    return false;
+  });
+  renderServicio('ucip',sub,'#A855F7');
+}
+
+function renderUrgPed(rows){
+  const sub=rows.filter(r=>{
+    const s=(r.serv||'').toUpperCase();
+    const v=(r.via||'').toUpperCase();
+    const e=(r.esp||'').toUpperCase();
+    // Servicio urgencias pediátricas explícito
+    if(s.includes('URGENCIAS PEDIATRIA')||s.includes('URG PEDIATRIA'))return true;
+    // Urgencias generales + edad < 18
+    if(v==='URGENCIAS'&&r.edad!=null&&r.edad<18)return true;
+    // Especialidad urgencias + edad < 18
+    if(e.includes('URGENCIAS')&&r.edad!=null&&r.edad<18)return true;
+    return false;
+  });
+  renderServicio('urgp',sub,'#FF7A00');
+}
+
+function renderGinecologia(rows){
+  const sub=rows.filter(r=>{
+    const e=(r.esp||'').toUpperCase();
+    const s=(r.serv||'').toUpperCase();
+    return e.includes('GINECOL')||e.includes('OBSTETRI')||
+           s.includes('GINECOL')||s.includes('OBSTETRI')||
+           s.includes('PARTO')||s.includes('MATERNIDAD');
+  });
+  renderServicio('gine',sub,'#FF5FAA');
+}
+// ── PREDICTOR ─────────────────────────────────────────────
+function fillPredictor(){
+  if(!D) return;
+  const op=D.opciones;
+  // Régimen
+  const sreg=document.getElementById('sel-reg');
+  if(sreg&&!sreg.dataset.filled){
+    ['CONTRIBUTIVO','SUBSIDIADO','ESPECIAL','VINCULADO','PARTICULAR'].forEach(r=>{
+      const o=document.createElement('option');o.value=o.textContent=r;sreg.appendChild(o);
+    });
+    sreg.dataset.filled='1';
+  }
+  // Especialidad
+  const sesp=document.getElementById('sel-esp');
+  if(sesp&&!sesp.dataset.filled){
+    const espList=[...new Set(D.typed.map(r=>r.esp).filter(Boolean))].sort();
+    espList.forEach(e=>{const o=document.createElement('option');o.value=o.textContent=e;sesp.appendChild(o);});
+    sesp.dataset.filled='1';
+  }
+  // EPS
+  const seps=document.getElementById('sel-eps');
+  if(seps&&!seps.dataset.filled){
+    op.eps.forEach(e=>{const o=document.createElement('option');o.value=o.textContent=e;seps.appendChild(o);});
+    seps.dataset.filled='1';
+  }
+}
+
+function sDx(n){
+  if(!D) return;
+  const q=(document.getElementById(`dx${n}-i`)?.value||'').toUpperCase().trim();
+  const dd=document.getElementById(`dx${n}-d`);
+  if(!dd) return;
+  if(q.length<2){dd.style.display='none';return;}
+  const matches=D.dx_list.filter(d=>d.cod.includes(q)||d.nom.toUpperCase().includes(q)).slice(0,8);
+  if(!matches.length){dd.style.display='none';return;}
+  dd.innerHTML=matches.map(d=>`<div class="dx-opt" onclick="selDx(${n},'${d.cod.replace(/'/g,"\\'")}','${d.nom.replace(/'/g,"\\'").slice(0,45)}',${d.est_media||0},${d.val_media||0})">${d.cod} <span style="color:var(--txd)">${d.nom.slice(0,45)}</span></div>`).join('');
+  dd.style.display='block';
+}
+
+function selDx(n,cod,nom,est,val){
+  document.getElementById(`dx${n}-i`).value='';
+  document.getElementById(`dx${n}-d`).style.display='none';
+  document.getElementById(`dx${n}-c`).value=cod;
+  document.getElementById(`dx${n}-e`).value=est;
+  document.getElementById(`dx${n}-v`).value=val;
+  const tag=document.getElementById(`dx${n}-tag`);
+  tag.innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(61,245,202,.1);border:1px solid rgba(61,245,202,.3);border-radius:10px;padding:2px 8px;font-size:11px;margin-top:3px;">${cod} – ${nom}<span onclick="clrDx(${n})" style="cursor:pointer;color:var(--txd);margin-left:2px;">×</span></span>`;
+  if(n===1){document.getElementById('btn-dx2')?.classList.remove('hidden');}
+  if(n===2){document.getElementById('btn-dx3')?.classList.remove('hidden');}
+}
+
+function clrDx(n){
+  ['c','e','v'].forEach(s=>{const el=document.getElementById(`dx${n}-${s}`);if(el)el.value='';});
+  const tag=document.getElementById(`dx${n}-tag`);if(tag)tag.innerHTML='';
+  const inp=document.getElementById(`dx${n}-i`);if(inp)inp.value='';
+}
+
+function showDxB(n){
+  document.getElementById(`dx${n}-blk`)?.classList.remove('hidden');
+  document.getElementById(`btn-dx${n}`)?.classList.add('hidden');
+}
+
+function predecir(){
+  if(!D){document.getElementById('pr-box').innerHTML='<div class="pr-empty">Primero carga los datos.</div>';return;}
+  const edad=parseInt(document.getElementById('n-edad').value)||45;
+  const sexo=document.querySelector('#tg-sx .tg.on')?.dataset.v||'FEMENINO';
+  const zona=document.querySelector('#tg-zona .tg.on')?.dataset.v||'URBANA';
+  const via=document.querySelector('#tg-via .tg.on')?.dataset.v||'URGENCIAS';
+  const reg=document.getElementById('sel-reg')?.value||'';
+  const esp=document.getElementById('sel-esp')?.value||'';
+  const eps=document.getElementById('sel-eps')?.value||'';
+  const dx1c=document.getElementById('dx1-c')?.value||'';
+  const dx1e=parseFloat(document.getElementById('dx1-e')?.value)||null;
+  const dx1v=parseFloat(document.getElementById('dx1-v')?.value)||null;
+  const dx2e=parseFloat(document.getElementById('dx2-e')?.value)||null;
+  const dx3e=parseFloat(document.getElementById('dx3-e')?.value)||null;
+  const tas=parseFloat(document.getElementById('v-tas')?.value)||null;
+  const fc=parseFloat(document.getElementById('v-fc')?.value)||null;
+  const temp=parseFloat(document.getElementById('v-temp')?.value)||null;
+  const spo2=parseFloat(document.getElementById('v-spo2')?.value)||null;
+
+  // ── MODELO CONSENSO ──────────────────────────────────────
+  // Fuente 1: clúster K-Means más cercano
+  let clusterEst=null, clusterVal=null, clusterLabel='N/D';
+  if(D.cluster_profiles && Object.keys(D.cluster_profiles).length){
+    const normEdad=edad/100, normEst=0.5;
+    let bestDist=Infinity,bestK=null;
+    Object.entries(D.cluster_profiles).forEach(([k,c])=>{
+      const ce=(c.edad_media||45)/100, cest=(c.est_media||7)/30;
+      const dist=Math.sqrt(Math.pow(normEdad-ce,2)+Math.pow(normEst-cest,2));
+      if(dist<bestDist){bestDist=dist;bestK=k;}
+    });
+    if(bestK!=null){
+      clusterEst=D.cluster_profiles[bestK].est_media;
+      clusterVal=D.cluster_profiles[bestK].val_media;
+      clusterLabel=`Clúster ${bestK} (est. ${fmtN(clusterEst,1)}d)`;
+    }
+  }
+
+  // Fuente 2: histórico por diagnóstico principal
+  let dxEst=dx1e, dxVal=dx1v;
+  if(dx2e!=null) dxEst=dxEst!=null?(dxEst+dx2e)/2:dx2e;
+  if(dx3e!=null) dxEst=dxEst!=null?(dxEst+dx3e)/2:dx3e;
+
+  // Fuente 3: histórico por especialidad
+  let espEst=null, espVal=null;
+  if(esp && D.typed.length){
+    const espRows=D.typed.filter(r=>r.esp===esp&&r.estancia!=null);
+    if(espRows.length>=3){
+      espEst=espRows.reduce((s,r)=>s+r.estancia,0)/espRows.length;
+      const espValRows=espRows.filter(r=>r.val_fac!=null);
+      if(espValRows.length)espVal=espValRows.reduce((s,r)=>s+r.val_fac,0)/espValRows.length;
+    }
+  }
+
+  // Fuente 4: histórico por EPS
+  let epsEst=null;
+  if(eps && D.typed.length){
+    const epsRows=D.typed.filter(r=>r.eps===eps&&r.estancia!=null);
+    if(epsRows.length>=5) epsEst=epsRows.reduce((s,r)=>s+r.estancia,0)/epsRows.length;
+  }
+
+  // Ponderación consenso
+  const weights=[],vals=[];
+  if(clusterEst!=null){weights.push(2);vals.push(clusterEst);}
+  if(dxEst!=null){weights.push(3);vals.push(dxEst);}
+  if(espEst!=null){weights.push(2);vals.push(espEst);}
+  if(epsEst!=null){weights.push(1);vals.push(epsEst);}
+  if(!vals.length){vals.push(D.kpis.estancia_media||6);weights.push(1);}
+  const wSum=weights.reduce((a,b)=>a+b,0);
+  let estBase=vals.reduce((s,v,i)=>s+v*weights[i],0)/wSum;
+
+  // Ajustes clínicos
+  let factores=[];
+  if(via==='URGENCIAS'){estBase*=1.15;factores.push({l:'Ingreso urgencias',v:'+15%',c:'var(--warn)'});}
+  if(via==='REMITIDO'){estBase*=1.20;factores.push({l:'Remitido (mayor complejidad)',v:'+20%',c:'var(--warn)'});}
+  if(edad>75){estBase*=1.25;factores.push({l:'Edad > 75 años',v:'+25%',c:'var(--red)'});}
+  else if(edad>60){estBase*=1.12;factores.push({l:'Edad 61–75 años',v:'+12%',c:'var(--warn)'});}
+  else if(edad<5){estBase*=1.30;factores.push({l:'Neonatal/lactante (<5)',v:'+30%',c:'var(--red)'});}
+  if(zona==='RURAL'){estBase*=1.08;factores.push({l:'Zona rural',v:'+8%',c:'var(--txd)'});}
+  if(temp!=null&&temp>38.5){estBase*=1.10;factores.push({l:'Fiebre (Temp>38.5°C)',v:'+10%',c:'var(--warn)'});}
+  if(spo2!=null&&spo2<92){estBase*=1.20;factores.push({l:'SpO₂ < 92%',v:'+20%',c:'var(--red)'});}
+  if(fc!=null&&(fc>110||fc<50)){estBase*=1.08;factores.push({l:'FC anormal',v:'+8%',c:'var(--txd)'});}
+  if(reg==='VINCULADO'||reg==='PARTICULAR'){estBase*=0.95;}
+
+  // Costo estimado
+  const valBase=clusterVal||dxVal||espVal||(D.kpis.total_facturado&&D.n?D.kpis.total_facturado/D.n:null);
+  let costEst=valBase!=null?valBase*(estBase/(clusterEst||dxEst||espEst||6)):null;
+
+  // Riesgo de reingreso
+  const riskFactors=[via==='URGENCIAS',edad>65,reg==='SUBSIDIADO',dx1c.startsWith('J'),dx1c.startsWith('I')].filter(Boolean).length;
+  const riesgoReing=riskFactors>=3?'Alto':riskFactors===2?'Moderado':'Bajo';
+  const riesgoColor=riskFactors>=3?'var(--red)':riskFactors===2?'var(--warn)':'var(--grn)';
+
+  // Intervalo de confianza
+  const ci_lo=Math.max(1,estBase*0.75), ci_hi=estBase*1.35;
+
+  // Servicio probable
+  const espUp=(esp||'').toUpperCase();
+  let servProb='Hospitalización General';
+  if(espUp.includes('UCI')||espUp.includes('UTICA')){servProb=edad>=18?'UCI Adultos':'UCI Pediátrica';}
+  else if(espUp.includes('PEDIATRI')&&edad<18)servProb='Hospitalización Pediátrica';
+  else if(espUp.includes('GINECOL')||espUp.includes('OBSTETRI'))servProb='Ginecología/Obstetricia';
+  else if(via==='URGENCIAS'&&edad<18)servProb='Urgencias Pediátricas';
+
+  // Render resultado
+  document.getElementById('pr-box').innerHTML=`
+<div style="display:flex;flex-direction:column;gap:12px;">
+  <div style="text-align:center;padding:14px 0 10px;border-bottom:1px solid var(--b);">
+    <div style="font-family:var(--mono);font-size:11px;color:var(--txd);letter-spacing:.1em;margin-bottom:4px;">ESTANCIA ESTIMADA</div>
+    <div style="font-size:36px;font-weight:700;font-family:var(--mono);color:var(--acc);">${fmtN(estBase,1)}<span style="font-size:16px;color:var(--txd)"> días</span></div>
+    <div style="font-size:11px;color:var(--txd);margin-top:3px;">IC 75%: ${fmtN(ci_lo,1)} – ${fmtN(ci_hi,1)} días</div>
+  </div>
+  ${costEst!=null?`<div style="text-align:center;padding:8px 0;border-bottom:1px solid var(--b);">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--txd);letter-spacing:.1em;margin-bottom:2px;">COSTO ESTIMADO</div>
+    <div style="font-size:22px;font-weight:600;font-family:var(--mono);color:var(--warn);">${fmtM(costEst)}</div>
+  </div>`:''}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div style="background:var(--bg3);border-radius:8px;padding:9px;text-align:center;">
+      <div style="font-size:9px;color:var(--txd);letter-spacing:.1em;margin-bottom:3px;">REINGRESO 30d</div>
+      <div style="font-size:13px;font-weight:600;color:${riesgoColor};">${riesgoReing}</div>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:9px;text-align:center;">
+      <div style="font-size:9px;color:var(--txd);letter-spacing:.1em;margin-bottom:3px;">SERVICIO PROBABLE</div>
+      <div style="font-size:11px;font-weight:500;color:var(--acc2);">${servProb}</div>
+    </div>
+  </div>
+  ${factores.length?`<div>
+    <div style="font-size:9px;color:var(--txd);letter-spacing:.12em;margin-bottom:6px;">FACTORES AJUSTE</div>
+    ${factores.map(f=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+      <span style="color:var(--txd);">${f.l}</span><span style="color:${f.c};font-family:var(--mono);">${f.v}</span>
+    </div>`).join('')}
+  </div>`:''}
+  <div>
+    <div style="font-size:9px;color:var(--txd);letter-spacing:.12em;margin-bottom:6px;">FUENTES DEL MODELO</div>
+    ${clusterEst!=null?`<div style="font-size:11px;color:var(--txd);padding:2px 0;">K-Means: ${clusterLabel}</div>`:''}
+    ${dxEst!=null?`<div style="font-size:11px;color:var(--txd);padding:2px 0;">Histórico Dx: ${fmtN(dxEst,1)}d promedio</div>`:''}
+    ${espEst!=null?`<div style="font-size:11px;color:var(--txd);padding:2px 0;">Especialidad ${esp}: ${fmtN(espEst,1)}d</div>`:''}
+    ${epsEst!=null?`<div style="font-size:11px;color:var(--txd);padding:2px 0;">EPS ${eps}: ${fmtN(epsEst,1)}d</div>`:''}
+  </div>
+  <div style="font-size:10px;color:var(--txd);font-family:var(--mono);border-top:1px solid var(--b);padding-top:8px;line-height:1.7;">
+    Modelo consenso estadístico.<br>No reemplaza criterio clínico.
+  </div>
+</div>`;
+}
+
+function genRpt(rows){
+  if(!D)return;
+  const k=D.kpis, rows2=rows||getFiltered();
+  const top3=D.dx_list.slice(0,3);
+  const fecha=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
+
+  // Helper: servicio sub-totales
+  function svcStats(filterFn,label,color){
+    const sub=rows2.filter(filterFn);
+    if(!sub.length)return '';
+    const estArr=sub.filter(r=>r.estancia!=null).map(r=>r.estancia);
+    const estMedia=estArr.length?estArr.reduce((a,b)=>a+b,0)/estArr.length:null;
+    const mort=sub.filter(r=>(r.cond_egreso||'').toUpperCase().includes('MUER')).length;
+    const mortPct=sub.length?mort/sub.length*100:0;
+    const topDx=Object.entries(sub.reduce((m,r)=>{if(r.dx)m[r.dx]=(m[r.dx]||0)+1;return m;},{}))
+      .sort((a,b)=>b[1]-a[1]).slice(0,2).map(e=>e[0]).join(', ');
+    return `<div class="rkv" style="border-left:3px solid ${color};padding-left:8px;">
+      <div class="rk" style="color:${color};">${label}</div>
+      <div class="rv">${sub.length} egresos · est. media ${estMedia!=null?fmtN(estMedia,1)+'d':'N/D'} · mort. ${fmtN(mortPct,1)}%${topDx?` · Dx: ${topDx}`:''}</div>
+    </div>`;
+  }
+
+  const uciA=svcStats(r=>{const s=(r.serv||'').toUpperCase();const e=(r.esp||'').toUpperCase();return s.includes('UCI ADULTOS')||s.includes('UCICO')||((e.includes('UTICA')||e.includes('UCI'))&&(r.edad==null||r.edad>=18));},'UCI Adultos','#38C4FF');
+  const uciP=svcStats(r=>{const s=(r.serv||'').toUpperCase();const e=(r.esp||'').toUpperCase();return s.includes('UCI PEDIATRICA')||s.includes('UCI NEONATAL')||s.includes('UCIN')||s.includes('SALA PEDIATRICA')||(e.includes('PEDIATRI')&&r.edad!=null&&r.edad<18)||((s.includes('UCI')||e.includes('UCI')||e.includes('UTICA'))&&r.edad!=null&&r.edad<18);},'UCI Pediátrica / Pediatría','#A855F7');
+  const urgP=svcStats(r=>{const s=(r.serv||'').toUpperCase();const v=(r.via||'').toUpperCase();const e=(r.esp||'').toUpperCase();return s.includes('URGENCIAS PEDIATRIA')||s.includes('URG PEDIATRIA')||(v==='URGENCIAS'&&r.edad!=null&&r.edad<18)||(e.includes('URGENCIAS')&&r.edad!=null&&r.edad<18);},'Urgencias Pediátricas','#FF7A00');
+  const gine=svcStats(r=>{const e=(r.esp||'').toUpperCase();const s=(r.serv||'').toUpperCase();return e.includes('GINECOL')||e.includes('OBSTETRI')||s.includes('GINECOL')||s.includes('OBSTETRI')||s.includes('PARTO')||s.includes('MATERNIDAD');},'Ginecología / Obstetricia','#FF5FAA');
+
+  // EPS mayor volumen
+  const epsVol=Object.entries(rows2.reduce((m,r)=>{if(r.eps)m[r.eps]=(m[r.eps]||0)+1;return m;},{})).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  // Especialidad mayor estancia
+  const espEst=Object.entries(rows2.filter(r=>r.esp&&r.estancia!=null).reduce((m,r)=>{if(!m[r.esp])m[r.esp]={s:0,n:0};m[r.esp].s+=r.estancia;m[r.esp].n++;return m;},{})).map(([k,v])=>({k,avg:v.s/v.n,n:v.n})).filter(x=>x.n>=3).sort((a,b)=>b.avg-a.avg).slice(0,3);
+
+  // Recomendaciones dinámicas
+  const recs=[];
+  if((k.estancia_media||0)>7)recs.push(`<li>La estancia media de <strong>${fmtN(k.estancia_media,1)} días</strong> supera el umbral de 7d. Revisar protocolos de alta temprana y gestión de camas.</li>`);
+  if((k.reingreso_pct||0)>10)recs.push(`<li>Reingreso a 30 días del <strong>${fmtN(k.reingreso_pct,1)}%</strong> — fortalecer seguimiento post-egreso y programas de telemedicina.</li>`);
+  if((k.mortalidad_pct||0)>5)recs.push(`<li>Mortalidad del <strong>${fmtN(k.mortalidad_pct,1)}%</strong> — activar comité de revisión de mortalidad y auditoría de casos críticos.</li>`);
+  if((k.margen_global||0)<5&&k.margen_global!=null)recs.push(`<li>Margen financiero del <strong>${fmtN(k.margen_global,1)}%</strong> — priorizar renegociación tarifaria con EAPB de mayor volumen.</li>`);
+  if(espEst.length&&espEst[0].avg>10)recs.push(`<li>Especialidad <strong>${espEst[0].k}</strong> con estancia media de ${fmtN(espEst[0].avg,1)}d — evaluar protocolos específicos de optimización.</li>`);
+  recs.push(`<li>Usar la segmentación K-Means (K=${D.K}) para diseñar rutas clínicas diferenciadas por perfil de riesgo.</li>`);
+  recs.push(`<li>Implementar seguimiento mensual de indicadores UCI con tablero de KPI reactivo.</li>`);
+
+  document.getElementById('rpt').innerHTML=`
+<div class="rh1">Informe Ejecutivo — Análisis Hospitalario · Dr. Factory</div>
+<p class="rp" style="margin-top:6px;margin-bottom:14px;">
+  Fuente: <strong>${D.fname||'datos'}</strong> &nbsp;·&nbsp; Fecha: ${fecha} &nbsp;·&nbsp;
+  <strong>${rows2.length.toLocaleString('es-CO')}</strong> registros analizados de <strong>${D.n.toLocaleString('es-CO')}</strong> totales
+</p>
+
+<div class="rh2">1. Actividad Asistencial General</div>
+${[
+  ['Total egresos (filtro activo)', rows2.length.toLocaleString('es-CO')],
+  ['Estancia media', k.estancia_media!=null?fmtN(k.estancia_media,1)+'d':'N/D'],
+  ['Estancia mediana', D.stats_est?.median!=null?fmtN(D.stats_est.median,1)+'d':'N/D'],
+  ['Percentil 90 estancia', D.stats_est?.p90!=null?fmtN(D.stats_est.p90,1)+'d':'N/D'],
+  ['Edad media pacientes', k.edad_media!=null?fmtN(k.edad_media,1)+' años':'N/D'],
+  ['% Femenino', k.pct_femenino!=null?fmtN(k.pct_femenino,1)+'%':'N/D'],
+  ['Mortalidad hospitalaria', k.mortalidad_pct!=null?fmtN(k.mortalidad_pct,1)+'%':'N/D'],
+  ['Tasa reingreso 30d', k.reingreso_pct!=null?fmtN(k.reingreso_pct,1)+'%':'N/D'],
+].map(([l,v])=>`<div class="rkv"><div class="rk">${l}</div><div class="rv">${v}</div></div>`).join('')}
+${k.mortalidad_pct!=null?`<div class="${k.mortalidad_pct>5?'rwarn':'rgood'}">Mortalidad ${fmtN(k.mortalidad_pct,1)}% — ${k.mortalidad_pct>5?'Revisar protocolos y comité de muertes evitables':'Dentro de rangos hospitalarios esperados'}</div>`:''}
+${k.reingreso_pct!=null?`<div class="${k.reingreso_pct>10?'rwarn':'rgood'}">Reingreso ${fmtN(k.reingreso_pct,1)}% — ${k.reingreso_pct>10?'Fortalecer seguimiento post-egreso':'Tasa controlada'}</div>`:''}
+
+<div class="rh2">2. Servicios Especializados</div>
+${uciA||'<div class="rp">UCI Adultos: sin datos suficientes en filtro activo.</div>'}
+${uciP||'<div class="rp">UCI Pediátrica / Pediatría: sin datos suficientes en filtro activo.</div>'}
+${urgP||'<div class="rp">Urgencias Pediátricas: sin datos suficientes en filtro activo.</div>'}
+${gine||'<div class="rp">Ginecología/Obstetricia: sin datos suficientes en filtro activo.</div>'}
+
+<div class="rh2">3. Top Diagnósticos (filtro activo)</div>
+${top3.length?top3.map((d,i)=>`<div class="rkv"><div class="rk">${i+1}. ${d.cod} – ${d.nom.slice(0,42)}</div><div class="rv">${d.n} casos · est. media ${fmtN(d.est_media,1)}d</div></div>`).join(''):'<div class="rp">No hay diagnósticos disponibles.</div>'}
+
+<div class="rh2">4. EPS de Mayor Volumen</div>
+${epsVol.length?epsVol.map(([e,n],i)=>`<div class="rkv"><div class="rk">${i+1}. ${e}</div><div class="rv">${n.toLocaleString('es-CO')} egresos (${fmtN(n/rows2.length*100,1)}%)</div></div>`).join(''):'<div class="rp">Sin datos de EPS.</div>'}
+
+${espEst.length?`<div class="rh2">5. Especialidades de Mayor Estancia</div>
+${espEst.map((x,i)=>`<div class="rkv"><div class="rk">${i+1}. ${x.k}</div><div class="rv">${fmtN(x.avg,1)}d media · ${x.n} egresos</div></div>`).join('')}`:''}
+
+<div class="rh2">${espEst.length?'6':'5'}. Análisis Financiero</div>
+${[
+  ['Total facturado', k.total_facturado!=null?fmtM(k.total_facturado):'N/D'],
+  ['Costo total', k.total_costo!=null?fmtM(k.total_costo):'N/D'],
+  ['Utilidad neta', k.total_utilidad!=null?fmtM(k.total_utilidad):'N/D'],
+  ['Margen global', k.margen_global!=null?fmtN(k.margen_global,1)+'%':'N/D'],
+  ['Facturación promedio/egreso', (k.total_facturado&&rows2.length)?fmtM(k.total_facturado/rows2.length):'N/D'],
+].map(([l,v])=>`<div class="rkv"><div class="rk">${l}</div><div class="rv">${v}</div></div>`).join('')}
+${k.margen_global!=null?`<div class="${k.margen_global<5?'rwarn':'rgood'}">Margen ${fmtN(k.margen_global,1)}% — ${k.margen_global<5?'Renegociar tarifas con EAPB principales':k.margen_global>=15?'Sostenibilidad financiera sólida':'Margen operacional aceptable'}</div>`:''}
+
+<div class="rh2">${espEst.length?'7':'6'}. Segmentación IA — K-Means (K=${D.K})</div>
+${Object.entries(D.cluster_profiles).map(([kk,c])=>`<div class="rkv"><div class="rk">Clúster ${kk} (n=${c.n})</div><div class="rv">Est. media ${fmtN(c.est_media,1)}d · edad ${fmtN(c.edad_media,0)}a · mortalidad ${fmtN(c.mort_pct,1)}%${c.val_media?` · factura avg ${fmtM(c.val_media)}`:''}</div></div>`).join('')}
+
+<div class="rh2">${espEst.length?'8':'7'}. Recomendaciones Estratégicas</div>
+<ol style="padding-left:18px;color:var(--txd);font-size:12px;line-height:2.2;">${recs.join('')}</ol>
+
+<div style="margin-top:22px;padding-top:12px;border-top:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;">
+  <span style="font-size:11px;color:var(--txd);font-family:var(--mono);"> Creado por Didier Potosi - Dr. Factory Dashboard IA v1</span>
+  <span style="font-size:11px;color:var(--txd);font-family:var(--mono);">${fecha}</span>
+</div>`;
+}
+
+function mlTab(idx,el){for(let i=0;i<4;i++){const t=document.getElementById(`ml-t${i}`);if(t)t.classList.toggle('hidden',i!==idx);}document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',i===idx));}
+function syncN(s,n){document.getElementById(n).value=document.getElementById(s).value;}
+function syncS(n,s){document.getElementById(s).value=document.getElementById(n).value;}
+function tog(gid,el){document.querySelectorAll(`#${gid} .tg`).forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+</script>
+</body>
+</html>

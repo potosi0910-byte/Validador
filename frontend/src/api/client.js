@@ -4,7 +4,7 @@ const api = axios.create({ baseURL: '/api' })
 
 // ── Token en cada petición ────────────────────────────────────────────────────
 api.interceptors.request.use(config => {
-  const token = localStorage.getItem('hslv_token')
+  const token = localStorage.getItem('drf_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
@@ -14,8 +14,8 @@ api.interceptors.response.use(
   res => res,
   err => {
     if (err?.response?.status === 401) {
-      localStorage.removeItem('hslv_token')
-      localStorage.removeItem('hslv_user')
+      localStorage.removeItem('drf_token')
+      localStorage.removeItem('drf_user')
       window.location.reload()
     }
     return Promise.reject(err)
@@ -30,8 +30,8 @@ export async function login(username, password) {
   const { data } = await api.post('/auth/login', form, {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   })
-  localStorage.setItem('hslv_token', data.access_token)
-  localStorage.setItem('hslv_user',  JSON.stringify({
+  localStorage.setItem('drf_token', data.access_token)
+  localStorage.setItem('drf_user',  JSON.stringify({
     username: data.username,
     role:     data.role,
     nombre:   data.nombre,
@@ -40,13 +40,13 @@ export async function login(username, password) {
 }
 
 export function logout() {
-  localStorage.removeItem('hslv_token')
-  localStorage.removeItem('hslv_user')
+  localStorage.removeItem('drf_token')
+  localStorage.removeItem('drf_user')
 }
 
 export function getUsuarioGuardado() {
   try {
-    const raw = localStorage.getItem('hslv_user')
+    const raw = localStorage.getItem('drf_user')
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
@@ -56,11 +56,22 @@ export function getUsuarioGuardado() {
 // ── Validación RIPS ───────────────────────────────────────────────────────────
 export async function procesar(jsonFiles, excelFiles = [], onProgress) {
   const form = new FormData()
-  jsonFiles.forEach(f  => form.append('json_files',   f))
-  excelFiles.forEach(f => form.append('excel_files',  f))
+  jsonFiles.forEach(f => form.append('json_files', f))
+
+  // Leer Excel a memoria antes de enviar: evita ERR_UPLOAD_FILE_CHANGED
+  // cuando el archivo está abierto en Excel/LibreOffice durante el upload
+  for (const f of excelFiles) {
+    try {
+      const buf = await f.arrayBuffer()
+      form.append('excel_files', new Blob([buf], { type: f.type || 'application/octet-stream' }), f.name)
+    } catch {
+      form.append('excel_files', f)
+    }
+  }
 
   const { data } = await api.post('/procesar', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 600000,
     onUploadProgress: e => {
       if (onProgress && e.total) onProgress(Math.round((e.loaded * 100) / e.total))
     },
@@ -80,6 +91,45 @@ export async function exportarExcel() {
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+// ── Administración de usuarios ────────────────────────────────────────────────
+
+export async function listarUsuarios() {
+  const { data } = await api.get('/auth/usuarios')
+  return data
+}
+
+export async function crearUsuario({ username, password, role, nombre }) {
+  const { data } = await api.post('/auth/usuarios', { username, password, role, nombre })
+  return data
+}
+
+export async function eliminarUsuario(username) {
+  const { data } = await api.delete(`/auth/usuarios/${username}`)
+  return data
+}
+
+export async function cambiarPasswordUsuario(username, nueva_password) {
+  const { data } = await api.put('/auth/password', { username, nueva_password })
+  return data
+}
+
+export async function cambiarMiPassword(password_actual, nueva_password) {
+  const { data } = await api.put('/auth/me/password', { password_actual, nueva_password })
+  return data
+}
+
+// ── Machine Learning ──────────────────────────────────────────────────────────
+export async function analizarML(excelFile, k = 4) {
+  const form = new FormData()
+  form.append('excel_file', excelFile)
+  form.append('k', String(k))
+  const { data } = await api.post('/ml/analizar', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 900000,
+  })
+  return data
 }
 
 export default api

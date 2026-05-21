@@ -222,7 +222,7 @@ def validar_auditoria(data, nombre_archivo=""):
         if horas_est is not None:
 
             # ── EST-24H-01: Estancia < 24h sin observación ni hospitalización ──
-            if 14 <= horas_est < 24:
+            if 8 <= horas_est < 24:
                 tiene_obs  = ("5DSM01" in cod_otros or "5DSM01" in cod_procs)
                 tiene_hosp = bool(hosps)
 

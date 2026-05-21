@@ -1,0 +1,7 @@
+tunnel: extractor-rips
+credentials-file: C:\Users\HAUDITORIA42\.cloudflared\<TUNNEL_ID>.json
+
+ingress:
+  - hostname: extractor-rips.cloudflare.app
+    service: http://localhost:5000
+  - service: http_status:404

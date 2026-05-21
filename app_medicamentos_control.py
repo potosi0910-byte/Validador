@@ -129,9 +129,10 @@ def cargar_excel_autorizaciones(archivos_excel):
         if not archivo or archivo.filename == "":
             continue
         try:
-            wb = load_workbook(archivo, data_only=True)
+            archivo.seek(0)
+            wb = load_workbook(archivo, data_only=True, read_only=True)
             ws = wb.active
-            headers = [cell.value for cell in ws[1]]
+            headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
  
             col_tipo_id      = encontrar_col(headers, ["TIPO", "AFILIADO"])
             col_numero       = encontrar_col(headers, ["NUMERO"])
@@ -184,10 +185,12 @@ def cargar_excel_autorizaciones(archivos_excel):
                     set_aut_excel.add(numero_aut)
 
                 filas_cargadas += 1
- 
+
+            wb.close()
+
         except Exception as e:
             errores.append(f"[{archivo.filename}] Error leyendo Excel: {e}")
- 
+
     return registros_excel, set_aut_excel, errores
  
  
@@ -3200,7 +3203,107 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
                 item.get('archivo_rips', ''),
                 item.get('archivo_eps', ''),
             ])
- 
+
+        for item in alertas.get('estancia_sin_aut', []):
+            ws2.append([
+                item.get('mensaje', 'Estancia hospitalaria sin autorización en base de datos'),
+                item.get('auths_hosp', ''),
+                item.get('num_doc', ''),
+                item.get('num_factura', ''),
+                item.get('archivo_rips', ''),
+                item.get('archivo_eps', ''),
+            ])
+
+        for item in alertas.get('proc_qx_misma_aut_hosp', []):
+            ws2.append([
+                item.get('mensaje', 'Proc. quirúrgico con auth igual a la de la estancia'),
+                item.get('num_aut', ''),
+                item.get('num_doc', ''),
+                item.get('num_factura', ''),
+                item.get('archivo_rips', ''),
+                item.get('archivo_eps', ''),
+            ])
+
+        for item in alertas.get('sin_num_aut_relacionado', []):
+            ws2.append([
+                item.get('mensaje', 'Sin números de autorización relacionados'),
+                '',
+                item.get('num_doc', ''),
+                item.get('num_factura', ''),
+                item.get('archivo_rips', ''),
+                item.get('archivo_eps', ''),
+            ])
+
+        for item in alertas.get('amb_aut_emision_posterior', []):
+            ws2.append([
+                f"Auth emitida POSTERIOR al servicio (Serv: {item.get('fecha_servicio','')} / Emis: {item.get('fecha_emision','')})",
+                item.get('num_aut', ''),
+                item.get('num_doc', ''),
+                '',
+                item.get('archivo_rips', ''),
+                item.get('archivo_eps', ''),
+            ])
+
+        for item in alertas.get('hosp_cod_sin_aut', []):
+            ws2.append([
+                item.get('mensaje', 'Hospitalización: código sin autorización asociada'),
+                '',
+                item.get('num_doc', ''),
+                item.get('num_factura', ''),
+                item.get('archivo_rips', ''),
+                item.get('archivo_eps', ''),
+            ])
+
+        for item in alertas.get('hosp_proc_cod_no_cruza', []):
+            ws2.append([
+                item.get('mensaje', 'Hosp + Procedimientos: auth y código no coinciden'),
+                item.get('num_aut', ''),
+                item.get('num_doc', ''),
+                item.get('num_factura', ''),
+                item.get('archivo_rips', ''),
+                item.get('archivo_eps', ''),
+            ])
+
+        for item in alertas.get('hosp_cups_duplicado', []):
+            ws2.append([
+                f"{item.get('mensaje', 'Hosp: código CUPS duplicado')} (x{item.get('repeticiones', '')})",
+                item.get('cod_proc', ''),
+                item.get('num_doc', ''),
+                item.get('num_factura', ''),
+                item.get('archivo_rips', ''),
+                '',
+            ])
+
+        for item in alertas.get('proc_sin_aut_amb', []):
+            ws2.append([
+                f"Proc. ambulatorio sin auth obligatoria ({item.get('seccion', '')})",
+                item.get('cod_proc', ''),
+                item.get('num_doc', ''),
+                item.get('num_factura', ''),
+                item.get('archivo_rips', ''),
+                '',
+            ])
+
+        for item in alertas.get('proc_aut_no_cruza_amb', []):
+            ws2.append([
+                'Auth no corresponde al CUPS del RIPS (Ambulatorio)',
+                item.get('num_aut', ''),
+                item.get('num_doc', ''),
+                item.get('num_factura', ''),
+                item.get('archivo_rips', ''),
+                item.get('archivo_eps', ''),
+            ])
+
+        for item in alertas.get('cups_noestandar_sin_aut', []):
+            ws2.append([
+                f"CUPS no estándar sin auth ({item.get('seccion', '')})",
+                item.get('cod_proc', ''),
+                item.get('num_doc', ''),
+                item.get('num_factura', ''),
+                item.get('archivo_rips', ''),
+                '',
+            ])
+
         for i in range(1, len(headers2) + 1):
             max_len = max(
                 (len(str(ws2.cell(r, i).value or "")) for r in range(1, ws2.max_row + 1)),
@@ -3559,4 +3662,4 @@ def index():
  
  
 if __name__ == '__main__':
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

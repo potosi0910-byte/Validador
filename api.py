@@ -5,20 +5,32 @@ Expone la misma lógica de app_medicamentos_control.py como API REST JSON.
 
 from __future__ import annotations
 
+import base64
+import glob as _glob
 import io
 import json
+import os
+import re
+import sqlite3
+import subprocess
+import sys
+import tempfile
+from collections import defaultdict
 from datetime import datetime
+from time import time
 from typing import List
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from auth import (
     autenticar_usuario,
     cambiar_password,
+    cambiar_password_verificado,
     crear_token,
     crear_usuario,
     eliminar_usuario,
@@ -55,16 +67,164 @@ app = FastAPI(
     version="2.0.0",
 )
 
+_ORIGINS = os.environ.get(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,http://localhost:3000"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Caché en memoria del último resultado procesado (para exportar sin reenviar archivos)
 _cache: dict = {}
+
+# ══════════════════════════════════════════════════════════════
+# ESTADÍSTICAS — SQLite (solo conteos, sin datos de pacientes)
+# ══════════════════════════════════════════════════════════════
+
+_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "estadisticas.db")
+
+
+def _init_db():
+    con = sqlite3.connect(_DB_PATH)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS estadisticas (
+            id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+            fecha                 TEXT NOT NULL,
+            usuario               TEXT NOT NULL,
+            archivos_json         INTEGER,
+            total_rips            INTEGER,
+            med_invalidos         INTEGER,
+            auts_rips             INTEGER,
+            auts_excel            INTEGER,
+            tipo_mismatch         INTEGER,
+            amb_par_nc            INTEGER,
+            hosp_proc_nc          INTEGER,
+            hosp_aut_no_rel       INTEGER,
+            estancia_sin_aut      INTEGER,
+            proc_qx_aut_hosp      INTEGER,
+            sin_aut_rel           INTEGER,
+            amb_emision_post      INTEGER,
+            hosp_cod_sin_aut      INTEGER,
+            hosp_cups_duplicado   INTEGER,
+            proc_sin_aut_amb      INTEGER,
+            proc_aut_no_cruza     INTEGER,
+            cups_noestandar_nc    INTEGER,
+            hosp_proc_cod_no_cruza INTEGER,
+            malla_total           INTEGER,
+            malla_criticas        INTEGER,
+            malla_notificaciones  INTEGER,
+            general_total         INTEGER,
+            general_criticas      INTEGER,
+            general_notificaciones INTEGER,
+            auditoria_total       INTEGER,
+            auditoria_criticas    INTEGER,
+            auditoria_notificaciones INTEGER,
+            top_reglas_malla      TEXT,
+            top_reglas_general    TEXT,
+            top_reglas_auditoria  TEXT,
+            tiempo_procesamiento  TEXT
+        )
+    """)
+    con.commit()
+    con.close()
+
+
+def _guardar_estadistica(stats: dict, usuario: str):
+    try:
+        con = sqlite3.connect(_DB_PATH)
+        con.execute("""
+            INSERT INTO estadisticas (
+                fecha, usuario,
+                archivos_json, total_rips, med_invalidos, auts_rips, auts_excel,
+                tipo_mismatch, amb_par_nc, hosp_proc_nc, hosp_aut_no_rel,
+                estancia_sin_aut, proc_qx_aut_hosp, sin_aut_rel, amb_emision_post,
+                hosp_cod_sin_aut, hosp_cups_duplicado, proc_sin_aut_amb,
+                proc_aut_no_cruza, cups_noestandar_nc, hosp_proc_cod_no_cruza,
+                malla_total, malla_criticas, malla_notificaciones,
+                general_total, general_criticas, general_notificaciones,
+                auditoria_total, auditoria_criticas, auditoria_notificaciones,
+                top_reglas_malla, top_reglas_general, top_reglas_auditoria,
+                tiempo_procesamiento
+            ) VALUES (
+                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+            )
+        """, (
+            datetime.now().isoformat(),
+            usuario,
+            stats.get("archivos_json", 0),
+            stats.get("total_rips", 0),
+            stats.get("med_invalidos", 0),
+            stats.get("auts_rips", 0),
+            stats.get("auts_excel", 0),
+            stats.get("tipo_mismatch", 0),
+            stats.get("amb_par_nc", 0),
+            stats.get("hosp_proc_nc", 0),
+            stats.get("hosp_aut_no_rel", 0),
+            stats.get("estancia_sin_aut", 0),
+            stats.get("proc_qx_aut_hosp", 0),
+            stats.get("sin_aut_rel", 0),
+            stats.get("amb_emision_post", 0),
+            stats.get("hosp_cod_sin_aut", 0),
+            stats.get("hosp_cups_duplicado", 0),
+            stats.get("proc_sin_aut_amb", 0),
+            stats.get("proc_aut_no_cruza", 0),
+            stats.get("cups_noestandar_nc", 0),
+            stats.get("hosp_proc_cod_no_cruza", 0),
+            stats.get("malla_total", 0),
+            stats.get("malla_criticas", 0),
+            stats.get("malla_notificaciones", 0),
+            stats.get("general_total", 0),
+            stats.get("general_criticas", 0),
+            stats.get("general_notificaciones", 0),
+            stats.get("auditoria_total", 0),
+            stats.get("auditoria_criticas", 0),
+            stats.get("auditoria_notificaciones", 0),
+            json.dumps(stats.get("malla_top_reglas", [])),
+            json.dumps(stats.get("general_top_reglas", [])),
+            json.dumps(stats.get("auditoria_top_reglas", [])),
+            stats.get("tiempo_procesamiento", ""),
+        ))
+        con.commit()
+        con.close()
+    except Exception:
+        pass  # nunca bloquear el flujo principal por un error de estadísticas
+
+
+_init_db()
+
+
+# ══════════════════════════════════════════════════════════════
+# RATE LIMITING — protección bruta-fuerza en login
+# ══════════════════════════════════════════════════════════════
+
+_login_attempts: dict = defaultdict(list)
+_RATE_WINDOW  = 60   # segundos
+_RATE_MAX     = 10   # intentos por ventana
+
+
+def _check_login_rate(ip: str) -> None:
+    now = time()
+    _login_attempts[ip] = [t for t in _login_attempts[ip] if now - t < _RATE_WINDOW]
+    if len(_login_attempts[ip]) >= _RATE_MAX:
+        raise HTTPException(
+            status_code=429,
+            detail="Demasiados intentos de acceso. Espere 1 minuto.",
+            headers={"Retry-After": "60"},
+        )
+    _login_attempts[ip].append(now)
+
+
+def _safe_filename(name: str) -> str:
+    """Elimina path traversal y caracteres peligrosos de un nombre de archivo."""
+    name = os.path.basename(name)
+    name = re.sub(r"[^\w\-_. ]", "_", name)
+    return name[:200] or "upload"
 
 
 # ══════════════════════════════════════════════════════════════
@@ -110,8 +270,12 @@ class NuevoUsuario(BaseModel):
     nombre:   str = ""
 
 class CambioPassword(BaseModel):
-    username:     str
+    username:       str
     nueva_password: str
+
+class CambioPasswordPropio(BaseModel):
+    password_actual: str
+    nueva_password:  str
 
 
 # ══════════════════════════════════════════════════════════════
@@ -119,7 +283,9 @@ class CambioPassword(BaseModel):
 # ══════════════════════════════════════════════════════════════
 
 @app.post("/api/auth/login", tags=["Autenticación"])
-def login(form: OAuth2PasswordRequestForm = Depends()):
+def login(request: Request, form: OAuth2PasswordRequestForm = Depends()):
+    ip = request.client.host if request.client else "unknown"
+    _check_login_rate(ip)
     usuario = autenticar_usuario(form.username, form.password)
     if not usuario:
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos.")
@@ -160,6 +326,12 @@ def put_password(body: CambioPassword, _: dict = Depends(solo_admin)):
     return {"ok": True}
 
 
+@app.put("/api/auth/me/password", tags=["Autenticación"])
+def put_mi_password(body: CambioPasswordPropio, usuario: dict = Depends(get_usuario_actual)):
+    cambiar_password_verificado(usuario["username"], body.password_actual, body.nueva_password)
+    return {"ok": True}
+
+
 # ══════════════════════════════════════════════════════════════
 # SISTEMA
 # ══════════════════════════════════════════════════════════════
@@ -171,14 +343,21 @@ def health():
 
 @app.post("/api/procesar", tags=["Validación"])
 async def procesar(
-    json_files: List[UploadFile] = File(..., description="Archivos RIPS JSON"),
-    excel_files: List[UploadFile] = File(default=[], description="Excel de autorizaciones (opcional)"),
+    request: Request,
     usuario: dict = Depends(get_usuario_actual),
 ):
     """
     Procesa uno o más archivos RIPS JSON con autorizaciones Excel opcionales.
     Retorna todas las validaciones, alertas y estadísticas en formato JSON.
     """
+    # python-multipart tiene límite de 1000 archivos por defecto; lo subimos
+    form = await request.form(max_files=5000, max_fields=5000)
+    json_files  = form.getlist("json_files")
+    excel_files = form.getlist("excel_files")
+
+    if not json_files:
+        raise HTTPException(status_code=400, detail="Se requieren archivos RIPS JSON.")
+
     registros: list = []
     alertas: list = []
     validaciones_malla: list = []
@@ -300,6 +479,9 @@ async def procesar(
         "errores_procesamiento":      errores_acum,
     }
 
+    # ── Guardar estadísticas (solo conteos, sin datos de pacientes) ──────
+    _guardar_estadistica(stats, usuario.get("username", "desconocido"))
+
     # ── Guardar en caché para exportar ────────────────────────────────────
     _cache["ultimo"] = {
         "registros": registros,
@@ -318,6 +500,28 @@ async def procesar(
         "validaciones_general": validaciones_general,
         "validaciones_auditoria": validaciones_auditoria,
     }
+
+
+@app.get("/api/estadisticas", tags=["Estadísticas"])
+def get_estadisticas(
+    limite: int = 100,
+    _: dict = Depends(solo_admin),
+):
+    """Retorna el historial de procesamiento (solo conteos, sin datos de pacientes)."""
+    con = sqlite3.connect(_DB_PATH)
+    con.row_factory = sqlite3.Row
+    filas = con.execute(
+        "SELECT * FROM estadisticas ORDER BY id DESC LIMIT ?", (limite,)
+    ).fetchall()
+    con.close()
+    resultado = []
+    for f in filas:
+        row = dict(f)
+        row["top_reglas_malla"]     = json.loads(row.get("top_reglas_malla") or "[]")
+        row["top_reglas_general"]   = json.loads(row.get("top_reglas_general") or "[]")
+        row["top_reglas_auditoria"] = json.loads(row.get("top_reglas_auditoria") or "[]")
+        resultado.append(row)
+    return {"total": len(resultado), "registros": resultado}
 
 
 @app.get("/api/exportar", tags=["Exportación"])
@@ -341,6 +545,105 @@ def exportar(usuario: dict = Depends(get_usuario_actual)):
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={nombre}"},
     )
+
+
+# ══════════════════════════════════════════════════════════════
+# MACHINE LEARNING — Análisis Predictivo Estancia Hospitalaria
+# ══════════════════════════════════════════════════════════════
+
+_ML_SCRIPT = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "analisis_hospitalario_v1.py",
+)
+
+
+@app.post("/api/ml/analizar", tags=["Machine Learning"])
+async def ml_analizar(
+    excel_file: UploadFile = File(..., description="Excel con hojas DX_TRIAGE y CUPS"),
+    k: int = Form(default=4, ge=2, le=10, description="Número de clusters K-Means"),
+    _usuario: dict = Depends(get_usuario_actual),
+):
+    """
+    Ejecuta el análisis predictivo de estancia hospitalaria con K-Means +
+    modelos supervisados. Retorna las gráficas generadas como imágenes base64.
+    """
+    if not os.path.isfile(_ML_SCRIPT):
+        raise HTTPException(status_code=500, detail="Script de análisis no disponible.")
+
+    content = await excel_file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Archivo Excel vacío.")
+
+    safe_name = _safe_filename(excel_file.filename or "datos.xlsx")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        excel_path = os.path.join(tmpdir, safe_name)
+        with open(excel_path, "wb") as fh:
+            fh.write(content)
+
+        out_dir = os.path.join(tmpdir, "figuras")
+        os.makedirs(out_dir, exist_ok=True)
+
+        _ml_env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
+        try:
+            result = subprocess.run(
+                [sys.executable, _ML_SCRIPT, "--excel", excel_path, "--k", str(k), "--out", out_dir],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=900,
+                cwd=tmpdir,
+                env=_ml_env,
+            )
+        except subprocess.TimeoutExpired:
+            raise HTTPException(status_code=504, detail="El análisis superó el tiempo límite (15 min).")
+
+        if result.returncode != 0:
+            # No exponer stderr al cliente — solo loguear en servidor
+            import sys as _sys
+            print(result.stderr[-3000:], file=_sys.stderr)
+            raise HTTPException(status_code=500, detail="Error al procesar el archivo. Verifique que el Excel tenga las hojas DX_TRIAGE y CUPS.")
+
+        imagenes: dict = {}
+        for img_path in sorted(_glob.glob(os.path.join(out_dir, "*.png"))):
+            nombre = os.path.splitext(os.path.basename(img_path))[0]
+            with open(img_path, "rb") as fh:
+                imagenes[nombre] = base64.b64encode(fh.read()).decode("utf-8")
+
+        return {
+            "status": "ok",
+            "k": k,
+            "archivo": excel_file.filename,
+            "n_graficas": len(imagenes),
+            "log": result.stdout[-5000:] if result.stdout else "",
+            "imagenes": imagenes,
+        }
+
+
+# ══════════════════════════════════════════════════════════════
+# FRONTEND ESTÁTICO (producción)
+# Sirve el build de React desde frontend/dist/
+# ══════════════════════════════════════════════════════════════
+
+_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend", "dist")
+
+if os.path.isdir(_DIST):
+    _assets = os.path.join(_DIST, "assets")
+    if os.path.isdir(_assets):
+        app.mount("/assets", StaticFiles(directory=_assets), name="static-assets")
+
+    @app.get("/styles.css", include_in_schema=False)
+    async def _styles():
+        return FileResponse(os.path.join(_DIST, "styles.css"))
+
+    @app.get("/", include_in_schema=False)
+    async def _index():
+        return FileResponse(os.path.join(_DIST, "index.html"))
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def _spa(full_path: str):
+        return FileResponse(os.path.join(_DIST, "index.html"))
 
 
 # ══════════════════════════════════════════════════════════════

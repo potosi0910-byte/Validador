@@ -1,7 +1,41 @@
 // ResultsSection — replica exacta del dashboard + tablas del template Flask
 // Usa las mismas clases CSS de static/styles.css
 
+import { useState } from 'react'
+
 function pct(n, t) { return t > 0 ? Math.round((n / t) * 100) : 0 }
+
+// ── Chevron animado ───────────────────────────────────────────────────────────
+const IcoChevron = ({ open }) => (
+  <svg
+    viewBox="0 0 20 20" fill="currentColor"
+    style={{ width: '1rem', height: '1rem', flexShrink: 0, marginLeft: 'auto',
+             transition: 'transform 0.22s ease',
+             transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+  >
+    <path fillRule="evenodd"
+      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+      clipRule="evenodd"/>
+  </svg>
+)
+
+// ── Tarjeta colapsable genérica ───────────────────────────────────────────────
+function CollapsibleCard({ cardCls = '', labelCls = '', header, children }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <section className={`card ${cardCls}`}>
+      <div
+        className={`card-label card-label-btn ${labelCls}`}
+        onClick={() => setOpen(o => !o)}
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+      >
+        {header}
+        <IcoChevron open={open} />
+      </div>
+      {open && <div className="card-collapsible-body">{children}</div>}
+    </section>
+  )
+}
 
 function TopReglas({ reglas }) {
   if (!reglas || !reglas.length) return null
@@ -78,7 +112,7 @@ function RowCls(v) {
   return ''
 }
 
-// ── Tabla genérica de alertas ─────────────────────────────────────────────
+// ── Tabla genérica de alertas (colapsable) ────────────────────────────────────
 function AlertTable({ title, desc, items = [], tipo, labelCls = 'label-danger', cardCls = 'alert-card-danger', ico }) {
   if (!items || items.length === 0) return null
   const badgeCls = labelCls.replace('label-', 'badge-')
@@ -95,12 +129,17 @@ function AlertTable({ title, desc, items = [], tipo, labelCls = 'label-danger', 
   const icoPath = ico === 'warn' ? ICO_WARN : ico === 'info' ? ICO_INFO : ICO_DANGER
 
   return (
-    <section className={`card alert-card ${cardCls}`}>
-      <div className={`card-label ${labelCls}`}>
-        <svg viewBox="0 0 20 20" fill="currentColor">{icoPath}</svg>
-        {title}
-        <span className={`badge-count ${badgeCls}`}>{items.length}</span>
-      </div>
+    <CollapsibleCard
+      cardCls={`alert-card ${cardCls}`}
+      labelCls={labelCls}
+      header={
+        <>
+          <svg viewBox="0 0 20 20" fill="currentColor">{icoPath}</svg>
+          {title}
+          <span className={`badge-count ${badgeCls}`}>{items.length}</span>
+        </>
+      }
+    >
       {desc && <p className="alert-desc" dangerouslySetInnerHTML={{ __html: desc }}></p>}
       <div className="table-wrapper">
         <table>
@@ -115,7 +154,7 @@ function AlertTable({ title, desc, items = [], tipo, labelCls = 'label-danger', 
           </tbody>
         </table>
       </div>
-    </section>
+    </CollapsibleCard>
   )
 }
 
@@ -243,18 +282,19 @@ export default function ResultsSection({ resultado }) {
         </>}
       </section>
 
-      {/* ── Alerta volumen ── */}
+      {/* ── Alerta volumen (colapsable) ── */}
       {stats.alerta_volumen && (
-        <section className="card alert-card alert-card-vol">
-          <div className="card-label label-vol">
+        <CollapsibleCard cardCls="alert-card alert-card-vol" labelCls="label-vol" header={
+          <>
             <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>
             Volumen RIPS elevado — {stats.total_rips} registros analizados
-          </div>
+          </>
+        }>
           <p className="alert-desc">Se superaron los <strong>800 registros</strong>. Verifique que el RIPS corresponda a un único periodo de facturación.</p>
-        </section>
+        </CollapsibleCard>
       )}
 
-      {/* ── Tablas de autorizaciones ── */}
+      {/* ── Tablas de autorizaciones (colapsables) ── */}
       {alertas && <>
         <AlertTable tipo="tipo_doc"    title="Tipo de documento no coincide con la EPS"                              items={alertas.tipo_doc_mismatch}         ico="warn" labelCls="label-warn" cardCls="alert-card-warn" />
         <AlertTable tipo="amb_par"     title="Ambulatorio / Cirugía ambulatoria: autorización o código no coinciden" items={alertas.amb_par_no_cruza}           ico="danger" desc="El par <code>numAutorizacion</code> + <code>codProcedimiento</code> del RIPS no se encontró en la base de datos EPS." />
@@ -281,14 +321,15 @@ export default function ResultsSection({ resultado }) {
         )}
       </>}
 
-      {/* ── Auditoría clínica ── */}
+      {/* ── Auditoría clínica (colapsable) ── */}
       {validaciones_auditoria.length > 0 && (
-        <section className="card results-card">
-          <div className="card-label label-danger">
+        <CollapsibleCard cardCls="results-card" labelCls="label-danger" header={
+          <>
             <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/></svg>
             Auditoría Clínica — Hallazgos
             <span className="badge-count badge-danger">{validaciones_auditoria.length}</span>
-          </div>
+          </>
+        }>
           <div className="table-wrapper">
             <table>
               <thead><tr>{COLS.auditoria.map(c => <th key={c}>{c}</th>)}</tr></thead>
@@ -302,17 +343,18 @@ export default function ResultsSection({ resultado }) {
               </tbody>
             </table>
           </div>
-        </section>
+        </CollapsibleCard>
       )}
 
-      {/* ── Medicamentos inválidos ── */}
+      {/* ── Medicamentos inválidos (colapsable) ── */}
       {registros.length > 0 && (
-        <section className="card results-card">
-          <div className="card-label">
+        <CollapsibleCard cardCls="results-card" labelCls="" header={
+          <>
             <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"/></svg>
             Medicamentos inválidos encontrados
             <span className="badge-count badge-warn">{registros.length}</span>
-          </div>
+          </>
+        }>
           <div className="table-wrapper">
             <table>
               <thead><tr>{COLS.medicamentos.map(c => <th key={c}>{c}</th>)}</tr></thead>
@@ -326,7 +368,7 @@ export default function ResultsSection({ resultado }) {
               </tbody>
             </table>
           </div>
-        </section>
+        </CollapsibleCard>
       )}
     </>
   )
