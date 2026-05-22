@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 
 const RIPS_PREFIJO = 'Rips_SL'
 const RIPS_MAX     = 5000
@@ -25,6 +25,11 @@ export default function UploadCard({
   const [btnCargando, setBtnCargando]     = useState(false)
   const [esperandoCarpeta, setEsperandoCarpeta] = useState(false)
   const [escaneando, setEscaneando]       = useState(false)
+  const [procesando, setProcesando]       = useState(false)
+
+  useEffect(() => {
+    if (!loading) setProcesando(false)
+  }, [loading])
 
   const inputAutoRef      = useRef()
   const inputManualRef    = useRef()
@@ -143,6 +148,23 @@ export default function UploadCard({
         </svg>
         Carga de archivos
       </div>
+
+      {/* Overlay procesando archivos */}
+      {procesando && (
+        <div className="clas-overlay clas-active">
+          <div className="clas-card">
+            <div className="clas-spinner">
+              <div className="clas-ring"></div>
+              <div className="clas-ring clas-ring-2"></div>
+              <svg className="clas-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+              </svg>
+            </div>
+            <div className="clas-title">Procesando archivos</div>
+            <div className="clas-sub">Analizando {nJson} archivos RIPS con IA<span className="clas-dots"><span>.</span><span>.</span><span>.</span></span></div>
+          </div>
+        </div>
+      )}
 
       {/* Overlay leyendo carpeta (browser escaneando archivos) */}
       {escaneando && (
@@ -346,7 +368,8 @@ export default function UploadCard({
 
       {/* Botones */}
       <div className="action-bar">
-        <button type="button" className="btn btn-primary" onClick={onProcesar}
+        <button type="button" className="btn btn-primary"
+          onClick={() => { setProcesando(true); onProcesar() }}
           disabled={!nJson || loading}>
           <svg viewBox="0 0 20 20" fill="currentColor">
             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
