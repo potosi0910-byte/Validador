@@ -161,7 +161,7 @@ export default function UploadCard({
               </svg>
             </div>
             <div className="clas-title">
-              {loadingPct < 100 ? 'Enviando archivos al servidor' : 'Analizando con IA'}
+              {loadingPct < 100 ? 'Enviando archivos al servidor' : 'Dr. Factory Auditando'}
             </div>
             <div className="clas-sub">
               {loadingPct < 100
