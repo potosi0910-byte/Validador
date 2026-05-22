@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 
 const RIPS_PREFIJO = 'Rips_SL'
-const RIPS_MAX     = 999
+const RIPS_MAX     = 5000
 
 function fmtFecha(ts) {
   return new Date(ts).toISOString().slice(0, 10)
