@@ -50,7 +50,7 @@ export default function App() {
     setLoading(true)
     setLoadingPct(0)
     setError(null)
-    await new Promise(resolve => setTimeout(resolve, 50))
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
     try {
       const data = await procesar(jsonFiles, excelFiles, pct => setLoadingPct(pct))
       setResultado(data)
