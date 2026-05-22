@@ -11,7 +11,7 @@ export default function UploadCard({
   jsonFiles, excelFiles,
   onJsonChange, onExcelChange,
   onProcesar, onExportar,
-  hasResults, error, loading,
+  hasResults, error, loading, loadingPct = 0,
 }) {
   const [modo, setModo]               = useState('auto')
   const [filtro, setFiltro]           = useState('fecha')
@@ -152,7 +152,7 @@ export default function UploadCard({
       {/* Overlay procesando archivos */}
       {procesando && (
         <div className="clas-overlay clas-active">
-          <div className="clas-card">
+          <div className="clas-card" style={{ minWidth: '320px' }}>
             <div className="clas-spinner">
               <div className="clas-ring"></div>
               <div className="clas-ring clas-ring-2"></div>
@@ -160,8 +160,43 @@ export default function UploadCard({
                 <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
               </svg>
             </div>
-            <div className="clas-title">Procesando archivos</div>
-            <div className="clas-sub">Analizando {nJson} archivos RIPS con IA<span className="clas-dots"><span>.</span><span>.</span><span>.</span></span></div>
+            <div className="clas-title">
+              {loadingPct < 100 ? 'Enviando archivos al servidor' : 'Analizando con IA'}
+            </div>
+            <div className="clas-sub">
+              {loadingPct < 100
+                ? <>{nJson} archivos RIPS · {loadingPct}% subido</>
+                : <>Ejecutando malla validadora 2275<span className="clas-dots"><span>.</span><span>.</span><span>.</span></span></>
+              }
+            </div>
+            {/* Barra de progreso */}
+            <div style={{ width: '100%', marginTop: '1rem' }}>
+              <div style={{
+                background: 'rgba(255,255,255,0.15)',
+                borderRadius: '999px',
+                height: '8px',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%',
+                  borderRadius: '999px',
+                  background: loadingPct < 100
+                    ? 'linear-gradient(90deg, #38bdf8, #818cf8)'
+                    : 'linear-gradient(90deg, #34d399, #10b981)',
+                  width: loadingPct < 100 ? `${Math.max(loadingPct, 3)}%` : '100%',
+                  transition: 'width 0.4s ease',
+                  animation: loadingPct >= 100 ? 'pct-pulse 1.5s ease-in-out infinite' : 'none',
+                }}/>
+              </div>
+              <div style={{
+                textAlign: 'right',
+                fontSize: '0.75rem',
+                color: 'rgba(255,255,255,0.7)',
+                marginTop: '0.25rem',
+              }}>
+                {loadingPct < 100 ? `${loadingPct}%` : 'Procesando...'}
+              </div>
+            </div>
           </div>
         </div>
       )}

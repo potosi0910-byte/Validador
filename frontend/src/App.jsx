@@ -149,6 +149,7 @@ export default function App() {
                   hasResults={hasResults}
                   error={error}
                   loading={loading}
+                  loadingPct={loadingPct}
                 />
                 {hasResults && <ResultsSection resultado={resultado} />}
               </>
