@@ -24,6 +24,7 @@ export default function UploadCard({
   const [clasActivo, setClasActivo]       = useState(false)
   const [btnCargando, setBtnCargando]     = useState(false)
   const [esperandoCarpeta, setEsperandoCarpeta] = useState(false)
+  const [escaneando, setEscaneando]       = useState(false)
 
   const inputAutoRef      = useRef()
   const inputManualRef    = useRef()
@@ -51,20 +52,22 @@ export default function UploadCard({
     carpetaOkRef.current = false
     setEsperandoCarpeta(true)
     inputAutoRef.current.click()
-    // Sólo apaga el mensaje si el usuario canceló el diálogo (onChange nunca dispara)
     const onFoco = () => {
-      setTimeout(() => {
-        if (!carpetaOkRef.current) setEsperandoCarpeta(false)
-      }, 600)
       window.removeEventListener('focus', onFoco)
+      setEsperandoCarpeta(false)
+      setEscaneando(true)  // muestra overlay "Leyendo carpeta..." mientras el browser escanea
+      setTimeout(() => {
+        if (!carpetaOkRef.current) setEscaneando(false)  // usuario canceló
+      }, 4000)
     }
     window.addEventListener('focus', onFoco)
   }
 
   // ── Carpeta automática ────────────────────────────────────────────────────
   function onCarpetaAuto(e) {
-    carpetaOkRef.current = true   // carpeta confirmada — bloquea el focus-timeout
+    carpetaOkRef.current = true
     setEsperandoCarpeta(false)
+    setEscaneando(false)
     setMostrarResumen(false)
     onJsonChange([])
     setBtnCargando(true)
@@ -140,6 +143,23 @@ export default function UploadCard({
         </svg>
         Carga de archivos
       </div>
+
+      {/* Overlay leyendo carpeta (browser escaneando archivos) */}
+      {escaneando && (
+        <div className="clas-overlay clas-active">
+          <div className="clas-card">
+            <div className="clas-spinner">
+              <div className="clas-ring"></div>
+              <div className="clas-ring clas-ring-2"></div>
+              <svg className="clas-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+              </svg>
+            </div>
+            <div className="clas-title">Leyendo carpeta</div>
+            <div className="clas-sub">Cargando archivos RIPS<span className="clas-dots"><span>.</span><span>.</span><span>.</span></span></div>
+          </div>
+        </div>
+      )}
 
       {/* Overlay de clasificación */}
       {clasActivo && (
