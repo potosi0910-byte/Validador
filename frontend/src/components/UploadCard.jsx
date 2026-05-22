@@ -58,7 +58,7 @@ export default function UploadCard({
       setEscaneando(true)  // muestra overlay "Leyendo carpeta..." mientras el browser escanea
       setTimeout(() => {
         if (!carpetaOkRef.current) setEscaneando(false)  // usuario canceló
-      }, 4000)
+      }, 120000)
     }
     window.addEventListener('focus', onFoco)
   }
