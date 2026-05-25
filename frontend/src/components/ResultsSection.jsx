@@ -175,6 +175,7 @@ const COLS = {
   proc_aut_nc:     ['#','Código CUPS','N° Autorización RIPS','N° Documento','Fecha Servicio','Factura RIPS','Archivo RIPS','Archivo EPS'],
   cups_ne:         ['#','Código Proc.','N° Documento','Fecha Servicio','Sección','Factura RIPS','Archivo RIPS'],
   auditoria:       ['#','ID Regla','Severidad','N° Documento','Factura','Campo','Mensaje','Valor Actual','Archivo'],
+  pertinencia:     ['#','ID Regla','Grupo Diagnóstico','N° Documento','Factura','Diagnósticos CIE-10','Observación','Archivo'],
   medicamentos:    ['#','Archivo','N° Factura','ID RIPS','Código','Nombre Tecnología','Valor Servicio'],
 }
 
@@ -198,14 +199,15 @@ const ROWS = {
   proc_aut_nc: i => (<>{M(i.cod_proc)}{M(i.num_aut)}{M(i.num_doc)}{M(i.fecha_inicio)}{M(i.num_factura)}{Sm(i.archivo_rips)}{Sm(i.archivo_eps)}</>),
   cups_ne:     i => (<>{M(i.cod_proc)}{M(i.num_doc)}{M(i.fecha_inicio)}{Sm(i.seccion)}{M(i.num_factura)}{Sm(i.archivo_rips)}</>),
   auditoria:   i => (<><td><span className="tag tag-code">{i.id_regla}</span></td><td><SevBadge v={i.severidad}/></td>{M(i.num_doc)}{M(i.num_factura)}{Sm(i.campo)}{T(i.mensaje)}{M(i.valor_actual)}{Sm(i.archivo)}</>),
+  pertinencia: i => (<><td><span className="tag tag-pert">{i.id_regla}</span></td>{T(i.campo ? i.mensaje.split(':')[0] : i.id_regla)}{M(i.num_doc)}{M(i.num_factura)}{M(i.valor_actual)}{T(i.mensaje)}{Sm(i.archivo)}</>),
   medicamentos:i => (<>{Sm(i.archivo)}{M(i.numeroFactura)}{M(i.idrips)}<td><span className="tag tag-code">{i.codConsulta}</span></td><td className="text-warn">{i.nomTecnologiaSalud}</td><td className="align-right mono">{i.vrServicio !== '' && i.vrServicio !== undefined ? Number(i.vrServicio).toLocaleString('es-CO', {maximumFractionDigits:0}) : ''}</td></>),
 }
 
 // ── Componente principal ──────────────────────────────────────────────────
 export default function ResultsSection({ resultado }) {
-  const { stats = {}, registros = [], alertas = {}, validaciones_malla = [], validaciones_general = [], validaciones_auditoria = [] } = resultado
+  const { stats = {}, registros = [], alertas = {}, validaciones_malla = [], validaciones_general = [], validaciones_auditoria = [], validaciones_pertinencia = [] } = resultado
 
-  const grandTotal   = (stats.malla_total || 0) + (stats.general_total || 0) + (stats.auditoria_total || 0)
+  const grandTotal   = (stats.malla_total || 0) + (stats.general_total || 0) + (stats.auditoria_total || 0) + (stats.pertinencia_total || 0)
   const grandCritica = (stats.malla_criticas || 0) + (stats.general_criticas || 0) + (stats.auditoria_criticas || 0)
 
   const noAlertasAut = !alertas || Object.values(alertas).every(v => !v || v.length === 0)
@@ -259,6 +261,9 @@ export default function ResultsSection({ resultado }) {
             total={stats.general_total} criticas={stats.general_criticas} notificaciones={stats.general_notificaciones} topReglas={stats.general_top_reglas} />
           <ModuleCard title="Auditoría Clínica" sub="Estancia · Transfusional · Urgencias · Lab" iconClass="mc-icon-audit"
             total={stats.auditoria_total} criticas={stats.auditoria_criticas} notificaciones={stats.auditoria_notificaciones} topReglas={stats.auditoria_top_reglas} />
+          <ModuleCard title="Pertinencia Clínica" sub="CIE-10 vs CUPS · Coherencia diagnóstico-procedimiento" iconClass="mc-icon-pert"
+            colorClass={stats.pertinencia_total > 0 ? 'mc-pert' : 'mc-ok'}
+            total={stats.pertinencia_total} criticas={0} notificaciones={stats.pertinencia_total} topReglas={stats.pertinencia_top_reglas} />
         </div>
       </section>
 
@@ -338,6 +343,41 @@ export default function ResultsSection({ resultado }) {
                   <tr key={i} className={RowCls(v.severidad)}>
                     <td className="text-muted">{i + 1}</td>
                     {ROWS.auditoria(v)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CollapsibleCard>
+      )}
+
+      {/* ── Pertinencia clínica (colapsable) — color amarillo ── */}
+      {validaciones_pertinencia.length > 0 && (
+        <CollapsibleCard cardCls="results-card alert-card-pert" labelCls="label-pert" header={
+          <>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/></svg>
+            Pertinencia Clínica — Observaciones CIE-10 vs CUPS
+            <span className="badge-count badge-pert">{validaciones_pertinencia.length}</span>
+          </>
+        }>
+          <p className="alert-desc">
+            Observaciones de pertinencia: el diagnóstico CIE-10 reportado no cuenta con los procedimientos CUPS de soporte esperados según la Resolución 2275/2023.
+            Estas observaciones son para revisión del auditor — no implican error estructural.
+          </p>
+          <div className="table-wrapper">
+            <table>
+              <thead><tr>{COLS.pertinencia.map(c => <th key={c}>{c}</th>)}</tr></thead>
+              <tbody>
+                {validaciones_pertinencia.map((v, i) => (
+                  <tr key={i} className="row-pert">
+                    <td className="text-muted">{i + 1}</td>
+                    <td><span className="tag tag-pert">{v.id_regla}</span></td>
+                    <td className="small">{v.mensaje.split(':')[0]}</td>
+                    {M(v.num_doc)}
+                    {M(v.num_factura)}
+                    {M(v.valor_actual)}
+                    <td style={{ fontSize: '0.8rem' }}>{v.mensaje}</td>
+                    {Sm(v.archivo)}
                   </tr>
                 ))}
               </tbody>

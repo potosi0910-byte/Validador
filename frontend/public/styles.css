@@ -2751,3 +2751,57 @@ select.admin-input { cursor: pointer; }
 
 /* Sidebar badge warn */
 .sidebar-ico-warn { background: var(--c-warn-bg); color: var(--c-warn); }
+
+/* ── PERTINENCIA CLÍNICA — amarillo ──────────────────────────────────────── */
+:root {
+  --c-pert:       #b45309;
+  --c-pert-bg:    rgba(234, 179, 8, 0.10);
+  --c-pert-glow:  rgba(234, 179, 8, 0.25);
+  --c-pert-border:rgba(234, 179, 8, 0.35);
+}
+
+.alert-card-pert {
+  border-left: 4px solid var(--c-pert) !important;
+  background: var(--c-pert-bg) !important;
+}
+
+.label-pert {
+  color: var(--c-pert) !important;
+  font-weight: 700;
+}
+
+.badge-pert {
+  background: rgba(234, 179, 8, 0.20);
+  color: var(--c-pert);
+  border: 1px solid var(--c-pert-border);
+}
+
+.tag-pert {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: monospace;
+  background: rgba(234, 179, 8, 0.18);
+  color: var(--c-pert);
+  border: 1px solid var(--c-pert-border);
+  white-space: nowrap;
+}
+
+.row-pert td {
+  background: rgba(234, 179, 8, 0.05);
+}
+
+/* Module card — pertinencia */
+.mc-pert {
+  border-left: 4px solid #b45309;
+  background: linear-gradient(135deg, rgba(234,179,8,0.08) 0%, rgba(234,179,8,0.03) 100%);
+}
+.mc-pert .mc-title { color: #92400e; }
+.mc-pert .mc-count { color: #b45309; }
+.mc-icon-pert::before {
+  content: '🔍';
+  font-size: 1.2rem;
+  line-height: 1;
+}

@@ -56,6 +56,7 @@ from app_medicamentos_control import (
     validar_usuarios_malla_2275,
 )
 from auditoria import validar_auditoria
+from pertinencia import validar_pertinencia
 
 # ══════════════════════════════════════════════════════════════
 # APP
@@ -363,6 +364,7 @@ async def procesar(
     validaciones_malla: list = []
     validaciones_general: list = []
     validaciones_auditoria: list = []
+    validaciones_pertinencia: list = []
     errores_acum: list = []
 
     # ── Leer archivos JSON ────────────────────────────────────────────────
@@ -417,6 +419,7 @@ async def procesar(
             validaciones_general.extend(validar_recien_nacidos_malla_2275(data, wrapper.filename))
             validaciones_general.extend(validar_otros_servicios_malla_2275(data, wrapper.filename))
             validaciones_auditoria.extend(validar_auditoria(data, wrapper.filename))
+            validaciones_pertinencia.extend(validar_pertinencia(data, wrapper.filename))
 
             archivos_procesados += 1
 
@@ -475,6 +478,8 @@ async def procesar(
         "auditoria_criticas":         _count_sev(validaciones_auditoria, "critica"),
         "auditoria_notificaciones":   sum(1 for v in validaciones_auditoria if v.get("severidad") in {"media", "alta"}),
         "auditoria_top_reglas":       _top_reglas(validaciones_auditoria),
+        "pertinencia_total":          len(validaciones_pertinencia),
+        "pertinencia_top_reglas":     _top_reglas(validaciones_pertinencia),
         "tiempo_procesamiento":       f"{(datetime.now() - t_proc).total_seconds():.1f}s",
         "errores_procesamiento":      errores_acum,
     }
@@ -489,6 +494,7 @@ async def procesar(
         "validaciones_malla": validaciones_malla,
         "validaciones_general": validaciones_general,
         "validaciones_auditoria": validaciones_auditoria,
+        "validaciones_pertinencia": validaciones_pertinencia,
         "stats": stats,
     }
 
@@ -499,6 +505,7 @@ async def procesar(
         "validaciones_malla": validaciones_malla,
         "validaciones_general": validaciones_general,
         "validaciones_auditoria": validaciones_auditoria,
+        "validaciones_pertinencia": validaciones_pertinencia,
     }
 
 
