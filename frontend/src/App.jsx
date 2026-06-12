@@ -27,8 +27,9 @@ export default function App() {
   const [excelFiles, setExcelFiles] = useState([])
 
   useEffect(() => {
-    const u = getUsuarioGuardado()
-    if (u) setUsuario(u)
+    const saved  = getUsuarioGuardado()
+    const token  = localStorage.getItem('drf_token')
+    if (saved && token) setUsuario(saved)
   }, [])
 
   const handleLogin = (data) => {

@@ -5,6 +5,7 @@ Versión WSGI nativa para GoDaddy cPanel + Passenger.
 import io
 import json
 import os
+import re
 import sqlite3
 from datetime import datetime, timedelta
 from functools import wraps
@@ -30,7 +31,8 @@ from app_medicamentos_control import (
     validar_urgencias_malla_2275,
     validar_usuarios_malla_2275,
 )
-from auditoria import validar_auditoria
+from auditoria import validar_auditoria, validar_concepto_recaudo
+from pertinencia import validar_pertinencia
 
 # ══════════════════════════════════════════════════════════════
 # APP
@@ -38,6 +40,8 @@ from auditoria import validar_auditoria
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500 MB
+app.config['MAX_FORM_PARTS']     = 10000               # werkzeug 3.x: por defecto 1000, insuficiente para >1000 archivos
+app.config['MAX_FORM_MEMORY_SIZE'] = 500 * 1024 * 1024 # 500 MB en memoria para el form
 
 SECRET_KEY  = "drf-malla-validadora-2275-clave-secreta-cambiar-en-produccion"
 ALGORITHM   = "HS256"
@@ -47,6 +51,8 @@ _BASE = os.path.dirname(os.path.abspath(__file__))
 USERS_FILE = os.path.join(_BASE, "users.json")
 DB_PATH    = os.path.join(_BASE, "estadisticas.db")
 _cache: dict = {}
+
+_RIPS_FILENAME_RE = re.compile(r'^Rips_SL\d{6}\.json$')
 
 # ══════════════════════════════════════════════════════════════
 # CORS
@@ -311,13 +317,24 @@ def put_password():
 @app.route("/api/procesar", methods=["POST"])
 @require_auth
 def procesar():
+    import sys, traceback
+    try:
+        return _procesar_interno()
+    except Exception as exc:
+        tb = traceback.format_exc()
+        print(f"[ERROR /api/procesar] {exc}\n{tb}", file=sys.stderr, flush=True)
+        return jsonify({"detail": f"Error interno: {exc}"}), 500
+
+
+def _procesar_interno():
     registros, alertas = [], []
-    validaciones_malla, validaciones_general, validaciones_auditoria = [], [], []
+    validaciones_malla, validaciones_general, validaciones_auditoria, validaciones_pertinencia = [], [], [], []
     errores_acum = []
 
     json_wrappers = [
         _FileWrapper(f.filename, f.read())
-        for f in request.files.getlist("json_files") if f and f.filename
+        for f in request.files.getlist("json_files")
+        if f and f.filename and _RIPS_FILENAME_RE.match(os.path.basename(f.filename))
     ]
     excel_wrappers = [
         _FileWrapper(f.filename, f.read())
@@ -327,8 +344,11 @@ def procesar():
     hay_excel = bool(excel_wrappers)
     registros_excel, set_aut_excel = {}, set()
     if hay_excel:
-        registros_excel, set_aut_excel, errs = cargar_excel_autorizaciones(excel_wrappers)
-        errores_acum.extend(errs)
+        try:
+            registros_excel, set_aut_excel, errs = cargar_excel_autorizaciones(excel_wrappers)
+            errores_acum.extend(errs)
+        except Exception as exc:
+            errores_acum.append(f"Error cargando Excel de autorizaciones: {exc}")
 
     archivos_procesados = 0
     total_rips = 0
@@ -351,12 +371,17 @@ def procesar():
             validaciones_general.extend(validar_recien_nacidos_malla_2275(data, wrapper.filename))
             validaciones_general.extend(validar_otros_servicios_malla_2275(data, wrapper.filename))
             validaciones_auditoria.extend(validar_auditoria(data, wrapper.filename))
+            validaciones_auditoria.extend(validar_concepto_recaudo(data, wrapper.filename))
+            validaciones_pertinencia.extend(validar_pertinencia(data, wrapper.filename))
             archivos_procesados += 1
         except Exception as exc:
             errores_acum.append(f"Error en {wrapper.filename}: {exc}")
 
     if hay_excel and (registros_excel or set_aut_excel):
-        alertas = validar_autorizaciones(pacientes_rips_global, registros_excel, set_aut_excel)
+        try:
+            alertas = validar_autorizaciones(pacientes_rips_global, registros_excel, set_aut_excel)
+        except Exception as exc:
+            errores_acum.append(f"Error en cruce de autorizaciones: {exc}")
 
     t_proc = datetime.now()
     total_auths_rips = sum(len(p.get("set_auths", set())) for p in pacientes_rips_global.values())
@@ -379,6 +404,9 @@ def procesar():
         "proc_aut_no_cruza":     _alen(alertas, "proc_aut_no_cruza_amb"),
         "cups_noestandar_nc":    _alen(alertas, "cups_noestandar_sin_aut"),
         "hosp_proc_cod_no_cruza":_alen(alertas, "hosp_proc_cod_no_cruza"),
+        "proc_sin_aut_no_excel":        _alen(alertas, "proc_sin_aut_no_excel"),
+        "internacion_sin_aut_no_excel": _alen(alertas, "internacion_sin_aut_no_excel"),
+        "internacion_aut_es_cedula":    _alen(alertas, "internacion_aut_es_cedula"),
         "malla_total":        len(validaciones_malla),
         "malla_criticas":     _count_sev(validaciones_malla, "critica"),
         "malla_notificaciones": sum(1 for v in validaciones_malla if v.get("severidad") in {"media","alta"}),
@@ -391,6 +419,8 @@ def procesar():
         "auditoria_criticas": _count_sev(validaciones_auditoria, "critica"),
         "auditoria_notificaciones": sum(1 for v in validaciones_auditoria if v.get("severidad") in {"media","alta"}),
         "auditoria_top_reglas": _top_reglas(validaciones_auditoria),
+        "pertinencia_total":   len(validaciones_pertinencia),
+        "pertinencia_top_reglas": _top_reglas(validaciones_pertinencia),
         "tiempo_procesamiento": f"{(datetime.now() - t_proc).total_seconds():.1f}s",
         "errores_procesamiento": errores_acum,
     }
@@ -401,15 +431,23 @@ def procesar():
         "validaciones_malla": validaciones_malla,
         "validaciones_general": validaciones_general,
         "validaciones_auditoria": validaciones_auditoria,
+        "validaciones_pertinencia": validaciones_pertinencia,
         "stats": stats,
     }
 
+    _MAX_TABLA = 5000
     return app.response_class(
         response=json.dumps({
-            "stats": stats, "registros": registros, "alertas": alertas,
-            "validaciones_malla": validaciones_malla,
-            "validaciones_general": validaciones_general,
-            "validaciones_auditoria": validaciones_auditoria,
+            "stats": stats,
+            "registros": registros,
+            "alertas": alertas,
+            # malla y general NO se renderizan en tablas del UI — solo sus stats.
+            # Se omiten del response para evitar respuestas de 30-80 MB con >300 archivos.
+            # El Excel de exportación usa el _cache y tiene los datos completos.
+            "validaciones_malla": [],
+            "validaciones_general": [],
+            "validaciones_auditoria":   validaciones_auditoria[:_MAX_TABLA],
+            "validaciones_pertinencia": validaciones_pertinencia[:_MAX_TABLA],
         }, default=_json_safe),
         status=200,
         mimetype="application/json",
@@ -426,6 +464,7 @@ def exportar():
         cached["registros"], cached["alertas"],
         cached["validaciones_malla"], cached["validaciones_general"],
         cached.get("validaciones_auditoria"),
+        cached.get("validaciones_pertinencia"),
     )
     nombre = f"Alertas_Malla_Validadora_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
     return send_file(output, as_attachment=True, download_name=nombre,

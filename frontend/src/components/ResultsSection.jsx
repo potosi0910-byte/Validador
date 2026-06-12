@@ -174,6 +174,9 @@ const COLS = {
   proc_sin_aut:    ['#','Código Proc.','N° Documento','Fecha Servicio','Sección','Factura RIPS','Archivo RIPS'],
   proc_aut_nc:     ['#','Código CUPS','N° Autorización RIPS','N° Documento','Fecha Servicio','Factura RIPS','Archivo RIPS','Archivo EPS'],
   cups_ne:         ['#','Código Proc.','N° Documento','Fecha Servicio','Sección','Factura RIPS','Archivo RIPS'],
+  proc_sin_aut_ne:     ['#','Mensaje','Código Proc.','N° Documento','Factura','Archivo RIPS'],
+  internacion_sin_aut: ['#','Mensaje','Código OS','Nombre OS','N° Documento','Factura','Archivo RIPS'],
+  internacion_cedula:  ['#','Mensaje','Código OS','Nombre OS','N° Documento','N° Autorización','Factura','Archivo RIPS'],
   auditoria:       ['#','ID Regla','Severidad','N° Documento','Factura','Campo','Mensaje','Valor Actual','Archivo'],
   pertinencia:     ['#','ID Regla','Grupo Diagnóstico','N° Documento','Factura','Diagnósticos CIE-10','Observación','Archivo'],
   medicamentos:    ['#','Archivo','N° Factura','ID RIPS','Código','Nombre Tecnología','Valor Servicio'],
@@ -198,6 +201,9 @@ const ROWS = {
   proc_sin_aut:i => (<>{M(i.cod_proc)}{M(i.num_doc)}{M(i.fecha_inicio)}{Sm(i.seccion)}{M(i.num_factura)}{Sm(i.archivo_rips)}</>),
   proc_aut_nc: i => (<>{M(i.cod_proc)}{M(i.num_aut)}{M(i.num_doc)}{M(i.fecha_inicio)}{M(i.num_factura)}{Sm(i.archivo_rips)}{Sm(i.archivo_eps)}</>),
   cups_ne:     i => (<>{M(i.cod_proc)}{M(i.num_doc)}{M(i.fecha_inicio)}{Sm(i.seccion)}{M(i.num_factura)}{Sm(i.archivo_rips)}</>),
+  proc_sin_aut_ne:    i => (<>{T(i.mensaje)}{M(i.cod_proc)}{M(i.num_doc)}{M(i.num_factura)}{Sm(i.archivo_rips)}</>),
+  internacion_sin_aut:i => (<>{T(i.mensaje)}{M(i.cod)}{Sm(i.nom)}{M(i.num_doc)}{M(i.num_factura)}{Sm(i.archivo_rips)}</>),
+  internacion_cedula: i => (<>{T(i.mensaje)}{M(i.cod)}{Sm(i.nom)}{M(i.num_doc)}{M(i.num_aut)}{M(i.num_factura)}{Sm(i.archivo_rips)}</>),
   auditoria:   i => (<><td><span className="tag tag-code">{i.id_regla}</span></td><td><SevBadge v={i.severidad}/></td>{M(i.num_doc)}{M(i.num_factura)}{Sm(i.campo)}{T(i.mensaje)}{M(i.valor_actual)}{Sm(i.archivo)}</>),
   pertinencia: i => (<><td><span className="tag tag-pert">{i.id_regla}</span></td>{T(i.campo ? i.mensaje.split(':')[0] : i.id_regla)}{M(i.num_doc)}{M(i.num_factura)}{M(i.valor_actual)}{T(i.mensaje)}{Sm(i.archivo)}</>),
   medicamentos:i => (<>{Sm(i.archivo)}{M(i.numeroFactura)}{M(i.idrips)}<td><span className="tag tag-code">{i.codConsulta}</span></td><td className="text-warn">{i.nomTecnologiaSalud}</td><td className="align-right mono">{i.vrServicio !== '' && i.vrServicio !== undefined ? Number(i.vrServicio).toLocaleString('es-CO', {maximumFractionDigits:0}) : ''}</td></>),
@@ -315,6 +321,9 @@ export default function ResultsSection({ resultado }) {
         <AlertTable tipo="proc_sin_aut" title="Procedimiento ambulatorio sin autorización obligatoria"                items={alertas.proc_sin_aut_amb}           ico="danger" />
         <AlertTable tipo="proc_aut_nc"  title="Autorización no corresponde al CUPS del RIPS (Ambulatorio)"            items={alertas.proc_aut_no_cruza_amb}      ico="danger" />
         <AlertTable tipo="cups_ne"      title="CUPS no estándar sin autorización asociada"                            items={alertas.cups_noestandar_sin_aut}    ico="warn" labelCls="label-warn" cardCls="alert-card-warn" />
+        <AlertTable tipo="proc_sin_aut_ne"     title="Procedimiento (<870000) sin autorización — cédula no cruza en base EPS"  items={alertas.proc_sin_aut_no_excel}           ico="danger" desc="El paciente tiene hospitalización o es ambulatorio, su cédula no está en la base EPS y el procedimiento no tiene <code>numAutorizacion</code>." />
+        <AlertTable tipo="internacion_sin_aut" title="Internación sin número de autorización — cédula no cruza en base EPS"    items={alertas.internacion_sin_aut_no_excel}    ico="danger" desc="Registro de internación en <code>otrosServicios</code> con <code>numAutorizacion</code> nulo. El paciente no fue localizado en la base de autorizaciones EPS." />
+        <AlertTable tipo="internacion_cedula"  title="Número de autorización contiene la cédula del paciente"                  items={alertas.internacion_aut_es_cedula}        ico="danger" desc="El campo <code>numAutorizacion</code> del registro de internación contiene el número de documento del paciente — no es un número de autorización válido." />
 
         {noAlertasAut && (
           <section className="card alert-card alert-card-ok">

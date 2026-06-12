@@ -1,7 +1,11 @@
 import { useRef, useState, useEffect } from 'react'
 
-const RIPS_PREFIJO = 'Rips_SL'
-const RIPS_MAX     = 5000
+const RIPS_REGEX = /^Rips_SL\d{6}\.json$/
+const RIPS_MAX   = 5000
+
+function esRipsValido(nombre) {
+  return RIPS_REGEX.test(nombre)
+}
 
 function fmtFecha(ts) {
   return new Date(ts).toISOString().slice(0, 10)
@@ -26,6 +30,7 @@ export default function UploadCard({
   const [esperandoCarpeta, setEsperandoCarpeta] = useState(false)
   const [escaneando, setEscaneando]       = useState(false)
   const [procesando, setProcesando]       = useState(false)
+  const [rechazados, setRechazados]       = useState(0)
 
   useEffect(() => {
     if (!loading) setProcesando(false)
@@ -79,9 +84,12 @@ export default function UploadCard({
     setClasActivo(true)
 
     setTimeout(() => {
-      const todos = Array.from(e.target.files)
-        .filter(f => f.name.endsWith('.json') && f.name.startsWith(RIPS_PREFIJO))
+      const allFiles = Array.from(e.target.files)
+      const todos = allFiles
+        .filter(f => esRipsValido(f.name))
         .sort((a, b) => b.lastModified - a.lastModified)
+      const ignorados = allFiles.filter(f => f.name.endsWith('.json') && !esRipsValido(f.name))
+      setRechazados(ignorados.length)
 
       if (todos.length === 0) {
         setClasActivo(false)
@@ -121,8 +129,11 @@ export default function UploadCard({
 
   // ── Modo manual ───────────────────────────────────────────────────────────
   function onManual(e) {
-    const sel = Array.from(e.target.files).slice(0, RIPS_MAX)
-    onJsonChange(sel)
+    const all = Array.from(e.target.files)
+    const validos   = all.filter(f => esRipsValido(f.name)).slice(0, RIPS_MAX)
+    const ignorados = all.filter(f => !esRipsValido(f.name))
+    setRechazados(ignorados.length)
+    onJsonChange(validos)
   }
 
   // ── Excel ─────────────────────────────────────────────────────────────────
@@ -353,6 +364,11 @@ export default function UploadCard({
           )}
           {warn && (
             <div className="file-counter-warn" style={{ display: 'block' }}>{warn}</div>
+          )}
+          {rechazados > 0 && (
+            <div className="file-counter-warn" style={{ display: 'block', marginTop: '0.4rem' }}>
+              {rechazados} archivo(s) ignorado(s) — solo se aceptan <code>Rips_SL######.json</code>
+            </div>
           )}
         </div>
 

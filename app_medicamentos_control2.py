@@ -353,6 +353,20 @@ def extraer_autorizaciones_rips(data, nombre_archivo=""):
                     if cod_p:
                         p["procedimientos_pac"].append({"cod": cod_p, "num_aut": na_p})
 
+        # ── Capturar registros de internación en otrosServicios ──────────────
+        os_regs = servicios.get("otrosServicios", [])
+        if isinstance(os_regs, list):
+            for _os in os_regs:
+                if not isinstance(_os, dict):
+                    continue
+                _nom = str(_os.get("nomTecnologiaSalud", "")).upper()
+                if _nom.startswith("INTERNAC"):
+                    p.setdefault("os_internacion", []).append({
+                        "num_aut": normalizar_str(_os.get("numAutorizacion", "")),
+                        "cod":     normalizar_str(_os.get("codTecnologiaSalud", "")),
+                        "nom":     _os.get("nomTecnologiaSalud", ""),
+                    })
+
         # ── Recopilar autorizaciones de todas las secciones ──────────────────
         for sec_name, cod_field in SECCIONES:
             registros = servicios.get(sec_name, [])
@@ -458,8 +472,68 @@ CONCEPTOS_RECAUDO_MED       = {"01", "02", "03", "05"}          # M20 (04=Antici
 # ── Catálogos adicionales Malla 2275/2023 ─────────────────────────────────────
 TIPOS_DOC_USUARIO         = {"CC","TI","RC","CN","CE","PA","MS","AS","CD","SC","PE","DE","PT"}
 TIPOS_DOC_PROFESIONAL     = {"CC","CE","CD","PA","SC","PE","DE","PT"}
-# Catálogo Sexo: H=Hombre, I=Indeterminado o Intersexual, M=Mujer
-CODIGOS_SEXO              = {"H","I","M"}
+# Catálogo Sexo: M=Masculino, F=Femenino, I=Indeterminado
+CODIGOS_SEXO              = {"M","F","I"}
+# Finalidades IVE (Interrupción Voluntaria del Embarazo)
+_FINALIDAD_IVE            = {"34","35","36","49"}
+
+def _cargar_sets_sexo_cie10():
+    """Lee CIE10.json y construye sets de categorías femeninas y de pene."""
+    import os as _os, json as _j
+    ruta = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "CIE10.json")
+    try:
+        with open(ruta, encoding="utf-8") as _f:
+            _datos = _j.load(_f)["datos"]
+    except Exception:
+        return frozenset(), frozenset()
+    _KW_F = (
+        "EMBARAZ","PARTO","PUERPERIO",
+        "UTERO","UTERINO","UTERINA",
+        "OVARIO","OOFORIT","SALPINGIT","TROMPA DE FALOPIO","LIGAMENTO ANCHO",
+        "VAGINA","VULVA","BARTHOLIN",
+        "PLACENTA","ABORTO",
+        "MENSTR","MENOPAUS","FEMENIN",
+        "MATERNA","MATERNO","OBSTETRIC",
+        "ENDOMETRI","LEIOMIO",
+        "CUELLO DEL UTERO","CUELLO UTERINO",
+        "INFERTILIDAD FEMENINA","FECUNDACION ARTIFICIAL",
+        "GINECOL","POSTPARTO",
+    )
+    _KW_PENE = (" PENE", "DEL PENE", "PREPUCIO", "FIMOSIS", "PARAFIMOSIS")
+    _visto, _cats_f, _cats_pene = set(), set(), set()
+    for _d in _datos:
+        _c3 = _d.get("codigo_categoria_3", "")
+        if _c3 in _visto:
+            continue
+        _visto.add(_c3)
+        _desc = _d.get("descripcion_categoria_3", "").upper()
+        if any(_k in _desc for _k in _KW_F):
+            _cats_f.add(_c3)
+        if any(_k in _desc for _k in _KW_PENE):
+            _cats_pene.add(_c3)
+    # N70-N99: genitales femeninas (rango completo)
+    for _c3 in _visto:
+        if _c3.startswith("N") and "N70" <= _c3 <= "N99":
+            _cats_f.add(_c3)
+    # Códigos adicionales confirmados femeninos
+    for _c3 in ("A34","D06","D39","F53","Q97","R87","Y76",
+                "Z32","Z33","Z34","Z35","Z36","Z37","Z39"):
+        if _c3 in _visto:
+            _cats_f.add(_c3)
+    # D29: neoplasias benignas genitales masculinos (incluye pene D29.0)
+    if "D29" in _visto:
+        _cats_pene.add("D29")
+    return frozenset(_cats_f), frozenset(_cats_pene)
+
+_DX_F_CATS, _DX_M_PENE_CATS = _cargar_sets_sexo_cie10()
+
+# Campos de diagnóstico CIE-10 a revisar en cada registro de servicio
+_CAMPOS_DX = (
+    "codDiagnosticoPrincipal","codDiagnosticoRelacionado1",
+    "codDiagnosticoRelacionado2","codDiagnosticoRelacionado3",
+    "codDiagnosticoEgreso1","codDiagnosticoEgreso2",
+    "codDiagnosticoEgreso3","codDiagnosticoEgreso4",
+)
 VALORES_SINO              = {"SI","NO"}
 # Catálogo conceptoRecaudo: 01=Copago, 02=Cuota moderadora, 03=Planes voluntarios, 04=Anticipo, 05=No aplica
 CONCEPTOS_RECAUDO_CONSULTA = {"01","02","03","05"}      # C18: excluye solo 04=Anticipo
@@ -538,6 +612,10 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
         'procedimiento_sin_aut': [],  # NUEVO: procedimiento < 870000 sin auth
         'hosp_dias_excedidos':   [],  # NUEVO: días de estancia > días autorizados
         'hosp_aut_fuera_plazo':  [],  # NUEVO: fecha_emision > fecha_egreso + 24h
+        # Paciente no está en base EPS
+        'proc_sin_aut_no_excel':        [],
+        'internacion_sin_aut_no_excel': [],
+        'internacion_aut_es_cedula':    [],
     }
 
     def to_int(s):
@@ -549,6 +627,34 @@ def validar_autorizaciones(pacientes_rips, registros_excel, set_aut_excel):
     for num_doc, p in pacientes_rips.items():
         # ── 1. ¿Existe el paciente en Excel? ─────────────────────────────
         if num_doc not in registros_excel:
+            _tiene_solo_urg = p.get('tiene_solo_urgencias', False)
+            if not _tiene_solo_urg:
+                _archivo_rips = p.get('archivo_rips', '')
+                _num_factura  = p.get('num_factura', '')
+                for _proc in p.get('procedimientos_pac', []):
+                    try:
+                        if int(_proc['cod']) < 870000 and not _proc['num_aut']:
+                            alertas['proc_sin_aut_no_excel'].append({
+                                'num_doc': num_doc, 'cod_proc': _proc['cod'],
+                                'num_factura': _num_factura, 'archivo_rips': _archivo_rips,
+                                'mensaje': f"Procedimiento {_proc['cod']} (<870000) sin número de autorización — paciente no localizado en base EPS",
+                            })
+                    except (ValueError, TypeError):
+                        pass
+                for _os in p.get('os_internacion', []):
+                    _na = _os['num_aut']
+                    if not _na:
+                        alertas['internacion_sin_aut_no_excel'].append({
+                            'num_doc': num_doc, 'cod': _os['cod'], 'nom': _os['nom'],
+                            'num_factura': _num_factura, 'archivo_rips': _archivo_rips,
+                            'mensaje': f"Internación '{_os['nom'][:50]}' sin número de autorización — paciente no localizado en base EPS",
+                        })
+                    elif _na == num_doc:
+                        alertas['internacion_aut_es_cedula'].append({
+                            'num_doc': num_doc, 'cod': _os['cod'], 'nom': _os['nom'],
+                            'num_aut': _na, 'num_factura': _num_factura, 'archivo_rips': _archivo_rips,
+                            'mensaje': f"Internación '{_os['nom'][:50]}': numAutorizacion contiene la cédula del paciente ({_na})",
+                        })
             continue
 
         regs_pac          = registros_excel[num_doc]
@@ -1281,7 +1387,7 @@ def validar_general_malla_2275(data, nombre_archivo=""):
 
 def validar_usuarios_malla_2275(data, nombre_archivo=""):
     """
-    Bloque U: U01-U11, RVC006, RVC007, RVC008, RVC009.
+    Bloque U: U01-U11, RVC006, RVC007, RVC008, RVC009, SEX-IVE-01.
     """
     errores = []
     if not isinstance(data, dict):
@@ -1400,7 +1506,7 @@ def validar_usuarios_malla_2275(data, nombre_archivo=""):
         elif cod_sexo not in CODIGOS_SEXO:
             _e("U05-DOMINIO", "critica", "codSexo",
                f"codSexo '{cod_sexo}' no pertenece al catálogo Sexo. "
-               "Valores válidos: H=Hombre, M=Mujer, I=Indeterminado o Intersexual.", cod_sexo)
+               "Valores válidos: M=Masculino, F=Femenino, I=Indeterminado.", cod_sexo)
 
         # ── U06: codPaisResidencia 3 chars ────────────────────
         cod_pais = normalizar_str(u.get("codPaisResidencia") or "")
@@ -1474,10 +1580,57 @@ def validar_usuarios_malla_2275(data, nombre_archivo=""):
                         _e("RVC008", "media", "fechaNacimiento",
                            f"La edad de la madre es {edad_madre} años. Para recién nacidos se esperan 9-60 años (RVC008).",
                            fecha_nac_raw)
-                if cod_sexo and cod_sexo != "M":
+                if cod_sexo and cod_sexo != "F":
                     _e("RVC009", "media", "codSexo",
                        f"El usuario con recién nacidos tiene codSexo='{cod_sexo}'. "
-                       "Se esperaba 'M' (Mujer) según catálogo Sexo (RVC009).", cod_sexo)
+                       "Se esperaba 'F' (Femenino) — la madre del recién nacido debe registrarse como sexo Femenino (RVC009).", cod_sexo)
+
+            # ── SEX-IVE-01: finalidad IVE → sexo debe ser Femenino ────
+            if cod_sexo and cod_sexo != "F":
+                for seccion in ("consultas","procedimientos","urgencias","hospitalizacion","otrosServicios"):
+                    for rec in (servicios.get(seccion) or []):
+                        if isinstance(rec, dict):
+                            fin = normalizar_str(rec.get("finalidadTecnologiaSalud") or "")
+                            if fin in _FINALIDAD_IVE:
+                                _e("SEX-IVE-01", "media", "codSexo",
+                                   f"Se registra finalidad IVE (código {fin}) pero el usuario tiene codSexo='{cod_sexo}'. "
+                                   "Se esperaba sexo 'F' (Femenino) para procedimientos de IVE.", cod_sexo)
+                                break
+                    else:
+                        continue
+                    break
+
+            # ── SEX-DX: validar sexo según diagnósticos CIE-10 ───────
+            if cod_sexo:
+                todos_dx_u: set = set()
+                for sec in ("consultas","procedimientos","urgencias","hospitalizacion","otrosServicios"):
+                    for rec in (servicios.get(sec) or []):
+                        if isinstance(rec, dict):
+                            for campo in _CAMPOS_DX:
+                                v = normalizar_str(rec.get(campo) or "")
+                                if v:
+                                    todos_dx_u.add(v)
+
+                # Buscar primer dx femenino (O=obstétrico/aborto, o categoría en _DX_F_CATS)
+                dx_f = next(
+                    (dx for dx in todos_dx_u
+                     if dx[0:1] == "O" or dx[:3] in _DX_F_CATS),
+                    None,
+                )
+                if dx_f and cod_sexo != "F":
+                    _e("SEX-DX-F", "media", "codSexo",
+                       f"Diagnóstico CIE-10 '{dx_f}' corresponde a patología obstétrica/ginecológica "
+                       f"pero el usuario tiene codSexo='{cod_sexo}'. Se esperaba 'F' (Femenino).", cod_sexo)
+
+                # Buscar primer dx relacionado con el pene
+                dx_m = next(
+                    (dx for dx in todos_dx_u if dx[:3] in _DX_M_PENE_CATS),
+                    None,
+                )
+                if dx_m and cod_sexo != "M":
+                    _e("SEX-DX-M", "media", "codSexo",
+                       f"Diagnóstico CIE-10 '{dx_m}' corresponde a patología del pene "
+                       f"pero el usuario tiene codSexo='{cod_sexo}'. Se esperaba 'M' (Masculino).", cod_sexo)
 
     return errores
 
@@ -3023,7 +3176,7 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
             # Deducir bloque a partir del prefijo del id_regla
             id_r   = v.get("id_regla", "")
             bloque = ("General/T"  if any(id_r.startswith(p) for p in ("RVG","T0","T01","T02","T03","T04","RVC001","RVC002","RVC003"))
-                      else "U"     if any(id_r.startswith(p) for p in ("U0","U1","RVC006","RVC007","RVC008","RVC009"))
+                      else "U"     if any(id_r.startswith(p) for p in ("U0","U1","RVC006","RVC007","RVC008","RVC009","SEX-IVE","SEX-DX"))
                       else "C"     if any(id_r.startswith(p) for p in ("C0","C1","C2","RVC011","RVC013","RVC031","RVC060","RVC061","RVC079","RVC086","RVC087"))
                       else "P"     if any(id_r.startswith(p) for p in ("P0","P1","P2","RVC011-P","RVC013-P","RVC031-P","RVC079-P"))
                       else "R"     if any(id_r.startswith(p) for p in ("R0","R1","RVC038","RVC040","RVC042","RVC043"))

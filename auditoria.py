@@ -630,4 +630,166 @@ def validar_auditoria(data, nombre_archivo=""):
                            "El código diagnóstico principal es similar al relacionado.",
                            f"principal={diag_ppal}, campo(s): {', '.join(coincidencias)}")
 
+        # ── AV-01: Acceso vascular — si existe 389103, debe existir 389902 ──
+        todos_cups_usuario = set(cod_procs + cod_cons + cod_otros)
+        if "389103" in todos_cups_usuario and "389902" not in todos_cups_usuario:
+            _e("AV-01", "media",
+               "codProcedimiento",
+               "No se evidencia proceso completo de Acceso vascular. Validar",
+               "389103 sin 389902")
+
     return errores
+
+
+# ══════════════════════════════════════════════════════════════
+# VALIDACIÓN: CONCEPTO DE RECAUDO
+# Reglas según tipoUsuario y presencia de urgencias/hospitalización
+# ══════════════════════════════════════════════════════════════
+
+# Códigos de internación CUPS 2026 (fuente: Cups2026enjson.json, 2026-04-29)
+_CODIGOS_INTERNACION = {
+    "105M01","106M01","106M02","107M01","107M02",
+    "108A01","109A01","109A02","109A03",
+    "110A01","110A02","110A03",
+    "120B01",
+    "129A01","129A02","129B01","129B02","129M01","129M02",
+    "130A01","130A02","130B01","130B02","130M01","130M02",
+    "131A01","131A02","131M01","131M02",
+    "132P01","132P02",
+    "133M01","134B01","134M01",
+    "135A01","135A02","135M01","135M02",
+}
+
+_SECCIONES_CODIGO = {
+    "consultas":        ["codConsulta"],
+    "procedimientos":   ["codProcedimiento"],
+    "urgencias":        ["codConsulta", "codProcedimiento", "codServicio"],
+    "hospitalizacion":  ["codConsulta", "codProcedimiento", "codServicio"],
+    "medicamentos":     ["codTecnologiaSalud", "codigo"],
+    "otrosServicios":   ["codTecnologiaSalud", "codigo", "codServicio"],
+}
+
+
+def _norm_recaudo(v):
+    """Normaliza conceptoRecaudo a string sin ceros a la izquierda."""
+    s = _nstr(v)
+    try:
+        return str(int(s))
+    except ValueError:
+        return s
+
+
+def _cod_item(item):
+    """Extrae el primer código de servicio disponible en el dict."""
+    for campo in ("codConsulta", "codProcedimiento", "codTecnologiaSalud",
+                  "codServicio", "codigo"):
+        v = _nstr(item.get(campo))
+        if v:
+            return v
+    return ""
+
+
+def validar_concepto_recaudo(data, nombre_archivo=""):
+    """
+    Valida el campo conceptoRecaudo de cada ítem de servicio según:
+
+    REC-01 (beneficiario con urgencias/hospitalización, tipoUsuario=2):
+      conceptoRecaudo debe ser "1".
+      Excepción código 890701: debe ser "5".
+
+    REC-02 (contributivo sin urgencias/hospitalización, tipoUsuario 1 o 2):
+      conceptoRecaudo debe ser "2".
+
+    REC-03 (subsidiado sin urgencias/hospitalización, tipoUsuario=4):
+      conceptoRecaudo debe ser "1" o "5".
+
+    Retorna lista de dicts con el mismo esquema que validar_auditoria.
+    """
+    alertas = []
+    if not isinstance(data, dict):
+        return alertas
+
+    num_factura = _get_factura(data)
+
+    for usuario in data.get("usuarios", []):
+        if not isinstance(usuario, dict):
+            continue
+
+        nd        = _num_doc_usuario(usuario)
+        tipo_raw  = _norm_recaudo(usuario.get("tipoUsuario", ""))   # "02" → "2"
+        servicios = usuario.get("servicios", {})
+        if not isinstance(servicios, dict):
+            continue
+
+        urgs  = [r for r in (servicios.get("urgencias",       []) or []) if isinstance(r, dict)]
+        hosps = [r for r in (servicios.get("hospitalizacion", []) or []) if isinstance(r, dict)]
+        tiene_urg_hosp = bool(urgs or hosps)
+
+        ctx = {
+            "archivo":     nombre_archivo,
+            "num_factura": num_factura,
+            "num_doc":     nd,
+            "consecutivo": "",
+        }
+
+        def _a(id_regla, severidad, campo, mensaje, valor_actual=""):
+            alertas.append({
+                **ctx,
+                "id_regla":     id_regla,
+                "severidad":    severidad,
+                "campo":        campo,
+                "mensaje":      mensaje,
+                "valor_actual": _nstr(valor_actual),
+            })
+
+        # Verificar si hay algún código de internación facturado para este usuario
+        todos_cups = []
+        for sec in _SECCIONES_CODIGO:
+            for r in (servicios.get(sec, []) or []):
+                if isinstance(r, dict):
+                    v = _cod_item(r)
+                    if v:
+                        todos_cups.append(v)
+        tiene_internacion = any(c in _CODIGOS_INTERNACION for c in todos_cups)
+
+        for seccion in _SECCIONES_CODIGO:
+            items = [r for r in (servicios.get(seccion, []) or []) if isinstance(r, dict)]
+            for item in items:
+                cr_raw = item.get("conceptoRecaudo")
+                if cr_raw is None:
+                    continue
+                cr  = _norm_recaudo(cr_raw)
+                cod = _cod_item(item)
+
+                # REC-01 / REC-01B: solo si hay código de internación facturado
+                if tipo_raw == "2" and tiene_urg_hosp and tiene_internacion:
+                    if cod == "890701":
+                        if cr != "5":
+                            _a("REC-01B", "alta",
+                               f"{seccion}.conceptoRecaudo",
+                               "Código de urgencias registra cobro copago.",
+                               f"código={cod} | conceptoRecaudo={cr_raw} | esperado=5")
+                    else:
+                        if cr != "1":
+                            _a("REC-01", "alta",
+                               f"{seccion}.conceptoRecaudo",
+                               f"El concepto de recaudo {cr_raw} no aplica para beneficiario.",
+                               f"código={cod} | conceptoRecaudo={cr_raw} | esperado=1")
+
+                # REC-02: solo si hay código de internación facturado
+                elif tipo_raw in {"1", "2"} and not tiene_urg_hosp and tiene_internacion:
+                    if cr != "2":
+                        _a("REC-02", "media",
+                           f"{seccion}.conceptoRecaudo",
+                           "Concepto de recaudo para régimen contributivo aplica cuota moderadora.",
+                           f"código={cod} | conceptoRecaudo={cr_raw} | esperado=2")
+
+                # REC-03: sin cambio — no requiere internación
+                elif tipo_raw == "4" and not tiene_urg_hosp:
+                    if cr not in {"1", "5"}:
+                        _a("REC-03", "media",
+                           f"{seccion}.conceptoRecaudo",
+                           "Concepto de recaudo en régimen subsidiado no aplica cuota moderadora.",
+                           f"código={cod} | conceptoRecaudo={cr_raw} | esperado=1 o 5")
+
+    return alertas
