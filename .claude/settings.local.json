@@ -26,7 +26,15 @@
       "PowerShell(node --version)",
       "PowerShell($env:PATH = $env:PATH + \";C:\\\\Program Files\\\\nodejs\"; npm --version)",
       "PowerShell($env:PATH = $env:PATH + \";C:\\\\Program Files\\\\nodejs\"; Set-Location \"c:\\\\Users\\\\HAUDITORIA42\\\\Documents\\\\Didier Potosi\\\\Malla Validadora HSLV\\\\Python\\\\Extractor_rips\\\\frontend\"; npm install 2>&1)",
-      "PowerShell(Copy-Item \"c:\\\\Users\\\\HAUDITORIA42\\\\Documents\\\\Didier Potosi\\\\Malla Validadora HSLV\\\\Python\\\\Extractor_rips\\\\static\\\\styles.css\" \"c:\\\\Users\\\\HAUDITORIA42\\\\Documents\\\\Didier Potosi\\\\Malla Validadora HSLV\\\\Python\\\\Extractor_rips\\\\frontend\\\\public\\\\styles.css\" -Force)"
+      "PowerShell(Copy-Item \"c:\\\\Users\\\\HAUDITORIA42\\\\Documents\\\\Didier Potosi\\\\Malla Validadora HSLV\\\\Python\\\\Extractor_rips\\\\static\\\\styles.css\" \"c:\\\\Users\\\\HAUDITORIA42\\\\Documents\\\\Didier Potosi\\\\Malla Validadora HSLV\\\\Python\\\\Extractor_rips\\\\frontend\\\\public\\\\styles.css\" -Force)",
+      "Bash(pip install *)",
+      "Bash(timeout 8 py -3.13 -c ' *)",
+      "Bash(dir \"c:\\\\Users\\\\HAUDITORIA42\\\\Documents\\\\Didier Potosi\\\\Dr-Factory\\\\Python\\\\Extractor_rips\\\\frontend\\\\src\" /s /b)",
+      "Bash(findstr /v node_modules)",
+      "Read(//c/Users/HAUDITORIA42/Documents/Didier Potosi/Dr-Factory/Python/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\HAUDITORIA42\\.claude\\projects\\c--Users-HAUDITORIA42-Documents-Didier-Potosi-Dr-Factory-Python-Extractor-rips\\memory"
     ]
   }
 }

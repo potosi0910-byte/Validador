@@ -1,13 +1,13 @@
 [
   {
     "username": "admin",
-    "password": "$2b$12$BjoVB2Iho41rcW65Cr.YWOpoojtZ4CLzTGL.EOSkAxPFjG/dfo.kS",
+    "password": "$2b$12$KbOh0DEnvH.ViHQwkroNC.LiNm4rO3zGxTAQsgTDvI82efO8kpIju",
     "role": "admin",
     "nombre": "Administrador Dr. Factory"
   },
   {
     "username": "auditor",
-    "password": "$2b$12$Ju1ZOGxeOSocLa58EwM31OIhq2gAZMM4Ip2KmhLpZSy2CgyzCkQIe",
+    "password": "$2b$12$ADcZiaVlwgKZCIxVEjBbs.Xrv20XBNQxjrssevWt0rcncEQuz4qXi",
     "role": "auditor",
     "nombre": "Auditor Clínico"
   }
