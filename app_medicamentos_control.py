@@ -3891,5 +3891,1033 @@ def index():
     )
  
  
+# ══════════════════════════════════════════════════════════════
+# VALIDACIONES MALLA 0948/2026 – complementarias a 2275
+# ══════════════════════════════════════════════════════════════
+#
+# Fuente: docs_normativos/anexo_tecnico1_resolucion_948_2026.txt
+# ("Documento Técnico 1 – Especificaciones técnicas de los campos de datos
+# y las reglas de validación del RIPS como soporte de la FEV en salud",
+# anexo a la Resolución 000948 de 2026), transcripción limpia hecha por el
+# usuario a partir del PDF oficial. Reemplaza por completo la versión
+# anterior basada en el texto OCR degradado.
+#
+# Esta malla implementa, por cada bloque de servicios:
+#   1) Presencia/formato de los CAMPOS NUEVOS (numeral 3.1.1 / numeral 4).
+#   2) Chequeos INFORMATIVOS de tamaño para los campos existentes que
+#      recortan su tamaño en 0948 (numeral 3.2.1 / numeral 4) — nunca se
+#      escala a "critica" porque 2275 sigue vigente en paralelo.
+#   3) Las reglas nuevas concretas RVC094-RVC098 (numeral 3.1.2 / numeral 6),
+#      implementadas literalmente cuando el dato es derivable del RIPS.
+#   4) Las escaladas de Notificación→Rechazo listadas en 3.2.2/3.2.3: si el
+#      chequeo homólogo ya existe en *_malla_2275, se reporta una versión
+#      0948 con severidad más alta; si no existe, se implementa de cero acá
+#      con severidad informativa ("media"/"baja").
+#   5) M02 (numAutorizacion en medicamentos) NO se exige en 0948 porque el
+#      campo fue eliminado (numeral 3.3); validar_medicamentos_malla_2275
+#      no se modifica y sigue exigiéndolo bajo 2275.
+#
+# RVC ids del numeral 6 que NO se implementaron con datos concretos (se
+# documenta el motivo en vez de adivinar la regla):
+#   - RVC096 (C04,P05,S06 contra tabla de referencia "CUPSRips"): requiere
+#     un catálogo CUPS completo que no está disponible en este repositorio;
+#     ya se valida el formato de 6 caracteres en la malla 2275.
+#   - RVC098 (fecha de servicio vs. fecha de fallecimiento + 24h, RUAF-ND):
+#     el RIPS no trae un campo de "fecha de fallecimiento" independiente de
+#     condicionDestinoUsuarioEgreso/fechaEgreso; se usa fechaEgreso como
+#     proxy SOLO cuando condicionDestinoUsuarioEgreso indica "muerto" (esto
+#     ya es lo que hace RVC053/RVC062 abajo). No se inventa un cruce con
+#     RUAF-ND porque esa fuente no está disponible en este pipeline.
+#   - RVC084 (lista exacta de finalidades de promoción/prevención/materno-
+#     perinatal que exigen conceptoRecaudo="No aplica"): el texto fuente
+#     nombra las finalidades por descripción, no por código explícito para
+#     cada una; implementarlo con los códigos ya usados en RVC067-071
+#     (11,12,13,14 aproximado) arriesgaría falsos positivos, así que se deja
+#     fuera hasta contar con la tabla RIPSFinalidadConsultaVersion2 completa.
+#   - RVC023 (P05=código de parto ⇒ debe existir recienNacidos): requiere el
+#     listado CUPS de códigos de parto (anexo aparte), no disponible aquí.
+#   - RVG14/RVG15 (nacimientos múltiples ⇔ procedimiento de parto múltiple;
+#     urgencias con observación ⇔ consulta de urgencia asociada): son
+#     validaciones de relación entre bloques de servicios de distinta
+#     naturaleza (procedimientos vs. recienNacidos; urgencias vs. consultas)
+#     que dependen de catálogos CUPS de parto/observación no disponibles;
+#     se documentan aquí como pendientes en vez de implementarse a ciegas.
+#
+# ── Cronograma de exigibilidad (Resolución 000948 de 2026, art. 23 y
+#    parágrafo transitorio) ──────────────────────────────────────────
+#   - Vigencia general: desde la fecha de expedición (14-may-2026); deroga
+#     2275/2023, 558/2024 y 1884/2024.
+#   - Desde el 01-jun-2026: las reglas que hoy son de "notificación" pasan a
+#     ser de "rechazo" (esto es lo que _severidad_0948 aproxima).
+#   - Desde el 01-jul-2026: son exigibles los ajustes de versión de software
+#     de carácter estructural (i.e. los campos nuevos dejan de ser opcionales
+#     "de transición").
+#   - RVC095 (U12/registroSIRAS): Notificación durante los primeros 3 meses
+#     desde la implementación de la resolución (14-may-2026 + 3 meses =
+#     ~14-ago-2026), luego Rechazo.
+# Estas fechas se usan para escalar automáticamente la severidad de los
+# hallazgos 0948 con el paso del tiempo, en vez de dejarlos fijos.
+
+from datetime import date as _date
+
+FECHA_EXPEDICION_0948 = _date(2026, 5, 14)
+FECHA_RECHAZO_0948 = _date(2026, 6, 1)
+FECHA_ESTRUCTURAL_0948 = _date(2026, 7, 1)
+FECHA_RVC095_RECHAZO = _date(2026, 8, 14)  # 3 meses desde la expedición
+
+
+def _severidad_0948(base_media="media", base_baja="baja", hoy=None):
+    """
+    Severidad para un hallazgo 0948 según el cronograma del parágrafo
+    transitorio del art. 23: antes del 01-jul-2026 se mantienen como
+    informativas; desde esa fecha, las reglas de estructura (campos nuevos)
+    se tratan como "alta" en vez de "media"/"baja". Nunca llega a "critica"
+    para campos nuevos porque la resolución no define rechazo automático
+    por su ausencia (sí lo define para las reglas de escalada N→R, que se
+    manejan aparte en _severidad_escalada_0948).
+    """
+    hoy = hoy or _date.today()
+    if hoy >= FECHA_ESTRUCTURAL_0948:
+        return "alta"
+    return base_media
+
+
+def _severidad_escalada_0948(hoy=None):
+    """
+    Severidad para las reglas que el numeral 3.2.2/3.2.3 marca como
+    "cambia de Notificación a Rechazo" en 0948. Antes del 01-jun-2026 se
+    reportan como "alta" (más fuerte que una notificación normal, para
+    anticipar el cambio); desde el 01-jun-2026 se reportan como "critica"
+    porque pasan a ser causal de rechazo.
+    """
+    hoy = hoy or _date.today()
+    return "critica" if hoy >= FECHA_RECHAZO_0948 else "alta"
+
+
+def _campo_nuevo_0948(errores, ctx, campo, valor, min_len=None, max_len=None,
+                       opcional_transicion=False, id_regla=None):
+    """
+    Chequeo genérico e informativo para un campo NUEVO introducido en la
+    Resolución 0948/2026 (numeral 3.1.1 / numeral 4).
+    """
+    id_regla = id_regla or f"0948-{campo}"
+    hoy = _date.today()
+    val = normalizar_str(valor)
+    if not val or val.lower() in {"none", "null"}:
+        exigible = hoy >= FECHA_ESTRUCTURAL_0948
+        if not opcional_transicion or exigible:
+            errores.append({
+                **ctx, "id_regla": id_regla,
+                "severidad": _severidad_0948(hoy=hoy),
+                "campo": campo,
+                "mensaje": f"[0948] Campo '{campo}' no está informado. "
+                           f"Es un campo nuevo en la Resolución 0948 de 2026"
+                           + (" (ya exigible: ajustes estructurales vigentes desde 01-jul-2026)."
+                              if exigible else
+                              " (aún no exigible; opcional durante la transición)."),
+                "valor_actual": "",
+            })
+        return
+    if min_len is not None and len(val) < min_len:
+        errores.append({
+            **ctx, "id_regla": id_regla,
+            "severidad": _severidad_0948(base_media="baja", hoy=hoy),
+            "campo": campo,
+            "mensaje": f"[0948] Campo '{campo}' tiene longitud {len(val)}, "
+                       f"menor al mínimo esperado ({min_len}) según 0948.",
+            "valor_actual": val,
+        })
+    if max_len is not None and len(val) > max_len:
+        errores.append({
+            **ctx, "id_regla": id_regla,
+            "severidad": _severidad_0948(base_media="baja", hoy=hoy),
+            "campo": campo,
+            "mensaje": f"[0948] Campo '{campo}' tiene longitud {len(val)}, "
+                       f"mayor al máximo esperado ({max_len}) según 0948.",
+            "valor_actual": val,
+        })
+
+
+def _tamano_cambio_0948(errores, ctx, campo, valor, tamano_exacto, id_regla, permite_null=True):
+    """
+    Chequeo INFORMATIVO (numeral 3.2.1) para campos existentes en 2275 cuyo
+    tamaño se acorta a un valor exacto en 0948 (p.ej. C10 de "4-25" a "4";
+    C11 de "0-25" a "0,4"). Como 2275 sigue vigente en paralelo, esto NUNCA
+    se reporta como "critica": es una advertencia de que, bajo 0948, ese
+    valor sería rechazado por tamaño.
+    """
+    val = normalizar_str(valor)
+    if not val or val.lower() in {"none", "null"}:
+        if not permite_null:
+            errores.append({
+                **ctx, "id_regla": id_regla, "severidad": "baja",
+                "campo": campo,
+                "mensaje": f"[0948] Campo '{campo}' no informado; en 0948 su tamaño exacto "
+                           f"exigido es {tamano_exacto} (no admite null).",
+                "valor_actual": "",
+            })
+        return
+    if len(val) != tamano_exacto:
+        errores.append({
+            **ctx, "id_regla": id_regla, "severidad": "baja",
+            "campo": campo,
+            "mensaje": f"[0948] Campo '{campo}' tiene tamaño {len(val)}; bajo la Resolución 0948 "
+                       f"el tamaño exacto exigido es {tamano_exacto} (2275 admite un rango mayor; "
+                       "este hallazgo es informativo de cara a la migración).",
+            "valor_actual": val,
+        })
+
+
+def _escalada_0948(errores, ctx, id_regla, campo, mensaje, valor_actual=""):
+    """
+    Reporta un hallazgo para una regla que el numeral 3.2.2/3.2.3 del texto
+    fuente marca explícitamente como "cambia de Notificación a Rechazo" (o
+    ajuste equivalente) en 0948. Severidad creciente según _severidad_escalada_0948.
+    """
+    errores.append({
+        **ctx, "id_regla": id_regla,
+        "severidad": _severidad_escalada_0948(),
+        "campo": campo,
+        "mensaje": f"[0948-escalada N→R] {mensaje}",
+        "valor_actual": normalizar_str(valor_actual),
+    })
+
+
+def _ctx_base_0948(nombre_archivo, data):
+    FACTURA_KEYS = {"numFactura", "numeroFactura", "nroFactura", "noFactura", "factura"}
+    num_factura = ""
+    for k in FACTURA_KEYS:
+        v = data.get(k)
+        if v and not isinstance(v, (dict, list)):
+            num_factura = normalizar_str(v)
+            break
+    return num_factura
+
+
+def _condicion_indica_muerto_0948(cond_egr):
+    """CondicionyDestinoUsuarioEgreso: '21' = Paciente fallecido (convención usada en la malla 2275)."""
+    return normalizar_str(cond_egr) == "21"
+
+
+def _condicion_indica_derivado_0948(cond_egr):
+    """Códigos que en la tabla CondicionyDestinoUsuarioEgreso indican traslado/derivación a otro servicio."""
+    return normalizar_str(cond_egr) in {"03", "04"}
+
+
+# ────────────────────────────────────────────────────────────────
+# BLOQUE C: CONSULTAS
+# ────────────────────────────────────────────────────────────────
+
+def validar_consultas_malla_0948(data, nombre_archivo=""):
+    """
+    Consultas bajo 0948:
+    - Campos nuevos C22-C30 (codigoVIDA + diagnósticos CIE11).
+    - Tamaño exacto de C10 (4) y C11-C13 (0,4) — informativo.
+    - RVC086/RVC087 escaladas a Rechazo (diagnóstico relacionado repetido /
+      igual al principal).
+    - RVC084: no implementada (ver nota de cabecera del módulo).
+    """
+    errores = []
+    if not isinstance(data, dict):
+        return errores
+    num_factura = _ctx_base_0948(nombre_archivo, data)
+
+    for usuario in data.get("usuarios", []):
+        if not isinstance(usuario, dict):
+            continue
+        num_doc = _num_doc_val(usuario)
+        servicios = usuario.get("servicios", {})
+        if not isinstance(servicios, dict):
+            continue
+        consultas = servicios.get("consultas", [])
+        if not isinstance(consultas, list):
+            continue
+        for con in consultas:
+            if not isinstance(con, dict):
+                continue
+            ctx = {"archivo": nombre_archivo, "num_factura": num_factura,
+                   "num_doc": num_doc, "consecutivo": normalizar_str(con.get("consecutivo"))}
+
+            # ── Campos nuevos ──────────────────────────────
+            _campo_nuevo_0948(errores, ctx, "codigoVIDA", con.get("codigoVIDA"),
+                               1, 256, opcional_transicion=True, id_regla="C22-0948")
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoPrincipalCIE11",
+                               con.get("codDiagnosticoPrincipalCIE11"), 4, 256, id_regla="C23-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodDiagnosticoPrincipalCIE11",
+                               con.get("nomCodDiagnosticoPrincipalCIE11"), 4, 1000, id_regla="C24-0948")
+            for n, letra in ((1, "C25"), (2, "C27"), (3, "C29")):
+                _campo_nuevo_0948(errores, ctx, f"codDiagnosticoRelacionado{n}CIE11",
+                                   con.get(f"codDiagnosticoRelacionado{n}CIE11"),
+                                   opcional_transicion=True, id_regla=f"{letra}-0948")
+            for n, letra in ((1, "C26"), (2, "C28"), (3, "C30")):
+                _campo_nuevo_0948(errores, ctx, f"nomCodDiagnosticoRelacionado{n}CIE11",
+                                   con.get(f"nomCodDiagnosticoRelacionado{n}CIE11"),
+                                   opcional_transicion=True, id_regla=f"{letra}-0948")
+
+            # ── Tamaño (3.2.1): C10 exacto 4, C11-C13 "0,4" ──
+            _tamano_cambio_0948(errores, ctx, "codDiagnosticoPrincipal",
+                                 con.get("codDiagnosticoPrincipal"), 4, "C10-0948", permite_null=False)
+            for campo in ("codDiagnosticoRelacionado1", "codDiagnosticoRelacionado2",
+                          "codDiagnosticoRelacionado3"):
+                _tamano_cambio_0948(errores, ctx, campo, con.get(campo), 4, "C11C12C13-0948")
+
+            # ── RVC086/RVC087 escaladas a Rechazo ────────────
+            diag_p = normalizar_str(con.get("codDiagnosticoPrincipal") or "")
+            diags_rel = [normalizar_str(con.get(f"codDiagnosticoRelacionado{n}") or "") for n in (1, 2, 3)]
+            diags_notnull = [d for d in diags_rel if d]
+            for dr in diags_notnull:
+                if dr == diag_p:
+                    _escalada_0948(errores, ctx, "RVC086", "codDiagnosticoRelacionado",
+                                    f"Diagnóstico relacionado '{dr}' es igual al diagnóstico principal "
+                                    "(RVC086 pasa de Notificación a Rechazo en 0948).", dr)
+            if len(diags_notnull) != len(set(diags_notnull)):
+                _escalada_0948(errores, ctx, "RVC087", "codDiagnosticoRelacionado",
+                                "Existen diagnósticos relacionados repetidos entre sí "
+                                "(RVC087 pasa de Notificación a Rechazo en 0948).")
+    return errores
+
+
+# ────────────────────────────────────────────────────────────────
+# BLOQUE P: PROCEDIMIENTOS
+# ────────────────────────────────────────────────────────────────
+
+def validar_procedimientos_malla_0948(data, nombre_archivo=""):
+    """
+    Procedimientos bajo 0948:
+    - Campos nuevos P21-P27 (CIE11 + codigoVIDA).
+    - Tamaño "0,4" para P14 (codDiagnosticoRelacionado) y P15 (codComplicacion) — informativo.
+    - RVC086 escalada (diagnóstico relacionado == principal), aplicable a P14.
+    - RVC023 (parto ⇒ recienNacidos): no implementada (ver nota de cabecera).
+    """
+    errores = []
+    if not isinstance(data, dict):
+        return errores
+    num_factura = _ctx_base_0948(nombre_archivo, data)
+
+    for usuario in data.get("usuarios", []):
+        if not isinstance(usuario, dict):
+            continue
+        num_doc = _num_doc_val(usuario)
+        servicios = usuario.get("servicios", {})
+        if not isinstance(servicios, dict):
+            continue
+        procs = servicios.get("procedimientos", [])
+        if not isinstance(procs, list):
+            continue
+        for p in procs:
+            if not isinstance(p, dict):
+                continue
+            ctx = {"archivo": nombre_archivo, "num_factura": num_factura,
+                   "num_doc": num_doc, "consecutivo": normalizar_str(p.get("consecutivo"))}
+
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoPrincipalCIE11",
+                               p.get("codDiagnosticoPrincipalCIE11"), 4, 256, id_regla="P21-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodDiagnosticoPrincipalCIE11",
+                               p.get("nomCodDiagnosticoPrincipalCIE11"), 1, 1000, id_regla="P22-0948")
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoRelacionadoCIE11",
+                               p.get("codDiagnosticoRelacionadoCIE11"),
+                               opcional_transicion=True, id_regla="P23-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodDiagnosticoRelacionadoCIE11",
+                               p.get("nomCodDiagnosticoRelacionadoCIE11"),
+                               opcional_transicion=True, id_regla="P24-0948")
+            _campo_nuevo_0948(errores, ctx, "codComplicacionCIE11",
+                               p.get("codComplicacionCIE11"), opcional_transicion=True, id_regla="P25-0948")
+            _campo_nuevo_0948(errores, ctx, "nomComplicacionCIE11",
+                               p.get("nomComplicacionCIE11"), opcional_transicion=True, id_regla="P26-0948")
+            _campo_nuevo_0948(errores, ctx, "codigoVIDA", p.get("codigoVIDA"),
+                               1, 256, opcional_transicion=True, id_regla="P27-0948")
+
+            _tamano_cambio_0948(errores, ctx, "codDiagnosticoRelacionado",
+                                 p.get("codDiagnosticoRelacionado"), 4, "P14-0948")
+            _tamano_cambio_0948(errores, ctx, "codComplicacion",
+                                 p.get("codComplicacion"), 4, "P15-0948")
+
+            diag_p = normalizar_str(p.get("codDiagnosticoPrincipal") or "")
+            diag_rel = normalizar_str(p.get("codDiagnosticoRelacionado") or "")
+            if diag_rel and diag_rel == diag_p:
+                _escalada_0948(errores, ctx, "RVC086", "codDiagnosticoRelacionado",
+                                f"codDiagnosticoRelacionado '{diag_rel}' es igual al diagnóstico principal "
+                                "(RVC086 pasa de Notificación a Rechazo en 0948).", diag_rel)
+    return errores
+
+
+# ────────────────────────────────────────────────────────────────
+# BLOQUE R: URGENCIAS
+# ────────────────────────────────────────────────────────────────
+
+def validar_urgencias_malla_0948(data, nombre_archivo=""):
+    """
+    Urgencias bajo 0948:
+    - Campos nuevos R13-R25 (CIE11 + codigoVIDA).
+    - Tamaño exacto R04/R05 (4), R06-R08/R10 (0,4) — informativo.
+    - RVC088/RVC089 escaladas a Rechazo (relacionados de egreso == principal
+      de egreso / repetidos entre sí).
+    - RVC053/RVC062 escaladas a Rechazo (condición=muerto ⇒ sin servicios
+      posteriores a 24h de fallecimiento; condición=derivado ⇒ deben existir
+      los servicios de destino). Implementadas con lo disponible en el
+      propio bloque de urgencias del RIPS (fechaEgreso como proxy de fecha
+      de fallecimiento cuando condicionDestinoUsuarioEgreso='21').
+    """
+    errores = []
+    if not isinstance(data, dict):
+        return errores
+    num_factura = _ctx_base_0948(nombre_archivo, data)
+
+    for usuario in data.get("usuarios", []):
+        if not isinstance(usuario, dict):
+            continue
+        num_doc = _num_doc_val(usuario)
+        servicios = usuario.get("servicios", {})
+        if not isinstance(servicios, dict):
+            continue
+        urg = servicios.get("urgencias", [])
+        if not isinstance(urg, list):
+            continue
+
+        # Fecha de fallecimiento derivada (proxy): fechaEgreso del primer
+        # registro de urgencias con condicionDestinoUsuarioEgreso='21'.
+        fecha_falle_dt = None
+        for r in urg:
+            if isinstance(r, dict) and _condicion_indica_muerto_0948(r.get("condicionDestinoUsuarioEgreso")):
+                feg = normalizar_str(r.get("fechaEgreso") or "")
+                try:
+                    if len(feg) >= 16:
+                        fecha_falle_dt = datetime.strptime(feg[:16], "%Y-%m-%d %H:%M")
+                    elif len(feg) == 10:
+                        fecha_falle_dt = datetime.strptime(feg, "%Y-%m-%d")
+                except ValueError:
+                    pass
+                break
+
+        for r in urg:
+            if not isinstance(r, dict):
+                continue
+            ctx = {"archivo": nombre_archivo, "num_factura": num_factura,
+                   "num_doc": num_doc, "consecutivo": normalizar_str(r.get("consecutivo"))}
+
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoPrincipalCIE11",
+                               r.get("codDiagnosticoPrincipalCIE11"), 4, 256, id_regla="R13-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodDiagnosticoPrincipalCIE11",
+                               r.get("nomCodDiagnosticoPrincipalCIE11"), 1, 1000, id_regla="R14-0948")
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoPrincipalECIE11",
+                               r.get("codDiagnosticoPrincipalECIE11"), 4, 256, id_regla="R15-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodDiagnosticoPrincipalECIE11",
+                               r.get("nomCodDiagnosticoPrincipalECIE11"), 1, 1000, id_regla="R16-0948")
+            for n, letra in ((1, "R17"), (2, "R19"), (3, "R21")):
+                _campo_nuevo_0948(errores, ctx, f"codDiagnosticoRelacionadoE{n}CIE11",
+                                   r.get(f"codDiagnosticoRelacionadoE{n}CIE11"),
+                                   opcional_transicion=True, id_regla=f"{letra}-0948")
+            for n, letra in ((1, "R18"), (2, "R20"), (3, "R22")):
+                _campo_nuevo_0948(errores, ctx, f"nomCodDiagnosticoRelacionadoE{n}CIE11",
+                                   r.get(f"nomCodDiagnosticoRelacionadoE{n}CIE11"),
+                                   opcional_transicion=True, id_regla=f"{letra}-0948")
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoCausaMuerteCIE11",
+                               r.get("codDiagnosticoCausaMuerteCIE11"),
+                               opcional_transicion=True, id_regla="R23-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodDiagnosticoCausaMuerteCIE11",
+                               r.get("nomCodDiagnosticoCausaMuerteCIE11"),
+                               opcional_transicion=True, id_regla="R24-0948")
+            _campo_nuevo_0948(errores, ctx, "codigoVIDA", r.get("codigoVIDA"),
+                               1, 256, opcional_transicion=True, id_regla="R25-0948")
+
+            _tamano_cambio_0948(errores, ctx, "codDiagnosticoPrincipal",
+                                 r.get("codDiagnosticoPrincipal"), 4, "R04-0948", permite_null=False)
+            _tamano_cambio_0948(errores, ctx, "codDiagnosticoPrincipalE",
+                                 r.get("codDiagnosticoPrincipalE"), 4, "R05-0948", permite_null=False)
+            for campo, id_r in (("codDiagnosticoRelacionadoE1", "R06-0948"),
+                                 ("codDiagnosticoRelacionadoE2", "R07-0948"),
+                                 ("codDiagnosticoRelacionadoE3", "R08-0948"),
+                                 ("codDiagnosticoCausaMuerte", "R10-0948")):
+                _tamano_cambio_0948(errores, ctx, campo, r.get(campo), 4, id_r)
+
+            # RVC088/RVC089: relacionados de egreso == principal de egreso / repetidos
+            diag_pe = normalizar_str(r.get("codDiagnosticoPrincipalE") or "")
+            rel_e = [normalizar_str(r.get(f"codDiagnosticoRelacionadoE{n}") or "") for n in (1, 2, 3)]
+            rel_e_notnull = [d for d in rel_e if d]
+            for dr in rel_e_notnull:
+                if dr == diag_pe:
+                    _escalada_0948(errores, ctx, "RVC088", "codDiagnosticoRelacionadoE",
+                                    f"Diagnóstico relacionado de egreso '{dr}' es igual al principal de "
+                                    "egreso (RVC088 pasa de Notificación a Rechazo en 0948).", dr)
+            if len(rel_e_notnull) != len(set(rel_e_notnull)):
+                _escalada_0948(errores, ctx, "RVC089", "codDiagnosticoRelacionadoE",
+                                "Existen diagnósticos relacionados de egreso repetidos entre sí "
+                                "(RVC089 pasa de Notificación a Rechazo en 0948).")
+
+            # RVC053: muerto ⇒ sin servicios posteriores a fecha_falle + 24h
+            cond = r.get("condicionDestinoUsuarioEgreso")
+            if fecha_falle_dt is not None and not _condicion_indica_muerto_0948(cond):
+                fecha_serv_raw = normalizar_str(r.get("fechaInicioAtencion") or "")
+                fecha_serv_dt = None
+                try:
+                    if len(fecha_serv_raw) >= 16:
+                        fecha_serv_dt = datetime.strptime(fecha_serv_raw[:16], "%Y-%m-%d %H:%M")
+                    elif len(fecha_serv_raw) == 10:
+                        fecha_serv_dt = datetime.strptime(fecha_serv_raw, "%Y-%m-%d")
+                except ValueError:
+                    pass
+                if fecha_serv_dt and (fecha_serv_dt - fecha_falle_dt).total_seconds() > 24 * 3600:
+                    _escalada_0948(errores, ctx, "RVC053", "fechaInicioAtencion",
+                                    "El usuario tiene un registro de urgencias marcado como fallecido y este "
+                                    "otro servicio de urgencias tiene fecha posterior a 24h del fallecimiento "
+                                    "(RVC053 pasa de Notificación a Rechazo en 0948).", fecha_serv_raw)
+
+            # RVC062: derivado a otro servicio ⇒ deben existir esos servicios (best-effort:
+            # se limita a dejar constancia informativa, ya que "esos servicios" pueden estar
+            # en cualquiera de los otros bloques del mismo usuario y no hay forma fiable de
+            # mapear el destino textual a un bloque concreto sin la tabla de referencia).
+            if _condicion_indica_derivado_0948(cond):
+                otros_bloques = servicios.get("hospitalizacion", []) or servicios.get("procedimientos", [])
+                if not otros_bloques:
+                    _escalada_0948(errores, ctx, "RVC062", "condicionDestinoUsuarioEgreso",
+                                    "condicionDestinoUsuarioEgreso indica derivación a otro servicio, pero "
+                                    "el usuario no tiene registros en hospitalización ni procedimientos "
+                                    "(RVC062 pasa de Notificación a Rechazo en 0948).", cond)
+    return errores
+
+
+# ────────────────────────────────────────────────────────────────
+# BLOQUE H: HOSPITALIZACIÓN
+# ────────────────────────────────────────────────────────────────
+
+def validar_hospitalizacion_malla_0948(data, nombre_archivo=""):
+    """
+    Hospitalización bajo 0948:
+    - Campos nuevos H16-H30 (CIE11 x2 pares principal + relacionados +
+      complicación + causa muerte + codigoVIDA).
+    - Tamaño exacto H06/H07 (4), H08-H11/H13 (0,4) — informativo.
+    - RVC088/RVC089 escaladas (relacionados de egreso == principal / repetidos).
+    - RVC053/RVC062 escaladas, análogas a urgencias.
+    """
+    errores = []
+    if not isinstance(data, dict):
+        return errores
+    num_factura = _ctx_base_0948(nombre_archivo, data)
+
+    for usuario in data.get("usuarios", []):
+        if not isinstance(usuario, dict):
+            continue
+        num_doc = _num_doc_val(usuario)
+        servicios = usuario.get("servicios", {})
+        if not isinstance(servicios, dict):
+            continue
+        regs = servicios.get("hospitalizacion", [])
+        if not isinstance(regs, list):
+            continue
+
+        fecha_falle_dt = None
+        for h in regs:
+            if isinstance(h, dict) and _condicion_indica_muerto_0948(h.get("condicionDestinoUsuarioEgreso")):
+                feg = normalizar_str(h.get("fechaEgreso") or "")
+                try:
+                    if len(feg) >= 16:
+                        fecha_falle_dt = datetime.strptime(feg[:16], "%Y-%m-%d %H:%M")
+                    elif len(feg) == 10:
+                        fecha_falle_dt = datetime.strptime(feg, "%Y-%m-%d")
+                except ValueError:
+                    pass
+                break
+
+        for h in regs:
+            if not isinstance(h, dict):
+                continue
+            ctx = {"archivo": nombre_archivo, "num_factura": num_factura,
+                   "num_doc": num_doc, "consecutivo": normalizar_str(h.get("consecutivo"))}
+
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoPrincipalECIE11",
+                               h.get("codDiagnosticoPrincipalECIE11"), 4, 256, id_regla="H16-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodDiagnosticoPrincipalECIE11",
+                               h.get("nomCodDiagnosticoPrincipalECIE11"), 1, 1000, id_regla="H17-0948")
+            for n, letra in ((1, "H20"), (2, "H22"), (3, "H24")):
+                _campo_nuevo_0948(errores, ctx, f"codDiagnosticoRelacionadoE{n}CIE11",
+                                   h.get(f"codDiagnosticoRelacionadoE{n}CIE11"),
+                                   opcional_transicion=True, id_regla=f"{letra}-0948")
+            for n, letra in ((1, "H21"), (2, "H23"), (3, "H25")):
+                _campo_nuevo_0948(errores, ctx, f"nomCodDiagnosticoRelacionadoE{n}CIE11",
+                                   h.get(f"nomCodDiagnosticoRelacionadoE{n}CIE11"),
+                                   opcional_transicion=True, id_regla=f"{letra}-0948")
+            _campo_nuevo_0948(errores, ctx, "codComplicacionCIE11",
+                               h.get("codComplicacionCIE11"), 4, 256, id_regla="H26-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodComplicacionCIE11",
+                               h.get("nomCodComplicacionCIE11"), 1, 1000, id_regla="H27-0948")
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoCausaMuerteCIE11",
+                               h.get("codDiagnosticoCausaMuerteCIE11"),
+                               opcional_transicion=True, id_regla="H28-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodDiagnosticoCausaMuerteCIE11",
+                               h.get("nomCodDiagnosticoCausaMuerteCIE11"),
+                               opcional_transicion=True, id_regla="H29-0948")
+            _campo_nuevo_0948(errores, ctx, "codigoVIDA", h.get("codigoVIDA"),
+                               1, 256, opcional_transicion=True, id_regla="H30-0948")
+
+            _tamano_cambio_0948(errores, ctx, "codDiagnosticoPrincipal",
+                                 h.get("codDiagnosticoPrincipal"), 4, "H06-0948", permite_null=False)
+            _tamano_cambio_0948(errores, ctx, "codDiagnosticoPrincipalE",
+                                 h.get("codDiagnosticoPrincipalE"), 4, "H07-0948", permite_null=False)
+            for campo, id_r in (("codDiagnosticoRelacionadoE1", "H08-0948"),
+                                 ("codDiagnosticoRelacionadoE2", "H09-0948"),
+                                 ("codDiagnosticoRelacionadoE3", "H10-0948"),
+                                 ("codComplicacion", "H11-0948"),
+                                 ("codDiagnosticoCausaMuerte", "H13-0948")):
+                _tamano_cambio_0948(errores, ctx, campo, h.get(campo), 4, id_r)
+
+            diag_pe = normalizar_str(h.get("codDiagnosticoPrincipalE") or "")
+            rel_e = [normalizar_str(h.get(f"codDiagnosticoRelacionadoE{n}") or "") for n in (1, 2, 3)]
+            rel_e_notnull = [d for d in rel_e if d]
+            for dr in rel_e_notnull:
+                if dr == diag_pe:
+                    _escalada_0948(errores, ctx, "RVC088", "codDiagnosticoRelacionadoE",
+                                    f"Diagnóstico relacionado de egreso '{dr}' es igual al principal de "
+                                    "egreso (RVC088 pasa de Notificación a Rechazo en 0948).", dr)
+            if len(rel_e_notnull) != len(set(rel_e_notnull)):
+                _escalada_0948(errores, ctx, "RVC089", "codDiagnosticoRelacionadoE",
+                                "Existen diagnósticos relacionados de egreso repetidos entre sí "
+                                "(RVC089 pasa de Notificación a Rechazo en 0948).")
+
+            cond = h.get("condicionDestinoUsuarioEgreso")
+            if fecha_falle_dt is not None and not _condicion_indica_muerto_0948(cond):
+                fecha_serv_raw = normalizar_str(h.get("fechaInicioAtencion") or "")
+                fecha_serv_dt = None
+                try:
+                    if len(fecha_serv_raw) >= 16:
+                        fecha_serv_dt = datetime.strptime(fecha_serv_raw[:16], "%Y-%m-%d %H:%M")
+                    elif len(fecha_serv_raw) == 10:
+                        fecha_serv_dt = datetime.strptime(fecha_serv_raw, "%Y-%m-%d")
+                except ValueError:
+                    pass
+                if fecha_serv_dt and (fecha_serv_dt - fecha_falle_dt).total_seconds() > 24 * 3600:
+                    _escalada_0948(errores, ctx, "RVC053", "fechaInicioAtencion",
+                                    "El usuario tiene un registro de hospitalización marcado como fallecido y "
+                                    "este otro servicio tiene fecha posterior a 24h del fallecimiento "
+                                    "(RVC053 pasa de Notificación a Rechazo en 0948).", fecha_serv_raw)
+
+            if _condicion_indica_derivado_0948(cond):
+                otros_bloques = servicios.get("urgencias", []) or servicios.get("procedimientos", [])
+                if not otros_bloques:
+                    _escalada_0948(errores, ctx, "RVC062", "condicionDestinoUsuarioEgreso",
+                                    "condicionDestinoUsuarioEgreso indica derivación a otro servicio, pero "
+                                    "el usuario no tiene registros en urgencias ni procedimientos "
+                                    "(RVC062 pasa de Notificación a Rechazo en 0948).", cond)
+    return errores
+
+
+# ────────────────────────────────────────────────────────────────
+# BLOQUE N: RECIÉN NACIDOS
+# ────────────────────────────────────────────────────────────────
+
+def validar_recien_nacidos_malla_0948(data, nombre_archivo=""):
+    """
+    Recién nacidos bajo 0948:
+    - Campos nuevos N14-N18 (CIE11 principal, causa muerte, codigoVIDA).
+    - RVC057 (edadGestacional 20-46) y RVC058 (peso 500-5000g) escaladas a
+      Rechazo (ya existen en la malla 2275 como "media").
+    - RVC053/RVC062 escaladas, análogas a urgencias/hospitalización.
+    - RVC097 (nueva, N06 numConsultasCPrenatal <= 15), implementada literal.
+    """
+    errores = []
+    if not isinstance(data, dict):
+        return errores
+    num_factura = _ctx_base_0948(nombre_archivo, data)
+
+    for usuario in data.get("usuarios", []):
+        if not isinstance(usuario, dict):
+            continue
+        num_doc = _num_doc_val(usuario)
+        servicios = usuario.get("servicios", {})
+        if not isinstance(servicios, dict):
+            continue
+        rn_list = servicios.get("recienNacidos", [])
+        if not isinstance(rn_list, list):
+            continue
+
+        fecha_falle_dt = None
+        for n in rn_list:
+            if isinstance(n, dict) and _condicion_indica_muerto_0948(n.get("condicionDestinoUsuarioEgreso")):
+                feg = normalizar_str(n.get("fechaEgreso") or "")
+                try:
+                    if len(feg) >= 16:
+                        fecha_falle_dt = datetime.strptime(feg[:16], "%Y-%m-%d %H:%M")
+                    elif len(feg) == 10:
+                        fecha_falle_dt = datetime.strptime(feg, "%Y-%m-%d")
+                except ValueError:
+                    pass
+                break
+
+        for n in rn_list:
+            if not isinstance(n, dict):
+                continue
+            ctx = {"archivo": nombre_archivo, "num_factura": num_factura,
+                   "num_doc": num_doc, "consecutivo": normalizar_str(n.get("consecutivo"))}
+
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoPrincipalECIE11",
+                               n.get("codDiagnosticoPrincipalECIE11"), 4, 256, id_regla="N14-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodDiagnosticoPrincipalECIE11",
+                               n.get("nomCodDiagnosticoPrincipalECIE11"), 1, 1000, id_regla="N15-0948")
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoCausaMuerteCIE11",
+                               n.get("codDiagnosticoCausaMuerteCIE11"),
+                               opcional_transicion=True, id_regla="N16-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodDiagnosticoCausaMuerteCIE11",
+                               n.get("nomCodDiagnosticoCausaMuerteCIE11"),
+                               opcional_transicion=True, id_regla="N17-0948")
+            _campo_nuevo_0948(errores, ctx, "codigoVIDA", n.get("codigoVIDA"),
+                               1, 256, opcional_transicion=True, id_regla="N18-0948")
+
+            # RVC057: edadGestacional 20-46
+            eg_raw = n.get("edadGestacional")
+            if eg_raw is not None:
+                try:
+                    eg = int(str(eg_raw).strip())
+                    if not (20 <= eg <= 46):
+                        _escalada_0948(errores, ctx, "RVC057", "edadGestacional",
+                                        f"edadGestacional {eg} no está entre 20 y 46 semanas "
+                                        "(RVC057 pasa de Notificación a Rechazo en 0948).", eg_raw)
+                except (ValueError, TypeError):
+                    pass
+
+            # RVC058: peso 500-5000g
+            peso_raw = n.get("peso")
+            if peso_raw is not None:
+                try:
+                    peso = float(str(peso_raw).strip())
+                    if not (500 <= peso <= 5000):
+                        _escalada_0948(errores, ctx, "RVC058", "peso",
+                                        f"Peso del recién nacido {peso}g no está entre 500 y 5000 gramos "
+                                        "(RVC058 pasa de Notificación a Rechazo en 0948).", peso_raw)
+                except (ValueError, TypeError):
+                    pass
+
+            # RVC097 (nueva 0948): numConsultasCPrenatal <= 15
+            ncp_raw = n.get("numConsultasCPrenatal")
+            if ncp_raw is not None:
+                try:
+                    ncp = int(str(ncp_raw).strip())
+                    if ncp > 15:
+                        errores.append({
+                            **ctx, "id_regla": "RVC097", "severidad": "critica",
+                            "campo": "numConsultasCPrenatal",
+                            "mensaje": f"numConsultasCPrenatal={ncp} supera el máximo permitido de 15 "
+                                       "consultas de cuidado prenatal (RVC097, nueva en 0948).",
+                            "valor_actual": normalizar_str(ncp_raw),
+                        })
+                except (ValueError, TypeError):
+                    errores.append({
+                        **ctx, "id_regla": "RVC097", "severidad": "alta",
+                        "campo": "numConsultasCPrenatal",
+                        "mensaje": "numConsultasCPrenatal debe ser numérico (RVC097, nueva en 0948).",
+                        "valor_actual": normalizar_str(ncp_raw),
+                    })
+
+            cond = n.get("condicionDestinoUsuarioEgreso")
+            if fecha_falle_dt is not None and not _condicion_indica_muerto_0948(cond):
+                fecha_serv_raw = normalizar_str(n.get("fechaNacimiento") or "")
+                fecha_serv_dt = None
+                try:
+                    if len(fecha_serv_raw) >= 16:
+                        fecha_serv_dt = datetime.strptime(fecha_serv_raw[:16], "%Y-%m-%d %H:%M")
+                    elif len(fecha_serv_raw) == 10:
+                        fecha_serv_dt = datetime.strptime(fecha_serv_raw, "%Y-%m-%d")
+                except ValueError:
+                    pass
+                if fecha_serv_dt and (fecha_serv_dt - fecha_falle_dt).total_seconds() > 24 * 3600:
+                    _escalada_0948(errores, ctx, "RVC053", "fechaNacimiento",
+                                    "El usuario tiene un registro de recién nacido marcado como fallecido y "
+                                    "este otro registro tiene fecha posterior a 24h del fallecimiento "
+                                    "(RVC053 pasa de Notificación a Rechazo en 0948).", fecha_serv_raw)
+
+            if _condicion_indica_derivado_0948(cond):
+                otros_bloques = servicios.get("hospitalizacion", []) or servicios.get("urgencias", [])
+                if not otros_bloques:
+                    _escalada_0948(errores, ctx, "RVC062", "condicionDestinoUsuarioEgreso",
+                                    "condicionDestinoUsuarioEgreso indica derivación a otro servicio, pero "
+                                    "el usuario no tiene registros en hospitalización ni urgencias "
+                                    "(RVC062 pasa de Notificación a Rechazo en 0948).", cond)
+    return errores
+
+
+# ────────────────────────────────────────────────────────────────
+# BLOQUE M: MEDICAMENTOS
+# ────────────────────────────────────────────────────────────────
+
+def validar_medicamentos_malla_0948(data, nombre_archivo=""):
+    """
+    Medicamentos bajo 0948:
+    - Campos nuevos M24 (opcional en transición) / M25 (obligatorio si M24
+      diligenciado) / M26 / M27 / M28 vrDispensacion / M29 codigoVIDA.
+    - RVC063 (M08 código IUM/CUM debe existir en SISPRO) escalada a Rechazo:
+      no hay catálogo SISPRO disponible en este repo, así que se limita a
+      re-emitir el chequeo de formato ya existente (M08 informado) con
+      severidad escalada, dejando constancia de que el cruce contra SISPRO
+      no puede verificarse aquí.
+    - RVC094 (nueva 0948): vrServicio == cantidadMedicamento * vrUnitMedicamento
+      cuando modalidadPago='04' y tipoMedicamento != '03'. La modalidad de
+      pago no vive en el bloque de medicamentos del RIPS (es un dato de la
+      FEV/contrato); se usa modalidadGrupoServicioTecSal como mejor proxy
+      disponible en el propio registro y se documenta la limitación.
+    - M02 (numAutorizacion) NO se valida aquí: fue eliminado en 0948.
+    """
+    errores = []
+    if not isinstance(data, dict):
+        return errores
+    num_factura = _ctx_base_0948(nombre_archivo, data)
+
+    for usuario in data.get("usuarios", []):
+        if not isinstance(usuario, dict):
+            continue
+        num_doc = _num_doc_val(usuario)
+        servicios = usuario.get("servicios", {})
+        if not isinstance(servicios, dict):
+            continue
+        meds = servicios.get("medicamentos", [])
+        if not isinstance(meds, list):
+            continue
+        for med in meds:
+            if not isinstance(med, dict):
+                continue
+            ctx = {"archivo": nombre_archivo, "num_factura": num_factura,
+                   "num_doc": num_doc, "consecutivo": normalizar_str(med.get("consecutivo"))}
+
+            # M24: explícitamente "opcional durante la transición de la norma"
+            m24 = normalizar_str(med.get("codDiagnosticoPrincipalECIE11") or "")
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoPrincipalECIE11", m24,
+                               4, 256, opcional_transicion=True, id_regla="M24-0948")
+
+            # M25: "Campo obligatorio cuando el campo M24 es diligenciado."
+            m25 = normalizar_str(med.get("nomCodDiagnosticoPrincipalECIE11") or "")
+            if m24 and m24.lower() not in {"none", "null"} and not m25:
+                errores.append({
+                    **ctx, "id_regla": "M25-0948", "severidad": "media",
+                    "campo": "nomCodDiagnosticoPrincipalECIE11",
+                    "mensaje": "[0948] nomCodDiagnosticoPrincipalECIE11 (M25) es obligatorio "
+                               "cuando codDiagnosticoPrincipalECIE11 (M24) está diligenciado.",
+                    "valor_actual": "",
+                })
+
+            _campo_nuevo_0948(errores, ctx, "codDiagnosticoRelacionadoCIE11",
+                               med.get("codDiagnosticoRelacionadoCIE11"),
+                               opcional_transicion=True, id_regla="M26-0948")
+            _campo_nuevo_0948(errores, ctx, "nomCodDiagnosticoRelacionadoCIE11",
+                               med.get("nomCodDiagnosticoRelacionadoCIE11"),
+                               opcional_transicion=True, id_regla="M27-0948")
+
+            # M28: vrDispensacion, N 0-15; "en caso de no aplicar diligenciar en 0"
+            vrd = med.get("vrDispensacion")
+            if vrd is None:
+                errores.append({
+                    **ctx, "id_regla": "M28-0948", "severidad": "media",
+                    "campo": "vrDispensacion",
+                    "mensaje": "[0948] vrDispensacion no está informado. Campo nuevo en 0948; "
+                               "si no aplica debe diligenciarse en 0.",
+                    "valor_actual": "",
+                })
+            else:
+                try:
+                    if float(vrd) < 0:
+                        errores.append({
+                            **ctx, "id_regla": "M28-0948", "severidad": "media",
+                            "campo": "vrDispensacion",
+                            "mensaje": "[0948] vrDispensacion no puede ser negativo.",
+                            "valor_actual": normalizar_str(vrd),
+                        })
+                except (ValueError, TypeError):
+                    errores.append({
+                        **ctx, "id_regla": "M28-0948", "severidad": "media",
+                        "campo": "vrDispensacion",
+                        "mensaje": "[0948] vrDispensacion debe ser numérico.",
+                        "valor_actual": normalizar_str(vrd),
+                    })
+
+            _campo_nuevo_0948(errores, ctx, "codigoVIDA", med.get("codigoVIDA"),
+                               1, 256, opcional_transicion=True, id_regla="M29-0948")
+
+            # RVC063 escalada (best-effort: sin catálogo SISPRO disponible)
+            cod_tec = normalizar_str(med.get("codTecnologiaSalud") or "")
+            if not cod_tec:
+                _escalada_0948(errores, ctx, "RVC063", "codTecnologiaSalud",
+                                "codTecnologiaSalud (M08) no está informado; en 0948 su validación contra "
+                                "el catálogo SISPRO (IUM/CUM) pasa de Notificación a Rechazo (RVC063). "
+                                "Nota: este pipeline no cuenta con el catálogo SISPRO para verificar la "
+                                "existencia del código; solo se controla su presencia.")
+
+            # RVC094 (nueva 0948): vrServicio == cantidadMedicamento * vrUnitMedicamento
+            # cuando modalidad de pago='04' y tipoMedicamento != '03'.
+            tipo_med = normalizar_str(med.get("tipoMedicamento") or "")
+            modalidad = normalizar_str(med.get("modalidadGrupoServicioTecSal") or "")
+            if modalidad == "04" and tipo_med != "03":
+                cant_raw = med.get("cantidadMedicamento")
+                vru_raw = med.get("vrUnitMedicamento")
+                vrs_raw = med.get("vrServicio")
+                if cant_raw is not None and vru_raw is not None and vrs_raw is not None:
+                    try:
+                        cant = float(str(cant_raw).strip())
+                        vru = float(str(vru_raw).strip())
+                        vrs = float(str(vrs_raw).strip())
+                        esperado = round(cant * vru, 2)
+                        if round(vrs, 2) != esperado:
+                            errores.append({
+                                **ctx, "id_regla": "RVC094", "severidad": "critica",
+                                "campo": "vrServicio",
+                                "mensaje": f"vrServicio ({vrs}) debe ser igual a cantidadMedicamento "
+                                           f"({cant}) * vrUnitMedicamento ({vru}) = {esperado} cuando "
+                                           "modalidadGrupoServicioTecSal='04' y tipoMedicamento≠'03' "
+                                           "(RVC094, nueva en 0948).",
+                                "valor_actual": normalizar_str(vrs_raw),
+                            })
+                    except (ValueError, TypeError):
+                        pass
+    return errores
+
+
+# ────────────────────────────────────────────────────────────────
+# BLOQUE S: OTROS SERVICIOS
+# ────────────────────────────────────────────────────────────────
+
+def validar_otros_servicios_malla_0948(data, nombre_archivo=""):
+    """
+    Otros servicios bajo 0948:
+    - Campos nuevos S17 codigoVIDA, S18 vrDispensacion.
+    - RVC066 (S07 obligatorio si tipoOS=01) escalada a Rechazo — ya existe
+      un chequeo equivalente de obligatoriedad condicional en 2275; aquí se
+      re-emite con severidad escalada.
+    """
+    errores = []
+    if not isinstance(data, dict):
+        return errores
+    num_factura = _ctx_base_0948(nombre_archivo, data)
+
+    for usuario in data.get("usuarios", []):
+        if not isinstance(usuario, dict):
+            continue
+        num_doc = _num_doc_val(usuario)
+        servicios = usuario.get("servicios", {})
+        if not isinstance(servicios, dict):
+            continue
+        otros = servicios.get("otrosServicios", [])
+        if not isinstance(otros, list):
+            continue
+        for svc in otros:
+            if not isinstance(svc, dict):
+                continue
+            ctx = {"archivo": nombre_archivo, "num_factura": num_factura,
+                   "num_doc": num_doc, "consecutivo": normalizar_str(svc.get("consecutivo"))}
+            _campo_nuevo_0948(errores, ctx, "codigoVIDA", svc.get("codigoVIDA"),
+                               1, 256, opcional_transicion=True, id_regla="S17-0948")
+            vrd = svc.get("vrDispensacion")
+            if vrd is None:
+                errores.append({
+                    **ctx, "id_regla": "S18-0948", "severidad": "media",
+                    "campo": "vrDispensacion",
+                    "mensaje": "[0948] vrDispensacion no está informado. Campo nuevo en 0948; "
+                               "si no aplica debe diligenciarse en 0.",
+                    "valor_actual": "",
+                })
+            else:
+                try:
+                    if float(vrd) < 0:
+                        errores.append({
+                            **ctx, "id_regla": "S18-0948", "severidad": "media",
+                            "campo": "vrDispensacion",
+                            "mensaje": "[0948] vrDispensacion no puede ser negativo.",
+                            "valor_actual": normalizar_str(vrd),
+                        })
+                except (ValueError, TypeError):
+                    errores.append({
+                        **ctx, "id_regla": "S18-0948", "severidad": "media",
+                        "campo": "vrDispensacion",
+                        "mensaje": "[0948] vrDispensacion debe ser numérico.",
+                        "valor_actual": normalizar_str(vrd),
+                    })
+
+            tipo_os = normalizar_str(svc.get("tipoOS") or "")
+            s07 = normalizar_str(svc.get("nomTecnologiaSalud") or "")
+            if tipo_os == "01" and (not s07 or s07.lower() in {"none", "null"}):
+                _escalada_0948(errores, ctx, "RVC066", "nomTecnologiaSalud",
+                                "nomTecnologiaSalud (S07) es obligatorio cuando tipoOS='01' (Dispositivos "
+                                "médicos e insumos) (RVC066 pasa de Notificación a Rechazo en 0948).")
+    return errores
+
+
+# ────────────────────────────────────────────────────────────────
+# BLOQUE U: USUARIOS
+# ────────────────────────────────────────────────────────────────
+
+def validar_usuarios_malla_0948(data, nombre_archivo=""):
+    """
+    Usuarios bajo 0948:
+    - U12 registroSIRAS (RVC095): obligatorio si tipoUsuario='10', null en
+      caso contrario. Notificación durante los primeros 3 meses desde la
+      implementación (14-may-2026 + 3 meses ≈ 14-ago-2026), luego Rechazo.
+    - RVC007 (edad vs. tipo de documento, tolerancia 1 año menos 1 día):
+      ajuste en Regla/Mensaje según 3.2.3; se re-emite el chequeo existente
+      en 2275 con severidad escalada y el mensaje ajustado.
+    """
+    errores = []
+    if not isinstance(data, dict):
+        return errores
+    num_factura = _ctx_base_0948(nombre_archivo, data)
+    hoy = _date.today()
+
+    for u in data.get("usuarios", []):
+        if not isinstance(u, dict):
+            continue
+        num_doc = _num_doc_val(u)
+        ctx = {"archivo": nombre_archivo, "num_factura": num_factura,
+               "num_doc": num_doc, "consecutivo": normalizar_str(u.get("consecutivo"))}
+        tipo_usr = normalizar_str(u.get("tipoUsuario") or "")
+        siras = normalizar_str(u.get("registroSIRAS") or "")
+        es_null = (not siras) or siras.lower() in {"none", "null"}
+        severidad_rvc095 = "critica" if hoy >= FECHA_RVC095_RECHAZO else "media"
+
+        if tipo_usr == "10":
+            if es_null:
+                errores.append({
+                    **ctx, "id_regla": "RVC095", "severidad": severidad_rvc095,
+                    "campo": "registroSIRAS",
+                    "mensaje": "registroSIRAS (U12) es obligatorio cuando tipoUsuario='10' "
+                               "(Tomador/Amparado SOAT) (RVC095, nueva en 0948; Notificación durante los "
+                               "primeros 3 meses de vigencia, luego Rechazo).",
+                    "valor_actual": "",
+                })
+            elif not (1 <= len(siras) <= 60):
+                errores.append({
+                    **ctx, "id_regla": "RVC095", "severidad": "baja",
+                    "campo": "registroSIRAS",
+                    "mensaje": f"registroSIRAS debe tener entre 1 y 60 caracteres (actual: {len(siras)}).",
+                    "valor_actual": siras,
+                })
+        else:
+            if not es_null:
+                errores.append({
+                    **ctx, "id_regla": "RVC095", "severidad": severidad_rvc095,
+                    "campo": "registroSIRAS",
+                    "mensaje": "registroSIRAS debe informarse null cuando tipoUsuario no es '10' "
+                               "(Tomador/Amparado SOAT) (RVC095, nueva en 0948).",
+                    "valor_actual": siras,
+                })
+
+        # RVC007 escalada: edad según fechaNacimiento coherente con tipoDocumentoIdentificacion,
+        # con tolerancia de un año menos un día (mismo criterio ya usado en la malla 2275).
+        fecha_nac_raw = normalizar_str(u.get("fechaNacimiento") or "")
+        tipo_doc_u = _tipo_doc(u)
+        if len(fecha_nac_raw) == 10 and tipo_doc_u:
+            try:
+                fecha_nac_dt = datetime.strptime(fecha_nac_raw, "%Y-%m-%d")
+                edad_dias = (datetime.now() - fecha_nac_dt).days
+                edad_anios = edad_dias / 365.25
+                permitidos_edad = None
+                if tipo_doc_u == "RC":
+                    permitidos_edad = (0, 7)          # hasta 6 años + tolerancia
+                elif tipo_doc_u == "TI":
+                    permitidos_edad = (6, 18)          # 7-17 + tolerancia
+                elif tipo_doc_u == "CC":
+                    permitidos_edad = (17, 200)
+                if permitidos_edad and not (permitidos_edad[0] <= edad_anios <= permitidos_edad[1]):
+                    _escalada_0948(errores, ctx, "RVC007", "tipoDocumentoIdentificacion",
+                                    f"La edad calculada ({edad_anios:.1f} años) no es coherente con "
+                                    f"tipoDocumentoIdentificacion='{tipo_doc_u}', considerando la tolerancia "
+                                    "de un año menos un día (RVC007, ajuste de Regla/Mensaje en 0948).",
+                                    tipo_doc_u)
+            except ValueError:
+                pass
+    return errores
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

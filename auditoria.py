@@ -705,6 +705,7 @@ def validar_concepto_recaudo(data, nombre_archivo=""):
 
     Retorna lista de dicts con el mismo esquema que validar_auditoria.
     """
+    return []  # INACTIVO
     alertas = []
     if not isinstance(data, dict):
         return alertas

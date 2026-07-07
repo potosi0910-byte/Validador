@@ -1,0 +1,471 @@
+DOCUMENTO TÉCNICO 1
+"ESPECIFICACIONES TÉCNICAS DE LOS CAMPOS DE DATOS Y LAS REGLAS DE VALIDACIÓN DEL RIPS COMO SOPORTE DE LA FEV EN SALUD"
+Versión: Lanzamiento. Abril 29 de 2026.
+
+NOTA: Este archivo es una transcripción de texto plano (sin tablas de OCR degradadas) del Documento Técnico 1 anexo a la Resolución 000948 de 2026, pegado directamente desde el PDF original por el usuario. Es la fuente autorizada para implementar las reglas de validación 0948, reemplazando el uso del archivo OCR degradado texto_cambios_rips_2275_vs_0948_con_reglas.txt para la sección de "campos modificados".
+
+=== 1. INTRODUCCIÓN ===
+RIPS se transmite en JSON. Tipos de dato JSON usados: Cadena, Número, Objeto, Arreglo, Nulo.
+
+1.2 CALIDAD DE LA INFORMACIÓN
+Reglas de validación en secuencia: estructura (sintaxis JSON, nombres de propiedades sensibles a mayúsculas/minúsculas, requerimiento mínimo de propiedades), contenido (valores permitidos, tamaño, tipo, tablas de referencia SISPRO, obligatoriedad), relación (cruces entre datos propios, catálogos externos, factura electrónica).
+
+Resultado de validación:
+- RIPS rechazado: incumple una o varias reglas obligatorias de estructura, contenido o relación.
+- RIPS aprobado: cumple todas las reglas obligatorias.
+- RIPS con notificación: no conformidad que transitoriamente NO impide radicación; el generador debe hacer plan de mejora porque periódicamente las notificaciones se convierten en reglas de rechazo.
+
+Valores negativos: todos los valores monetarios deben ser positivos o cero. Regla RVG01.
+Cantidades de tecnologías/otros servicios: deben ser positivas mayores a cero. Regla RVG01.
+
+1.3 CONVENCIONES DE TABLAS
+Tabla de datos RIPS: columnas ID Campo, Campo, Descripción, Tipo, Tamaño, Observaciones, Versión.
+Tabla de validaciones generales: ID Validación, Y (R=Rechazo / N=Notificación), Regla, ID Mensaje, Mensaje, Versión.
+Tabla de validaciones por campo: ID Validación, ID Campo, Y, Regla, ID Mensaje, Mensaje, Versión.
+
+1.4 TIPOS DE DATO
+C = Cadena (string). Fecha/hora en formato "AAAA-MM-DD HH:MM". Si no hay dato y el campo lo permite: null (sin comillas dobles).
+N = Numérico, solo positivos 0-9, sin separador de miles, decimales separados por punto. Si no hay dato y el campo lo permite: 0.
+
+1.5 TAMAÑO DE LOS DATOS
+Formato "X": tamaño exacto (ej: 5 → informar más o menos de 5 posiciones = rechazo).
+Formato "x-y (a.b)": tamaño mínimo x, máximo y; parte entera máxima a, parte decimal máxima b. Ej "0-10": null posible (tamaño 0 permitido), más de 10 posiciones = rechazo. Ej "0-24 (18.6)": null posible, más de 24 caracteres = rechazo, máximo 18 enteros y 6 decimales.
+"Valores separados por comas": debe tener exactamente uno de los tamaños fijos listados.
+
+1.6 GRADUALIDAD DE LAS VALIDACIONES
+Las reglas "N: Notificación" pasarán a ser de rechazo en fechas que el Ministerio determine (mejora continua). [Nota: la Resolución 000948 art. 23 parágrafo transitorio fija 01-jun-2026 para ese paso de notificación a rechazo, y 01-jul-2026 para ajustes estructurales de software.]
+
+1.7 ASPECTOS A TENER EN CUENTA
+- Las ejemplificaciones NO son RIPS reales; en caso de diferencia con el texto del documento técnico, prevalece el texto.
+- Todos los campos deben diligenciarse; si no hay info, relacionar 0 o null según tipo de dato.
+
+1.8 VALIDACIONES CRUZADAS COBERTURA/MODALIDAD DE PAGO/TIPO USUARIO/CONCEPTOS RECAUDO
+Tabla de cruces XML (cobertura o plan de beneficio, modalidad de pago) x JSON (tipo usuario) x JSON/XML (recaudo). Casillas marcadas con "X" = permitido reportar; vacío = no permitido, genera rechazo; codificación no asignada = rechazo automático.
+Excepciones: * concepto recaudo 04 aplica solo a FEV en salud (XML), no a RIPS soporte. ** no aplica para tecnologías de grupos 8902 y 8903. *** no aplica para régimen subsidiado.
+
+=== 2. ESTRUCTURA JSON ===
+Objeto raíz "transacción" (no se nombra): T01 numDocumentoIdObligado, T02 numFactura, T03 tipoNota, T04 numNota.
+"usuarios": arreglo de usuarios (U01-U12), cada uno contiene "servicios": {consultas[], procedimientos[], urgencias[], hospitalizacion[], recienNacidos[], medicamentos[], otrosServicios[]}.
+
+=== 3. CONTROL DE CAMBIOS (0948 vs 2275) ===
+
+3.1 ELEMENTOS NUEVOS
+
+3.1.1 Campos nuevos (numeral 4 - tabla de datos):
+- M28 vrDispensacion: se incluye para diligenciar cuando el Gestor Farmacéutico solo factura el valor de la dispensación del medicamento, cuando la EPS realiza compra directa a fabricantes/importadores/titulares de registro sanitario y entrega a los Gestores para su dispensación.
+- Consultas: C22 codigoVIDA, C23 codDiagnosticoPrincipalCIE11, C24 nomCodDiagnosticoPrincipalCIE11, C25 codDiagnosticoRelacionado1CIE11, C26 nomCodDiagnosticoRelacionado1CIE11, C27 codDiagnosticoRelacionado1CIE11 (relacionado 2, nombre repetido en tabla control de cambios pero corresponde a relacionado2 según numeral 4), C28 nomCodDiagnosticoRelacionado1CIE11 (idem, relacionado2), C29 codDiagnosticoRelacionado3CIE11, C30 nomCodDiagnosticoRelacionado3CIE11.
+- Procedimientos: P21 codDiagnosticoPrincipalCIE11, P22 nomCodDiagnosticoPrincipalCIE11, P23 codDiagnosticoRelacionadoCIE11, P24 nomCodDiagnosticoRelacionadoCIE11, P25 codComplicacionCIE11, P26 nomComplicacionCIE11, P27 codigoVIDA.
+- Urgencias: R13 codDiagnosticoPrincipalCIE11, R14 nomCodDiagnosticoPrincipalCIE11, R15 codDiagnosticoPrincipalECIE11, R16 nomCodDiagnosticoPrincipalECIE11, R17 codDiagnosticoRelacionadoE1CIE11, R18 nomCodDiagnosticoRelacionadoE1CIE11, R19 codDiagnosticoRelacionadoE2CIE11, R20 nomCodDiagnosticoRelacionadoE2CIE11, R21 codDiagnosticoRelacionadoE3CIE11, R22 nomCodDiagnosticoRelacionadoE3CIE11, R23 codDiagnosticoCausaMuerteCIE11, R24 nomCodDiagnosticoCausaMuerteCIE11, R25 codigoVIDA.
+- Hospitalización: H16 codDiagnosticoPrincipalECIE11, H17 nomCodDiagnosticoPrincipalECIE11, H18 codDiagnosticoPrincipalECIE11 (idem H16 en control de cambios pero repetido - ver numeral 4 detallado abajo, en realidad hay dos pares porque H16/H17 son "principal confirmado" y H18/H19 aparecen duplicados en el control de cambios; el detalle de numeral 4 aclara), H19 nomCodDiagnosticoPrincipalECIE11, H20 codDiagnosticoRelacionadoE1CIE11, H21 nomCodDiagnosticoRelacionadoE1CIE11, H22 codDiagnosticoRelacionadoE2CIE11, H23 nomCodDiagnosticoRelacionadoE2CIE11, H24 codDiagnosticoRelacionadoE3CIE11, H25 nomCodDiagnosticoRelacionadoE3CIE11, H26 codComplicacionCIE11, H27 nomcodComplicacionCIE11, H28 codDiagnosticoCausaMuerteCIE11, H29 nomCodDiagnosticoCausaMuerteCIE11, H30 codigoVIDA.
+- Recién nacidos: N14 codDiagnosticoPrincipalECIE11, N15 nomCodDiagnosticoPrincipalECIE11, N16 codDiagnosticoCausaMuerteCIE11, N17 nomCodDiagnosticoCausaMuerteCIE11 (nombre), N18 codigoVIDA.
+- Medicamentos: M24 codDiagnosticoPrincipalECIE11, M25 nomCodDiagnosticoPrincipalECIE11, M26 codDiagnosticoRelacionadoCIE11, M27 nomCodDiagnosticoRelacionadoCIE11, M29 codigoVIDA. (M28 vrDispensacion ya mencionado arriba.)
+- Otros servicios: S17 codigoVIDA, S18 vrDispensacion.
+- Usuarios: U12 registroSIRAS — "Corresponde al registro de radicación del reporte de la atención en salud a víctimas de accidentes de tránsito, emitido por la plataforma SIRAS."
+
+3.1.2 AJUSTE SOBRE EL NUMERAL 6 (validaciones nuevas)
+- RVC094 (campo M19): se incluye regla para validar el valor del servicio = cantidadMedicamento * vrUnitMedicamento, siempre que modalidad de pago = 04 y tipo de medicamento sea diferente a 03.
+- RVC095 (campo U12): será de notificación los primeros 3 meses desde la implementación de esta resolución; después pasa a Rechazo.
+- RVC096 (campos C04, P05, S06): el código CUPS reportado debe existir y ser válido conforme a la tabla de referencia "CUPSRips".
+- RVC097 (campo N06): número de consultas para el cuidado prenatal no puede ser mayor de 15.
+- RVC098 (campos C02, P02, M04, S04): la fecha y hora de prestación del servicio no puede ser mayor a la fecha y hora de fallecimiento del usuario más 24 horas, según registro RUAF-ND.
+
+3.2 ELEMENTOS CON AJUSTES EN EL CAMPO
+
+3.2.1 Ajustes sobre el numeral 4 (solo se especifica QUÉ columnas cambiaron, no siempre el valor nuevo exacto — usar el detalle del numeral 4 más abajo cuando esté disponible):
+- U07 codMunicipioResidencia: ajuste en Observación.
+- U08 codZonaTerritorialResidencia: ajuste en Observación.
+- S07 nomTecnologiaSalud: ajuste en Tamaño y Observación.
+- P17 conceptoRecaudo: ajuste en Observación.
+- S13 conceptoRecaudo: ajuste en Observación.
+- T01 numDocumentoIdObligado: ajuste en Tamaño.
+- M03 idMIPRES: ajuste en Descripción, Tipo, Tamaño y Observación.
+- S03 idMIPRES: ajuste en Descripción, Tamaño y Observación.
+- M07 tipoMedicamento: ajuste en Observación.
+- M08 codTecnologiaSalud: ajuste en Observación.
+- M10 concentracionMedicamento: ajuste en Tamaño y Observación.
+- M11 unidadMedida: ajuste en Observación.
+- M12 formaFarmaceutica: ajuste en Observación.
+- M13 unidadMinDispensa: ajuste en Tamaño y Observación.
+- M16 tipoDocumentoIdentificacion: ajuste en Tamaño y Observación.
+- M17 numDocumentoIdentificacion: ajuste en Tamaño y Observación.
+- M18 vrUnitMedicamento: ajuste en Observación.
+- M20 conceptoRecaudo: ajuste en Observación.
+- C10 codDiagnosticoPrincipal: ajuste en Tamaño (2275: 4-25; 0948: 4, ver detalle numeral 4: Tamaño "4").
+- C11 codDiagnosticoRelacionado1: ajuste en Tamaño (0948: "0, 4").
+- C12 codDiagnosticoRelacionado2: ajuste en Tamaño (0948: "0, 4").
+- C13 codDiagnosticoRelacionado3: ajuste en Tamaño (0948: "0, 4").
+- C17 vrServicio: ajuste en Observación.
+- C18 conceptoRecaudo: ajuste en Observación.
+- P03 idMIPRES: ajuste en Descripción, Tamaño y Observación.
+- P04 numAutorizacion: ajuste en Observación.
+- P11 tipoDocumentoIdentificacion: ajuste en Descripción.
+- P12 numDocumentoIdentificacion: ajuste en Descripción.
+- P14 codDiagnosticoRelacionado: ajuste en Tamaño (0948: "0, 4").
+- P15 codComplicacion: ajuste en Tamaño (0948: "0, 4").
+- P16 vrServicio: ajuste en Observación.
+- R04 codDiagnosticoPrincipal: ajuste en Tamaño (0948: "4").
+- R05 codDiagnosticoPrincipalE: ajuste en Tamaño (0948: "4").
+- R06 codDiagnosticoRelacionadoE1: ajuste en Tamaño (0948: "0, 4").
+- R07 codDiagnosticoRelacionadoE2: ajuste en Tamaño (0948: "0, 4").
+- R08 codDiagnosticoRelacionadoE3: ajuste en Tamaño (0948: "0, 4").
+- R10 codDiagnosticoCausaMuerte: ajuste en Tamaño (0948: "0, 4").
+- H06 codDiagnosticoPrincipal: ajuste en Tamaño (0948: "4").
+- H07 codDiagnosticoPrincipalE: ajuste en Tamaño (0948: "4").
+- H08 codDiagnosticoRelacionadoE1: ajuste en Tamaño (0948: "0, 4").
+- H09 codDiagnosticoRelacionadoE2: ajuste en Tamaño (0948: "0, 4").
+- H10 codDiagnosticoRelacionadoE3: ajuste en Tamaño (0948: "0, 4").
+- H11 codComplicacion: ajuste en Tamaño (0948: "0, 4").
+- H13 codDiagnosticoCausaMuerte: ajuste en Tamaño (0948: "0, 4").
+
+3.2.2 Ajustes sobre el numeral 5 (validaciones generales):
+- RVG14: cambia de Notificación a Rechazo.
+- RVG15: cambia de Rechazo a Notificación.
+
+3.2.3 Ajustes sobre el numeral 6 (validaciones por campo):
+- RVC007 (U04): ajuste en columnas Regla y Mensaje.
+- RVC023 (P05): cambia de Notificación a Rechazo.
+- RVC053 (R09, H12, N10): cambia de Notificación a Rechazo.
+- RVC057 (N05): cambia de Notificación a Rechazo.
+- RVC058 (N08): cambia de Notificación a Rechazo.
+- RVC062 (R09, H12, N10): cambia de Notificación a Rechazo.
+- RVC063 (M08): cambia de Notificación a Rechazo.
+- RVC066 (S07): ajuste en IDCampo, Tamaño, Regla y Mensaje; cambia de Notificación a Rechazo.
+- RVC084 (C08): cambia de Notificación a Rechazo.
+- RVC086 (C11, C12, C13, P14, M06): cambia de Notificación a Rechazo.
+- RVC087 (C11, C12, C13): cambia de Notificación a Rechazo.
+- RVC088 (R06, R07, R08, H08, H09, H10): cambia de Notificación a Rechazo.
+- RVC089 (R06, R07, R08, H08, H09, H10): cambia de Notificación a Rechazo.
+- RVC091 (C17, P16, M18, M19, S11, S12): ajuste en columna Regla.
+
+3.3 CAMPOS ELIMINADOS
+- M02 numAutorizacion (Medicamentos): se elimina el campo ya que, por disposición normativa, los medicamentos no requieren autorización.
+
+=== 4. DETALLE DE LOS DATOS DE RIPS (numeral 4) ===
+
+4.1 DATOS RELATIVOS A LA TRANSACCIÓN
+T01 numDocumentoIdObligado: Tipo C, Tamaño 4-12. NIT del facturador; debe coincidir con NIT de la factura; debe estar en tabla IPSCodHabilitación / IPSnoREPS / EntidadesnoREPS. Si es proveedor de tecnologías de salud únicamente debe tener registros de usuarios, procedimientos, medicamentos y otros servicios (nota: en el numeral 3.2.1 dice que T01 tuvo "ajuste en la columna Tamaño" respecto a 2275).
+T02 numFactura: tipo/tamaño según DIAN. Debe coincidir con la FEV. Si RIPS es con FEV, informar número de factura; si no, null.
+T03 tipoNota: Tipo C, Tamaño 0,2. Tabla referencia "TipoNota". Null si no es nota crédito/débito/ajuste.
+T04 numNota: Tipo C, Tamaño 0-20. Debe coincidir con la nota crédito/débito informada a la DIAN.
+
+4.2 DATOS RELATIVOS A LOS USUARIOS
+U01 tipoDocumentoIdentificacion: C, 2. Tabla "TipoIdPISIS". AS/MS con estructura según Resolución 769/2024.
+U02 numDocumentoIdentificacion: C, 4-20.
+U03 tipoUsuario: C, 2. Tabla "RIPSTipoUsuarioVersion2". Puede validarse contra ERP de la factura.
+U04 fechaNacimiento: C, 10. No mayor a fecha de validación RIPS. Reglas de coherencia tipo documento vs edad (registro civil ≤6 años, TI 7-17, CC ≥18, etc.), recién nacido entre 9 y 60 años de la madre.
+U05 codSexo: C, 1. Tabla "Sexo" col Extra III (M/F/I). Recién nacido → madre debe ser F. IVE → usuario debe ser F.
+U06 codPaisResidencia: C, 3. ISO 3166-1. Tabla "Pais".
+U07 codMunicipioResidencia: C, 0,5. Tabla "Municipio". Obligatorio si codPaisResidencia=170.
+U08 codZonaTerritorialResidencia: C, 0,2. Tabla "ZonaVersion2". Obligatorio si codPaisResidencia=170.
+U09 incapacidad: C, 2. Tabla "LstSiNo".
+U10 consecutivo: N, 1-7. Inicia en 1, incrementa de a 1, sin repetidos.
+U11 codPaisOrigen: C, 3. ISO 3166-1. Tabla "Pais".
+U12 registroSIRAS: C, 0,1-60. NUEVO (v2). "Corresponde al registro de radicación del reporte de la atención en salud a víctimas de accidentes de tránsito, emitido por la plataforma SIRAS." Obligatorio cuando tipoUsuario=10 (Tomador/Amparado SOAT); en caso contrario null.
+
+4.3.1 DATOS DE LAS CONSULTAS
+C01 codPrestador: C,12. IPSCodHabilitación/IPSnoREPS/EntidadesnoREPS; relacionado con numDocumentoIdObligado.
+C02 fechaInicioAtencion: C,16. No mayor a validación RIPS ni menor a nacimiento; dentro del periodo de facturación.
+C03 numAutorizacion: C,0-30. Null si no requiere autorización.
+C04 codConsulta: C,6. Tabla "CUPSRips". Validable contra cobertura, sexo, grupo/servicio/finalidad/causa, plan de beneficios FEV, cantidad por paciente/día, diagnóstico principal. Interconsultas dentro de internación/urgencias.
+C05 modalidadGrupoServicioTecSal: C,2. Tabla "ModalidadAtencion".
+C06 grupoServicios: C,2. Tabla "GrupoServicios".
+C07 codServicio: N,3-4. Tabla "Servicios". Validar coherencia con grupo/modalidad.
+C08 finalidadTecnologiaSalud: C,2. Tabla "RIPSFinalidadConsultaVersion2". Muchas reglas cruzadas con causa/sexo/edad/CIE (ver validaciones por campo RVC067-085).
+C09 causaMotivoAtencion: C,2. Tabla "RIPSCausaExternaVersion2".
+C10 codDiagnosticoPrincipal: C,4 (AJUSTE 0948: tamaño exacto "4", antes 2275 tenía rango mayor). Preferible CIE10 morbilidad (19 capítulos excepto 18). Tabla "CIE10".
+C11 codDiagnosticoRelacionado1: C,0,4 (AJUSTE 0948).
+C12 codDiagnosticoRelacionado2: C,0,4 (AJUSTE 0948).
+C13 codDiagnosticoRelacionado3: C,0,4 (AJUSTE 0948).
+C14 tipoDiagnosticoPrincipal: C,2. Tabla "RIPSTipoDiagnosticoPrincipalVersion2".
+C15 tipoDocumentoIdentificacion (profesional): C,2. Valores permitidos: CC,CE,CD,PA,SC,PE,DE,PT.
+C16 numDocumentoIdentificacion (profesional): C,4-20.
+C17 vrServicio: N,0-10 (v2, AJUSTE Observación). >0 si modalidad=evento; si no, 0. Sin FEV: valor pagado por paciente. EOSD: 0.
+C18 conceptoRecaudo: C,2 (v2, AJUSTE Observación). Tabla "conceptoRecaudo". Solo régimen contributivo cobra cuota moderadora.
+C19 valorPagoModerador: N,1-10 (v2). 0 si no aplica; ≥1 si cuota moderadora o bono/vale de plan voluntario.
+C20 numFEVPagoModerador: tipo/tamaño DIAN. Null si no aplica pago moderador.
+C21 consecutivo: N,1-7.
+C22 codigoVIDA: C,0,1-256 (NUEVO v2). "Se genera del proyecto historia clínica y corresponde al id único de la atención en el sistema IHCE, que será obligatorio una vez entre en operación."
+C23 codDiagnosticoPrincipalCIE11: C,0,4-256 (NUEVO v2). Tabla referencia CIE11.
+C24 nomCodDiagnosticoPrincipalCIE11: C,0,4-1000 (NUEVO v2).
+C25 codDiagnosticoRelacionado1CIE11: C,0,4-256 (NUEVO v2). Null si no se informa (con la palabra null, sin comillas).
+C26 nomCodDiagnosticoRelacionado1CIE11: C,0,1-1000 (NUEVO v2).
+C27 codDiagnosticoRelacionado2CIE11 (nota: en texto original aparece "codDiagnosticoRelacionado1CIE11" repetido por error tipográfico del PDF; por contexto corresponde a relacionado2): C,0,1-256.
+C28 nomCodDiagnosticoRelacionado2CIE11: C,0,1-1000.
+C29 codDiagnosticoRelacionado3CIE11: C,0,1-256.
+C30 nomCodDiagnosticoRelacionado3CIE11: C,0,1-1000.
+
+4.3.2 DATOS DE LOS PROCEDIMIENTOS
+P01 codPrestador: C,12. Igual reglas que C01.
+P02 fechaInicioAtencion: C,16. Igual reglas que C02.
+P03 idMIPRES: C,0,19-25 (v2, AJUSTE). Si prescrito por MIPRES, informar ID de entrega; si no, null. Validable contra MIPRES.
+P04 numAutorizacion: C,0-30 (v2, AJUSTE Observación). Si financiado con presupuesto máximo, corresponde al número de prescripción MIPRES. Null si no requiere.
+P05 codProcedimiento: C,6. Tabla "CUPSRips". Muchas validaciones cruzadas (cobertura, sexo, grupo/servicio, plan beneficios, cantidad/día, diagnóstico, estancia, parto→hospitalización/recién nacido, quirúrgico→sala de cirugía).
+P06 viaIngresoServicioSalud: C,2. Tabla "ViaIngresoUsuario".
+P07 modalidadGrupoServicioTecSal: C,2. Tabla "ModalidadAtencion".
+P08 grupoServicios: C,2. Tabla "GrupoServicios".
+P09 codServicio: N,3-4. Tabla "Servicios".
+P10 finalidadTecnologiaSalud: C,2. Tabla "RIPSFinalidadConsultaVersion2". Intervención colectiva → validar anexo 5 CUPS.
+P11 tipoDocumentoIdentificacion (profesional): C,2 (v2, AJUSTE Descripción). Mismos valores permitidos que C15.
+P12 numDocumentoIdentificacion (profesional): C,4-20 (v2, AJUSTE Descripción).
+P13 codDiagnosticoPrincipal: C,4. Preferible CIE10 morbilidad/mortalidad; no puede ser síntomas/signos (R00-R99) ni factores que influyen en salud (Z00-Z99, ver RVC033). Validable con código CUPS del procedimiento.
+P14 codDiagnosticoRelacionado: C,0,4 (AJUSTE 0948 Tamaño).
+P15 codComplicacion: C,0,4 (AJUSTE 0948 Tamaño).
+P16 vrServicio: N,1-15 (v2, AJUSTE Observación). >0 si modalidad=evento; sin FEV informar 0.
+P17 conceptoRecaudo: C,2 (AJUSTE Observación). Igual reglas que C18.
+P18 valorPagoModerador: N,1-10 (v2). Igual reglas que C19, más: si copago, ≥1 y en otros servicios del mismo usuario no debe haber otros valores en este campo; sumatoria con cuota moderadora en un solo registro.
+P19 numFEVPagoModerador: igual que C20.
+P20 consecutivo: N,1-7.
+P21 codDiagnosticoPrincipalCIE11: C,0,4-256 (NUEVO v2).
+P22 nomCodDiagnosticoPrincipalCIE11: C,0,1-1000 (NUEVO v2).
+P23 codDiagnosticoRelacionadoCIE11: C,0,4-256 (NUEVO v2).
+P24 nomCodDiagnosticoRelacionadoCIE11: C,0,1-1000 (NUEVO v2).
+P25 codComplicacionCIE11: C,0,1-256 (NUEVO v2).
+P26 nomComplicacionCIE11: C,0,1-1000 (NUEVO v2).
+P27 codigoVIDA: C,1-256 (NUEVO v2).
+
+4.3.3 DATOS DE LA URGENCIA CON OBSERVACIÓN
+R01 codPrestador: C,12. Igual que C01.
+R02 fechaInicioAtencion: C,16. No mayor a validación ni a egreso; no menor a nacimiento.
+R03 causaMotivoAtencion: C,2. Tabla "RIPSCausaExternaVersion2" (columna urgencias).
+R04 codDiagnosticoPrincipal (ingreso): C,4 (AJUSTE 0948 Tamaño). Reglas iguales a las de morbilidad/mortalidad CIE10, exclusión R00-R99 y Z00-Z99.
+R05 codDiagnosticoPrincipalE (egreso, previamente llamado codDiagnosticoPrincipalE en 2275 con otro tamaño): C,4 (AJUSTE 0948 Tamaño).
+R06 codDiagnosticoRelacionadoE1: C,0,4 (AJUSTE 0948 Tamaño).
+R07 codDiagnosticoRelacionadoE2: C,0,4 (AJUSTE 0948 Tamaño).
+R08 codDiagnosticoRelacionadoE3: C,0,4 (AJUSTE 0948 Tamaño).
+R09 condicionDestinoUsuarioEgreso: C,2. Tabla "CondicionyDestinoUsuarioEgreso". Muerto → sin servicios posteriores; derivado a otro servicio → deben existir esos servicios (RVC053/062 pasan de Notificación a Rechazo en 0948).
+R10 codDiagnosticoCausaMuerte: C,0,4 (AJUSTE 0948 Tamaño). Obligatorio si condición=muerto; igual a causa básica del certificado de defunción.
+R11 fechaEgreso: C,16. Si muerte, = fecha/hora de muerte. No mayor a validación ni menor a nacimiento; dentro de periodo de facturación.
+R12 consecutivo: N,1-7.
+R13 codDiagnosticoPrincipalCIE11: C,4-256 (NUEVO v2).
+R14 nomCodDiagnosticoPrincipalCIE11: C,1-1000 (NUEVO v2).
+R15 codDiagnosticoPrincipalECIE11: C,4-256 (NUEVO v2).
+R16 nomCodDiagnosticoPrincipalECIE11: C,1-1000 (NUEVO v2).
+R17 codDiagnosticoRelacionadoE1CIE11: C,4-256 (NUEVO v2).
+R18 nomCodDiagnosticoRelacionadoE1CIE11: C,1-1000 (NUEVO v2).
+R19 codDiagnosticoRelacionadoE2CIE11: C, tamaño rotulado literalmente como "R19" en el PDF (probable error tipográfico; tratar análogo a R17/R21, rango 0/4-256).
+R20 nomCodDiagnosticoRelacionadoE2CIE11: C,1-1000 (NUEVO v2).
+R21 codDiagnosticoRelacionadoE3CIE11: C,4-256 (NUEVO v2).
+R22 nomCodDiagnosticoRelacionadoE3CIE11: C,1-1000 (NUEVO v2).
+R23 codDiagnosticoCausaMuerteCIE11: C,0,4-256 (NUEVO v2).
+R24 nomCodDiagnosticoCausaMuerteCIE11: C,0,1-1000 (NUEVO v2).
+R25 codigoVIDA: C,0,1-256 (NUEVO v2).
+
+4.3.4 DATOS DE HOSPITALIZACIÓN
+H01 codPrestador: C,12. Igual que C01.
+H02 viaIngresoServicioSalud: C,2. Tabla "ViaIngresoUsuario". Validable con atención previa en la misma institución.
+H03 fechaInicioAtencion: C,16. No mayor a validación ni a fecha/hora de egreso.
+H04 numAutorizacion: C,0-30. Null si no requiere.
+H05 causaMotivoAtencion: C,2. Tabla "RIPSCausaExternaVersion2" (hospitalización).
+H06 codDiagnosticoPrincipal (ingreso): C,4 (AJUSTE 0948 Tamaño).
+H07 codDiagnosticoPrincipalE (egreso): C,4 (AJUSTE 0948 Tamaño).
+H08 codDiagnosticoRelacionadoE1: C,0,4 (AJUSTE 0948 Tamaño).
+H09 codDiagnosticoRelacionadoE2: C,0,4 (AJUSTE 0948 Tamaño).
+H10 codDiagnosticoRelacionadoE3: C,0,4 (AJUSTE 0948 Tamaño).
+H11 codComplicacion: C,0,4 (AJUSTE 0948 Tamaño). Reglas iguales morbilidad/mortalidad; sin restricción explícita R00-R99/Z00-Z99 mencionada para complicación (a diferencia de principal/egreso/causa muerte).
+H12 condicionDestinoUsuarioEgreso: C,2. Igual reglas que R09.
+H13 codDiagnosticoCausaMuerte: C,0,4 (AJUSTE 0948 Tamaño). Igual reglas que R10.
+H14 fechaEgreso: C,16. Si muerte = fecha muerte. Validable estancia <6 horas (RVC041, notificación).
+H15 consecutivo: N,1-7.
+H16 codDiagnosticoPrincipalECIE11: C,0,4-256 (NUEVO v2).
+H17 nomCodDiagnosticoPrincipalECIE11: C,0,1-1000 (NUEVO v2).
+H18 codDiagnosticoPrincipalECIE11 (segundo, distinto slot — el documento define dos pares H16/H17 y H18/H19 con la misma descripción "principal confirmado o presuntivo"; aparente redundancia en el documento oficial, posiblemente cubriendo diagnóstico principal de ingreso vs egreso en CIE11): C,0,4-256 (NUEVO v2).
+H19 nomCodDiagnosticoPrincipalECIE11 (segundo): C,0,1-1000 (NUEVO v2).
+H20 codDiagnosticoRelacionadoE1CIE11: C,0,4-256 (NUEVO v2).
+H21 nomCodDiagnosticoRelacionadoE1CIE11: C,0,1-1000 (NUEVO v2).
+H22 codDiagnosticoRelacionadoE2CIE11: C,0,4-256 (NUEVO v2).
+H23 nomCodDiagnosticoRelacionadoE2CIE11: C,0,1-1000 (NUEVO v2).
+H24 codDiagnosticoRelacionadoE3CIE11: C,0,4-256 (NUEVO v2).
+H25 nomCodDiagnosticoRelacionadoE3CIE11: C,0,1-1000 (NUEVO v2).
+H26 codComplicacionCIE11: C,4-256 (NUEVO v2).
+H27 nomcodComplicacionCIE11: C,1-1000 (NUEVO v2).
+H28 codDiagnosticoCausaMuerteCIE11: C,0,4-256 (NUEVO v2).
+H29 nomCodDiagnosticoCausaMuerteCIE11: C,0,1-1000 (NUEVO v2).
+H30 codigoVIDA: C,0,1-256 (NUEVO v2).
+
+4.3.5 DATOS DE RECIÉN NACIDO
+N01 codPrestador: C,12. Igual que C01.
+N02 tipoDocumentoIdentificacion: C,2. Solo CN, RC, MS (Resolución 3280/2018, 1133/2021).
+N03 numDocumentoIdentificacion: N,4-20 (v2). Si MS, según Resolución 1133/2021.
+N04 fechaNacimiento: C,16. No mayor a validación RIPS.
+N05 edadGestacional: N,2. Validable 20-46 semanas (RVC057, cambia a Rechazo en 0948).
+N06 numConsultasCPrenatal: N,2. No mayor a 15 (RVC097 nueva regla explícita 0948, y RVC058 pasa a Rechazo).
+N07 codSexoBiologico: C,2. Tabla "Sexo" col Extra II (01 hombre, 02 mujer, 03 indeterminado).
+N08 peso: N,3-4. Validable 500-5000 gramos (RVC058 pasa a Rechazo en 0948).
+N09 codDiagnosticoPrincipal: C,4-25.
+N10 condicionDestinoUsuarioEgreso: C,2. Igual reglas que R09/H12 (RVC053/062 pasan a Rechazo en 0948).
+N11 codDiagnosticoCausaMuerte: C,0,4-25. Solo si murió en primeras 24h. Igual reglas morbilidad/mortalidad + exclusiones R00-R99/Z00-Z99.
+N12 fechaEgreso: C,16. Si muerte = fecha muerte. No menor a nacimiento.
+N13 consecutivo: N,1-7.
+N14 codDiagnosticoPrincipalECIE11: C,4-256 (NUEVO v2).
+N15 nomCodDiagnosticoPrincipalECIE11: C,1-1000 (NUEVO v2). Preferible CIE11 morbilidad/mortalidad PA00-PK7Z.
+N16 codDiagnosticoCausaMuerteCIE11: C,4-256 (NUEVO v2). Preferible CIE11 MB00-MBZ9.
+N17 nomCodDiagnosticoCausaMuerteCIE11 (nombre, campo N17 en el PDF aparece con mismo nombre "codDiagnosticoCausaMuerteCIE11" pero es la columna Nombre): C,1-1000 (NUEVO v2). Preferible CIE11 MB00-MBZ9.
+N18 codigoVIDA: C,1-256 (NUEVO v2).
+
+4.3.5(bis) DATOS DE MEDICAMENTOS [el PDF numera esta sección también como 4.3.5 por error tipográfico; en realidad es distinta al recién nacido]
+M01 codPrestador: C,0,12. Igual reglas que C01, null si es proveedor de tecnologías de salud.
+M03 idMIPRES: C,0,19-25. Igual reglas que P03.
+M04 fechaDispensAdmon: C,16. No mayor a validación ni menor a nacimiento; dentro de periodo de facturación.
+M05 codDiagnosticoPrincipal: C,4. Diagnóstico por el cual se formula el medicamento. Preferible morbilidad/mortalidad CIE10 V01-Y98; no puede ser R00-R99.
+M06 codDiagnosticoRelacionado: C,0,4. No igual al principal.
+M07 tipoMedicamento: C,2 (AJUSTE Observación). Tabla "TipoMedicamentoPOSVersion2". Preparación magistral (03): un registro por principio activo, se aceptan preparaciones con único principio activo. UNIRS validable contra listado.
+M08 codTecnologiaSalud: C,0-20 (v3, AJUSTE Observación). IUM preferido, si no existe CUM. Preparaciones magistrales: código de cada medicamento usado o, para derivados de Cannabis, código DCI de cada principio activo (02887 Cannabinol, 50840 Cannabidiol, 50941 Tetrahidrocannabinol/Dronabinol).
+M09 nomTecnologiaSalud: C,0-30. Solo obligatorio para preparación magistral (nombre genérico DCI); otros tipos: null.
+M10 concentracionMedicamento: N,0-24(10,14) (AJUSTE Tamaño/Observación). Solo preparación magistral; otros: 0.
+M11 unidadMedida: N,0-4 (AJUSTE Observación). Solo preparación magistral; otros: 0. Tabla "UMM".
+M12 formaFarmaceutica: C,0,6,8 (AJUSTE Observación). Solo preparación magistral; otros: null. Tabla "FFM".
+M13 unidadMinDispensa: N,1-3 (v3, AJUSTE Tamaño/Observación). Unidad mínima de dispensación (vial/tableta/frasco). Preparación magistral: misma unidad en cada principio activo. Tabla "UPR" o "UMM".
+M14 cantidadMedicamento: N,1-10 (v3). Obligatorio siempre. Preparación magistral: cantidad en el primer principio activo, 0 en los demás.
+M15 diasTratamiento: N,1-3. Mínimo 1, sin fracciones (redondeo hacia arriba).
+M16 tipoDocumentoIdentificacion (prescriptor): C,0,2 (AJUSTE Tamaño/Observación). Mismos valores CC/CE/CD/PA/SC/PE/DE/PT; null si no hay.
+M17 numDocumentoIdentificacion (prescriptor): C,0,4-20 (AJUSTE Tamaño/Observación). Null si no hay.
+M18 vrUnitMedicamento: N,1-15 (v3, AJUSTE Observación). >0 si modalidad=evento, si no 0. Preparación magistral: valor unitario por principio activo o sumatoria en el primero (demás en 0).
+M19 vrServicio: N,1-15. >0 si modalidad=evento. Preparación magistral: valor total (sumatoria) en el primer principio activo, demás en 0. Sin FEV: 0. NUEVA REGLA RVC094: debe ser igual a cantidadMedicamento(M14) * vrUnitMedicamento(M18) cuando modalidad de pago=04 y tipoMedicamento≠03.
+M20 conceptoRecaudo: C,2. Igual reglas que C18.
+M21 valorPagoModerador: N,1-10. Igual reglas que C19; preparación magistral: valor en un solo registro/principio activo, demás en 0. Notas crédito: recaudos siempre en 0.
+M22 numFEVPagoModerador: igual que C20.
+M23 consecutivo: N,1-7.
+M24 codDiagnosticoPrincipalECIE11: C,4-256 (NUEVO v2). "Durante la transición de la norma, el campo M24 es opcional." Preferible CIE11 MB00-MBZ9 o QA00-QG9Z según morbilidad/mortalidad.
+M25 nomCodDiagnosticoPrincipalECIE11: C,-1000 (rango truncado en original, tratar como 0/1-1000) (NUEVO v2). "Campo obligatorio cuando el campo M24 es diligenciado."
+M26 codDiagnosticoRelacionadoCIE11: C,0,4-256 (NUEVO v2).
+M27 nomCodDiagnosticoRelacionadoCIE11: C,0-1000 (NUEVO v2).
+M28 vrDispensacion: N,0-15 (NUEVO v2). "Corresponde al valor acordado entre el gestor Farmacéutico y la EPS, en caso de no aplicar diligenciar en 0." (Ver también numeral 3.1.1 — aplica cuando el Gestor Farmacéutico solo factura el valor de la dispensación en compra directa EPS→fabricante.)
+M29 codigoVIDA: C,1-256 (NUEVO v2).
+
+4.3.6 DATOS DE OTROS SERVICIOS
+S01 codPrestador: C,0,12. Null para proveedor de tecnologías de salud propiamente (aclarar: en general igual reglas que C01).
+S02 numAutorizacion: C,0-30. Validable contra MIPRES si financiado por presupuesto máximo.
+S03 idMIPRES: C,0,19-25 (AJUSTE Descripción/Tamaño/Observación). Igual reglas que P03/M03.
+S04 fechaSuministroTecnologia: C,16. No mayor a validación; dentro de periodo de facturación.
+S05 tipoOS: C,2. Tabla "TipoOtrosServicios". Servicios complementarios = solo los financiados por presupuestos máximos. APME = servicios complementarios. Estancias validables contra urgencias/hospitalización (RVC056).
+S06 codTecnologiaSalud: C,1-20. Dispositivos médicos/insumos: código IDM (Res. 1405/2022) o UDI, o código propio del facturador si no hay IDM/UDI. Traslado/transporte/estancia: código CUPS. Honorarios: código CUPS del procedimiento. Servicios complementarios: código tabla MIPRES. Validable con cobertura, sexo, grupo servicios, plan beneficios FEV, cantidad/día, diagnóstico principal. RVC096 (nueva 0948): debe existir en tabla "CUPSRips".
+S07 nomTecnologiaSalud: C,0,1-200 (AJUSTE Tamaño/Observación en 0948; RVC066 pasa a Rechazo). Obligatorio (descripción) solo cuando tipoOS=01 (Dispositivos médicos e insumos); si no, null.
+S08 cantidadOS: N,5. Dispositivos/insumos/traslados/complementarios: en unidades. Honorarios: siempre 1 (solo 1 por procedimiento y profesional). Estancia: cantidad de días.
+S09 tipoDocumentoIdentificacion (persona que ordena): C,0,2. Mismos valores CC/CE/CD/PA/SC/PE/DE/PT. Solo aplica a tipos "Dispositivos médicos e insumos", "Servicios complementarios" y "Honorarios".
+S10 numDocumentoIdentificacion (persona que ordena): C,0,4-20. Igual restricción de aplicabilidad que S09.
+S11 vrUnitOS: N,1-15. >0 si modalidad=evento, si no 0.
+S12 vrServicio: N,1-15 (v2, AJUSTE Observación). NO incluye cuota moderadora. >0 si modalidad=evento; sin FEV: 0.
+S13 conceptoRecaudo: C,2 (v2, AJUSTE Observación). Igual reglas que C18.
+S14 valorPagoModerador: N,1-15 (v2). Solo aplica a servicios ordenados en atenciones ambulatorias. Solo régimen contributivo. Cuota moderadora en un solo registro si aplica a varios ítems. 0 si no aplica.
+S15 numFEVPagoModerador: igual que C20.
+S16 consecutivo: N,1-7.
+S17 codigoVIDA: C,0,1-256 (NUEVO v2).
+S18 vrDispensacion: N,0-15 (NUEVO v2). "Corresponde al valor acordado entre el gestor Farmacéutico y la EPS, en caso de no aplicar diligenciar en 0." (Insumo médico, análogo a M28 pero para otros servicios.)
+
+=== 5. VALIDACIONES GENERALES (tabla completa) ===
+RVG01 (R): solo se valida RIPS si cumple la estructura establecida. [incluye la subregla de valores monetarios/cantidades positivas mencionada en 1.2]
+RVG02 (R): los datos de RIPS deben coincidir con la factura electrónica de venta y demás documentos electrónicos.
+RVG03 (R): los RIPS deben contener registros de servicios prestados.
+RVG04 (R): el dato informado debe corresponder al tipo de dato requerido.
+RVG05 (R): el dato informado debe corresponder al tamaño de dato requerido.
+RVG06 (R): el dato informado debe corresponder al contenido requerido.
+RVG07 (R): todos los usuarios informados deben tener al menos un registro de servicios.
+RVG08 (R): el valor reportado en los servicios debe coincidir con el valor de la FEV cuando modalidad=evento.
+RVG09 (R): el valor reportado en cuotas/pagos moderadores debe coincidir con el valor de la FEV.
+RVG10 (R): solo se podrá registrar un facturador electrónico en salud por RIPS y FEV.
+RVG11 (R): profesionales que realizan consultas/procedimientos/prescriben medicamentos/ordenan otros servicios deben estar en RETHUS o inscritos en MIPRES (servicio social obligatorio).
+RVG12 (R): no puede haber usuarios informados con los mismos datos.
+RVG13 (N): no debe haber medicamentos con el mismo código para el mismo usuario en la misma fecha/hora.
+RVG14 (R en 0948, antes N en 2275 — CAMBIO): si se informan nacimientos múltiples, el procedimiento debe corresponder a parto múltiple.
+RVG15 (N en 0948, antes R en 2275 — CAMBIO): si se informan datos de urgencias con observación, debe existir una consulta de urgencia con fecha/hora ≥ ingreso a observación.
+RVG16 (R): al informar urgencias con observación + consulta de urgencia, debe coincidir la causa que origina el servicio.
+RVG17 (R): al informar recién nacido con servicios/tecnologías, los datos van en el objeto "usuario" del recién nacido y los servicios en los objetos de servicios respectivos.
+RVG19 (R): el NIT del pagador debe corresponder a un PSS/PTS; no se permite validar FEV+RIPS emitida desde un PSS/PTS hacia otro PSS/PTS.
+CIN006 (R): el campo cobertura o plan no permite el tipo de conceptoRecaudo registrado (validación cruzada según tabla 1.8).
+
+=== 6. VALIDACIONES POR CAMPO (tabla completa, ID Validación / ID Campo / Y / Regla resumida) ===
+Nota: los campos relacionados con pagos moderadores (C18,C19,C20,P17,P18,P19,M20,M21,M22,S13,S14,S15) pueden usarse cuando así se pactó en acuerdos de voluntades con coberturas diferentes a las del SGSSS.
+
+RVC001 (T01, R): NIT del facturador debe coincidir con el de la FEV.
+RVC002 (T01, R): NIT debe existir en IPSCodHabilitación/IPSnoREPS/EntidadesnoREPS.
+RVC003 (T01, R): si NIT es de proveedor de tecnologías de salud, solo puede tener usuarios/medicamentos/otros servicios.
+RVC004 (T02, R): número de factura RIPS debe coincidir con la FEV.
+RVC005 (U03, R): tipo de usuario debe estar asociado a la cobertura/plan de beneficios de la FEV.
+RVC006 (U04, R): fecha de nacimiento no mayor a fecha de validación RIPS.
+RVC007 (U04, R, AJUSTE 0948 en Regla/Mensaje): la edad según fecha nacimiento debe coincidir con tipo de documento, con margen de tolerancia de un año menos un día.
+RVC008 (U04, N): si se informan datos de recién nacido, el usuario (madre) puede tener entre 9 y 60 años.
+RVC009 (U05, N): si se informan datos de recién nacido, el usuario debe ser sexo Femenino.
+RVC010 (U05, N): si finalidad=IVE, el usuario debe ser sexo Femenino.
+RVC011 (C01,P01,R01,H01,N01,M01,S01, R): código del facturador debe estar en IPSCodHabilitación/IPSnoREPS/EntidadesnoREPS.
+RVC012 (C01,P01,R01,H01,N01,M01,S01, R): código del prestador debe estar relacionado con numDocumentoIdObligado.
+RVC013 (C02,P02,M04,S04, R): fecha/hora del servicio no mayor a fecha/hora de validación RIPS.
+RVC014 (C02,P02,M04,S04, R): fecha del servicio no puede estar fuera del periodo de facturación de la FEV.
+RVC015 (C04, N): CUPS validable como consulta.
+RVC016 (C04,P05,S06, N): CUPS validable según sexo del usuario.
+RVC017 (C04,P05,S06, N): CUPS validable contra cobertura/plan de beneficios de la FEV.
+RVC018 (C04,P05,S06, N): CUPS validable según cantidad de veces por paciente/día.
+RVC019 (C04,P05,S06, N): CUPS validable con el diagnóstico principal.
+RVC020 (P05, N): CUPS validable como procedimiento.
+RVC021 (P05, N): CUPS validable con el tiempo de estancia del paciente.
+RVC022 (P05, N): si CUPS=parto y grupo=internación, debe haber hospitalización y salas (parto o cirugía).
+RVC023 (P05, R en 0948, antes N — CAMBIO): si CUPS=parto, debe haber datos de recién nacido.
+RVC024 (S06, R): código de traslado/transporte/estancia debe ser CUPS.
+RVC025 (S06, R): código de servicios complementarios debe estar en tabla MIPRES.
+RVC026 (S06, N): CUPS validable como cobertura de otros servicios.
+RVC027 (C04, N): si hay internación/urgencias, CUPS debe ser interconsulta dentro del periodo respectivo.
+RVC028 (C10,C11,C12,C13,P13,P14,P15,R04,R05,R06,R07,R08,R10,H06,H07,H08,H09,H10,H11,H13,N09,N11,M05,M06, N): código CIE validable según sexo/edad.
+RVC029 (C10,C11,C12,C13,R04,R05,H06,H07, N): código CIE validable según código CUPS de la consulta.
+RVC030 (P13,P14, N): código CIE validable según código CUPS del procedimiento.
+RVC031 (C10,P13,P15,R04,R05,R10,H06,H07,H11,H13,N09,N11,M05, N): diagnóstico principal/complicación/causa muerte debería ser preferiblemente CIE10 V01-Y98.
+RVC032 (P13,P15,R04,R10,H13,N11, N): diagnóstico principal/complicación/causa muerte no puede ser CIE10 R00-R99.
+RVC033 (P13,P15,R04,R10,H13,N11, N): CIE no debería ser Z00-Z99 (factores que influyen en salud).
+RVC034 (C17,P16,M18,M19,S11,S12, R): valor >0 si modalidad=evento; si no, 0.
+RVC035 (C18,P17,M20,S13, N): solo régimen contributivo cobra cuota moderadora.
+RVC036 (C19,P18,M21,S14, R, AJUSTE v2): el pago moderador de la FEV debe corresponder a la sumatoria de detalles de RIPS.
+RVC037 (C18,P17,M20,S13, N): régimen subsidiado no puede pagar valores moderadores de planes voluntarios.
+RVC038 (R02,H03, R): fecha/hora ingreso no mayor a fecha/hora validación.
+RVC039 (R02,H03, R): fecha/hora ingreso no mayor a fecha/hora egreso.
+RVC040 (R11, N): rango ingreso-egreso en urgencias no debe superar 48 horas.
+RVC041 (H14, N): estancia hospitalización puede validarse si es menor a 6 horas.
+RVC042 (R10,H13,N11, R): causa básica de muerte obligatoria si condición=Paciente muerto.
+RVC043 (R11,H14,N12, R): fecha/hora egreso no mayor a fecha/hora validación.
+RVC044 (R11,H14,N12, R): fecha egreso no fuera del periodo de facturación.
+RVC045 (N04, R): fecha/hora nacimiento no mayor a validación.
+RVC046 (N12, R): fecha/hora egreso no menor a fecha/hora nacimiento del recién nacido.
+RVC047 (N02,N03, R) — ELIMINADA en 0948 (verificar): documento de recién nacido/madre.
+RVC048 (P04,M02,S02, N): si financiado por presupuesto máximo, validar contra número de prescripción MIPRES. [Nota: M02 fue ELIMINADO en 0948 — ver 3.3; esta regla en 0948 aplicaría solo a P04, S02]
+RVC049 (M03,S03, R): ID de entrega validable contra MIPRES.
+RVC050 (S09,S10, R): debe registrarse persona que ordena para "Dispositivos médicos e insumos" y "Servicios complementarios".
+RVC051 (C08,P10, N): finalidad validable con sexo/edad.
+RVC052 (C08, N): finalidad=IVE validable con causa relacionada a IVE o "Atención de población materno perinatal" (IVE sin especificación de causal hasta semana 24).
+RVC053 (R09,H12,N10, R en 0948, antes N — CAMBIO): si condición=Paciente muerto, no debe haber servicios con fecha/hora posterior a 24h de fallecimiento.
+RVC054 (H02, R): vía de ingreso validable con atención previa en la misma institución.
+RVC055 (M07, R): si medicamento UNIRS, validar contra listado UNIRS.
+RVC056 (S05, R): estancias deben validarse con registros de urgencias/hospitalización.
+RVC057 (N05, R en 0948, antes N — CAMBIO): edad gestacional entre 20-46 semanas.
+RVC058 (N08, R en 0948, antes N — CAMBIO): peso recién nacido entre 500-5000 gramos.
+RVC059 (C04,P05, N): CUPS validable con grupo de servicio/servicio/finalidad/causa.
+RVC060 (C19,P18,M21, R, AJUSTE v2): si tipo pago moderador=cuota moderadora o bono/vale plan voluntario, valor debe ser ≥1.
+RVC061 (C19,P18,M21, R): si no aplica pago moderador, informar 0.
+RVC062 (R09,H12,N10, R en 0948, antes N — CAMBIO): si condición=Paciente derivado a otro servicio, deben existir esos servicios.
+RVC063 (M08, R en 0948, antes N — CAMBIO): código IUM/CUM debe existir en catálogo SISPRO.
+RVC064 (M08, R): preparaciones magistrales de Cannabis deben usar códigos DCI (02887/50840/50941).
+RVC065 (M09,M10,M11,M12, N): para tipoMedicamento 01/02/04, estos campos pueden ser null.
+RVC066 (S07, R en 0948, antes N — CAMBIO, AJUSTE IDCampo/Tamaño/Regla/Mensaje): si tipoOS=01, S07 es obligatorio.
+RVC067 (C08, N): finalidad="Valoración integral para la promoción y mantenimiento" → causa debe relacionarse con "Promoción y mantenimiento de la salud – intervenciones individuales".
+RVC068 (C08, N): finalidad="Atención para el cuidado preconcepcional" → causa relacionada con "Atención de población materno perinatal".
+RVC069 (C08, N): finalidad="Atención del parto y puerperio" → causa relacionada con "Atención de población materno perinatal".
+RVC070 (C08, N) — eliminada/duplicada en tabla; cuidado prenatal → materno perinatal.
+RVC071 (C08, N): finalidad="Atención para el seguimiento del recién nacido" → causa relacionada con "Atención de población materno perinatal".
+RVC072-078: variantes eliminadas/duplicadas de reglas de finalidad-causa materno-perinatal (marcadas "Eliminada" en la tabla oficial).
+RVC079 (C02,P02,M04,S04, R): fecha/hora servicio no menor a fecha nacimiento del usuario.
+RVC080 (R11,H14,N12, R): fecha/hora egreso no menor a fecha nacimiento del usuario.
+RVC081 (R02,H03, R): fecha/hora ingreso no menor a fecha nacimiento del usuario.
+RVC082 (S06, N): CUPS validable contra grupo de servicios informado.
+RVC083 (P10, N): finalidad="Intervención colectiva" → código debe ser de intervención colectiva (anexo 5 CUPS).
+RVC084 (C08, R en 0948, antes N — CAMBIO, v3): para finalidades de promoción/prevención/materno-perinatal listadas, tipo de pago moderador debe ser "No aplica pago moderador".
+RVC085 (C08, N, v3): finalidad="Valoración integral para la promoción y mantenimiento" → diagnóstico principal solo puede ser CIE Z00-Z99.
+RVC086 (C11,C12,C13,P14,M06, R en 0948, antes N — CAMBIO): diagnóstico relacionado no puede ser igual al diagnóstico principal.
+RVC087 (C11,C12,C13, R en 0948, antes N — CAMBIO): diagnóstico relacionado no puede ser igual a otro diagnóstico relacionado.
+RVC088 (R06,R07,R08,H08,H09,H10, R en 0948, antes N — CAMBIO): diagnóstico relacionado de egreso no puede ser igual al principal de egreso.
+RVC089 (R06,R07,R08,H08,H09,H10, R en 0948, antes N — CAMBIO): diagnóstico relacionado de egreso no puede ser igual a otro relacionado de egreso.
+RVC090 (P05, N): si CUPS=procedimiento quirúrgico y grupo=quirúrgico, debe haber datos de sala de cirugía en otros servicios.
+RVC091 (C17,P16,M18,M19,S11,S12, R, AJUSTE 0948 en Regla): si RIPS sin FEV y profesional independiente no obligado a facturar (3.500 UVT), informar valor pagado por el paciente; si prestador EOSD, valor=0; considerar descuentos pactados.
+RVC092 (C18,P17,M20,S13, R, NUEVA v3): concepto "Anticipos" aplica únicamente al reporte en la FEV, no debe usarse en el RIPS.
+RVC094 (M19, R, NUEVA v2/0948): vrServicio (M19) debe ser igual a cantidadMedicamento(M14) * vrUnitMedicamento(M18) cuando modalidad de pago=04 y tipoMedicamento≠03.
+RVC095 (U12, R, NUEVA v2/0948): registro SIRAS obligatorio cuando tipoUsuario=10. Es de Notificación los primeros 3 meses desde la implementación de la resolución, luego pasa a Rechazo.
+RVC096 (C04,P05,S06, R, NUEVA v2/0948): código CUPS debe existir en tabla de referencia "CUPSRips".
+RVC097 (N06, R, NUEVA v2/0948): número de consultas de cuidado prenatal no puede ser mayor a 15.
+RVC098 (C02,P02,M04,S04, R, NUEVA v2/0948): fecha/hora de prestación no puede ser mayor a fecha/hora de fallecimiento del usuario + 24 horas (según RUAF-ND).
+
+=== FIN DEL DOCUMENTO ===

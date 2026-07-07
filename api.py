@@ -54,6 +54,14 @@ from app_medicamentos_control import (
     validar_recien_nacidos_malla_2275,
     validar_urgencias_malla_2275,
     validar_usuarios_malla_2275,
+    validar_consultas_malla_0948,
+    validar_hospitalizacion_malla_0948,
+    validar_medicamentos_malla_0948,
+    validar_otros_servicios_malla_0948,
+    validar_procedimientos_malla_0948,
+    validar_recien_nacidos_malla_0948,
+    validar_urgencias_malla_0948,
+    validar_usuarios_malla_0948,
 )
 from auditoria import validar_auditoria, validar_concepto_recaudo
 from pertinencia import validar_pertinencia
@@ -120,6 +128,10 @@ def _init_db():
             malla_total           INTEGER,
             malla_criticas        INTEGER,
             malla_notificaciones  INTEGER,
+            malla_0948_total          INTEGER,
+            malla_0948_criticas       INTEGER,
+            malla_0948_notificaciones INTEGER,
+            top_reglas_malla_0948     TEXT,
             general_total         INTEGER,
             general_criticas      INTEGER,
             general_notificaciones INTEGER,
@@ -132,6 +144,20 @@ def _init_db():
             tiempo_procesamiento  TEXT
         )
     """)
+    # ── Migración: agrega columnas de la malla 0948 a bases existentes ────
+    cols_existentes = {row[1] for row in con.execute("PRAGMA table_info(estadisticas)")}
+    for col_def in (
+        "malla_0948_total INTEGER",
+        "malla_0948_criticas INTEGER",
+        "malla_0948_notificaciones INTEGER",
+        "top_reglas_malla_0948 TEXT",
+    ):
+        col_name = col_def.split()[0]
+        if col_name not in cols_existentes:
+            try:
+                con.execute(f"ALTER TABLE estadisticas ADD COLUMN {col_def}")
+            except sqlite3.OperationalError:
+                pass  # columna ya agregada por otra ejecución concurrente
     con.commit()
     con.close()
 
@@ -148,12 +174,14 @@ def _guardar_estadistica(stats: dict, usuario: str):
                 hosp_cod_sin_aut, hosp_cups_duplicado, proc_sin_aut_amb,
                 proc_aut_no_cruza, cups_noestandar_nc, hosp_proc_cod_no_cruza,
                 malla_total, malla_criticas, malla_notificaciones,
+                malla_0948_total, malla_0948_criticas, malla_0948_notificaciones,
                 general_total, general_criticas, general_notificaciones,
                 auditoria_total, auditoria_criticas, auditoria_notificaciones,
                 top_reglas_malla, top_reglas_general, top_reglas_auditoria,
+                top_reglas_malla_0948,
                 tiempo_procesamiento
             ) VALUES (
-                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
             )
         """, (
             datetime.now().isoformat(),
@@ -180,6 +208,9 @@ def _guardar_estadistica(stats: dict, usuario: str):
             stats.get("malla_total", 0),
             stats.get("malla_criticas", 0),
             stats.get("malla_notificaciones", 0),
+            stats.get("malla_0948_total", 0),
+            stats.get("malla_0948_criticas", 0),
+            stats.get("malla_0948_notificaciones", 0),
             stats.get("general_total", 0),
             stats.get("general_criticas", 0),
             stats.get("general_notificaciones", 0),
@@ -189,6 +220,7 @@ def _guardar_estadistica(stats: dict, usuario: str):
             json.dumps(stats.get("malla_top_reglas", [])),
             json.dumps(stats.get("general_top_reglas", [])),
             json.dumps(stats.get("auditoria_top_reglas", [])),
+            json.dumps(stats.get("malla_0948_top_reglas", [])),
             stats.get("tiempo_procesamiento", ""),
         ))
         con.commit()
@@ -369,6 +401,7 @@ def _procesar_sync(json_wrappers, excel_wrappers):
     """Toda la lógica de validación en función síncrona — se ejecuta en hilo separado."""
     registros, alertas = [], []
     validaciones_malla, validaciones_general = [], []
+    validaciones_malla_0948 = []
     validaciones_auditoria, validaciones_pertinencia = [], []
     errores_acum = []
     archivos_procesados = 0
@@ -399,6 +432,17 @@ def _procesar_sync(json_wrappers, excel_wrappers):
             validaciones_general.extend(validar_hospitalizacion_malla_2275(data, wrapper.filename))
             validaciones_general.extend(validar_recien_nacidos_malla_2275(data, wrapper.filename))
             validaciones_general.extend(validar_otros_servicios_malla_2275(data, wrapper.filename))
+
+            # ── Malla 0948/2026 (borrador, informativa, no vigente aún) ────
+            validaciones_malla_0948.extend(validar_consultas_malla_0948(data, wrapper.filename))
+            validaciones_malla_0948.extend(validar_hospitalizacion_malla_0948(data, wrapper.filename))
+            validaciones_malla_0948.extend(validar_medicamentos_malla_0948(data, wrapper.filename))
+            validaciones_malla_0948.extend(validar_otros_servicios_malla_0948(data, wrapper.filename))
+            validaciones_malla_0948.extend(validar_procedimientos_malla_0948(data, wrapper.filename))
+            validaciones_malla_0948.extend(validar_urgencias_malla_0948(data, wrapper.filename))
+            validaciones_malla_0948.extend(validar_recien_nacidos_malla_0948(data, wrapper.filename))
+            validaciones_malla_0948.extend(validar_usuarios_malla_0948(data, wrapper.filename))
+
             validaciones_auditoria.extend(validar_auditoria(data, wrapper.filename))
             validaciones_auditoria.extend(validar_concepto_recaudo(data, wrapper.filename))
             validaciones_pertinencia.extend(validar_pertinencia(data, wrapper.filename))
@@ -451,6 +495,10 @@ def _procesar_sync(json_wrappers, excel_wrappers):
         "malla_criticas":             _count_sev(validaciones_malla, "critica"),
         "malla_notificaciones":       sum(1 for v in validaciones_malla if v.get("severidad") in {"media", "alta"}),
         "malla_top_reglas":           _top_reglas(validaciones_malla),
+        "malla_0948_total":              len(validaciones_malla_0948),
+        "malla_0948_criticas":           _count_sev(validaciones_malla_0948, "critica"),
+        "malla_0948_notificaciones":     sum(1 for v in validaciones_malla_0948 if v.get("severidad") in {"media", "alta"}),
+        "malla_0948_top_reglas":         _top_reglas(validaciones_malla_0948),
         "general_total":              len(validaciones_general),
         "general_criticas":           _count_sev(validaciones_general, "critica"),
         "general_notificaciones":     sum(1 for v in validaciones_general if v.get("severidad") in {"media", "alta"}),
@@ -470,6 +518,7 @@ def _procesar_sync(json_wrappers, excel_wrappers):
     _cache["ultimo"] = {
         "registros": registros, "alertas": alertas,
         "validaciones_malla": validaciones_malla,
+        "validaciones_malla_0948": validaciones_malla_0948,
         "validaciones_general": validaciones_general,
         "validaciones_auditoria": validaciones_auditoria,
         "validaciones_pertinencia": validaciones_pertinencia,
@@ -480,6 +529,7 @@ def _procesar_sync(json_wrappers, excel_wrappers):
         "registros": registros,
         "alertas": alertas,
         "validaciones_malla": validaciones_malla,
+        "validaciones_malla_0948": validaciones_malla_0948,
         "validaciones_general": validaciones_general,
         "validaciones_auditoria": validaciones_auditoria,
         "validaciones_pertinencia": validaciones_pertinencia,
@@ -504,6 +554,7 @@ def get_estadisticas(
         row["top_reglas_malla"]     = json.loads(row.get("top_reglas_malla") or "[]")
         row["top_reglas_general"]   = json.loads(row.get("top_reglas_general") or "[]")
         row["top_reglas_auditoria"] = json.loads(row.get("top_reglas_auditoria") or "[]")
+        row["top_reglas_malla_0948"] = json.loads(row.get("top_reglas_malla_0948") or "[]")
         resultado.append(row)
     return {"total": len(resultado), "registros": resultado}
 
