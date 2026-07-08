@@ -211,10 +211,10 @@ const ROWS = {
 
 // ── Componente principal ──────────────────────────────────────────────────
 export default function ResultsSection({ resultado }) {
-  const { stats = {}, registros = [], alertas = {}, validaciones_malla = [], validaciones_general = [], validaciones_auditoria = [], validaciones_pertinencia = [] } = resultado
+  const { stats = {}, registros = [], alertas = {}, validaciones_malla = [], validaciones_general = [], validaciones_malla_0948 = [], validaciones_auditoria = [], validaciones_pertinencia = [] } = resultado
 
-  const grandTotal   = (stats.malla_total || 0) + (stats.general_total || 0) + (stats.auditoria_total || 0) + (stats.pertinencia_total || 0)
-  const grandCritica = (stats.malla_criticas || 0) + (stats.general_criticas || 0) + (stats.auditoria_criticas || 0)
+  const grandTotal   = (stats.malla_total || 0) + (stats.general_total || 0) + (stats.auditoria_total || 0) + (stats.pertinencia_total || 0) + (stats.malla_0948_total || 0)
+  const grandCritica = (stats.malla_criticas || 0) + (stats.general_criticas || 0) + (stats.auditoria_criticas || 0) + (stats.malla_0948_criticas || 0)
 
   const noAlertasAut = !alertas || Object.values(alertas).every(v => !v || v.length === 0)
 
@@ -263,6 +263,9 @@ export default function ResultsSection({ resultado }) {
         <div className="module-grid">
           <ModuleCard title="Malla RIPS 2275" sub="Validación estructural y normativa"
             total={stats.malla_total} criticas={stats.malla_criticas} notificaciones={stats.malla_notificaciones} topReglas={stats.malla_top_reglas} />
+          <ModuleCard title="Malla RIPS 0948 (2026)" sub="Campos nuevos y reglas de transición — informativa"
+            colorClass={stats.malla_0948_criticas > 0 ? 'mc-danger' : stats.malla_0948_total > 0 ? 'mc-warn' : 'mc-ok'}
+            total={stats.malla_0948_total} criticas={stats.malla_0948_criticas} notificaciones={stats.malla_0948_notificaciones} topReglas={stats.malla_0948_top_reglas} />
           <ModuleCard title="Validación General" sub="Cruce autorizaciones EPS–RIPS" iconClass="mc-icon-general"
             total={stats.general_total} criticas={stats.general_criticas} notificaciones={stats.general_notificaciones} topReglas={stats.general_top_reglas} />
           <ModuleCard title="Auditoría Clínica" sub="Estancia · Transfusional · Urgencias · Lab" iconClass="mc-icon-audit"

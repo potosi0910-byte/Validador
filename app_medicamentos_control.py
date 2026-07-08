@@ -2,6 +2,7 @@ from io import BytesIO
 from datetime import datetime, timedelta
 import unicodedata
 import re
+import os
  
 from flask import Flask, render_template, request, send_file
 import json
@@ -3230,7 +3231,7 @@ def validar_otros_servicios_malla_2275(data, nombre_archivo=""):
  
 def construir_excel(registros, alertas=None, validaciones_malla=None,
                     validaciones_general=None, validaciones_auditoria=None,
-                    validaciones_pertinencia=None):
+                    validaciones_pertinencia=None, validaciones_malla_0948=None):
     wb  = Workbook()
  
     # ── Hoja 1: Medicamentos inválidos ───────────────────────────────────
@@ -3599,6 +3600,59 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
             )
             ws4.column_dimensions[get_column_letter(i)].width = min(max_len + 3, 80)
 
+    # ── Hoja: Malla 0948/2026 (nuevas reglas en transición) ──────────────
+    if validaciones_malla_0948:
+        ws0948 = wb.create_sheet("Malla_0948_2026")
+        headers0948 = [
+            "Archivo", "Factura", "N° Doc Paciente", "Consecutivo",
+            "ID Regla", "Severidad", "Campo", "Mensaje", "Valor Actual"
+        ]
+        ws0948.append(headers0948)
+
+        fill_critica = PatternFill("solid", fgColor="C00000")
+        fill_alta    = PatternFill("solid", fgColor="E26B0A")
+        fill_media   = PatternFill("solid", fgColor="F0AD00")
+        fill_baja    = PatternFill("solid", fgColor="FFF2CC")
+        fill_head0948 = PatternFill("solid", fgColor="6A1B9A")
+
+        for col in range(1, len(headers0948) + 1):
+            c = ws0948.cell(row=1, column=col)
+            c.font      = Font(bold=True, color="FFFFFF")
+            c.alignment = Alignment(horizontal="center")
+            c.fill      = fill_head0948
+
+        for v in validaciones_malla_0948:
+            fila = [
+                v.get("archivo",      ""),
+                v.get("num_factura",  ""),
+                v.get("num_doc",      ""),
+                v.get("consecutivo",  ""),
+                v.get("id_regla",     ""),
+                v.get("severidad",    ""),
+                v.get("campo",        ""),
+                v.get("mensaje",      ""),
+                v.get("valor_actual", ""),
+            ]
+            ws0948.append(fila)
+            sev = v.get("severidad", "")
+            row_fill = (fill_critica if sev == "critica"
+                        else fill_alta  if sev == "alta"
+                        else fill_media if sev == "media"
+                        else fill_baja  if sev == "baja"
+                        else None)
+            for col in range(1, len(headers0948) + 1):
+                cell = ws0948.cell(row=ws0948.max_row, column=col)
+                if row_fill:
+                    cell.fill = row_fill
+                    cell.font = Font(color="FFFFFF" if sev == "critica" else "000000")
+
+        for i in range(1, len(headers0948) + 1):
+            max_len = max(
+                (len(str(ws0948.cell(r, i).value or "")) for r in range(1, ws0948.max_row + 1)),
+                default=10
+            )
+            ws0948.column_dimensions[get_column_letter(i)].width = min(max_len + 3, 80)
+
     # ── Hoja 5: Auditoría clínica ────────────────────────────────────────
     if validaciones_auditoria:
         ws5 = wb.create_sheet("Auditoria_Clinica")
@@ -3917,31 +3971,31 @@ def index():
 #      campo fue eliminado (numeral 3.3); validar_medicamentos_malla_2275
 #      no se modifica y sigue exigiéndolo bajo 2275.
 #
-# RVC ids del numeral 6 que NO se implementaron con datos concretos (se
-# documenta el motivo en vez de adivinar la regla):
-#   - RVC096 (C04,P05,S06 contra tabla de referencia "CUPSRips"): requiere
-#     un catálogo CUPS completo que no está disponible en este repositorio;
-#     ya se valida el formato de 6 caracteres en la malla 2275.
-#   - RVC098 (fecha de servicio vs. fecha de fallecimiento + 24h, RUAF-ND):
-#     el RIPS no trae un campo de "fecha de fallecimiento" independiente de
-#     condicionDestinoUsuarioEgreso/fechaEgreso; se usa fechaEgreso como
-#     proxy SOLO cuando condicionDestinoUsuarioEgreso indica "muerto" (esto
-#     ya es lo que hace RVC053/RVC062 abajo). No se inventa un cruce con
-#     RUAF-ND porque esa fuente no está disponible en este pipeline.
-#   - RVC084 (lista exacta de finalidades de promoción/prevención/materno-
-#     perinatal que exigen conceptoRecaudo="No aplica"): el texto fuente
-#     nombra las finalidades por descripción, no por código explícito para
-#     cada una; implementarlo con los códigos ya usados en RVC067-071
-#     (11,12,13,14 aproximado) arriesgaría falsos positivos, así que se deja
-#     fuera hasta contar con la tabla RIPSFinalidadConsultaVersion2 completa.
-#   - RVC023 (P05=código de parto ⇒ debe existir recienNacidos): requiere el
-#     listado CUPS de códigos de parto (anexo aparte), no disponible aquí.
+# RVC/RVG ids del numeral 6 que dependían de catálogos de referencia
+# oficiales (Cups2026enjson.json y las tablas en "tablas de referencia/")
+# — ya implementados con esos catálogos:
+#   - RVC096 (C04,P05,S06 contra tabla "CUPSRips"): se carga
+#     Cups2026enjson.json de forma perezosa (_cups_codigos_validos_0948) y
+#     se valida codConsulta/codProcedimiento/codTecnologiaSalud (este
+#     último solo para tipoOS de traslados/estancias/honorarios). RVC023
+#     (P05, escalada N→R) se mantiene aparte por ser un chequeo distinto
+#     (CUPS=parto ⇒ debe existir recienNacidos), ver validar_procedimientos_malla_0948.
+#   - RVC098 (fecha de servicio vs. fecha de fallecimiento + 24h): se usa
+#     fechaEgreso del registro (urgencias/hospitalizacion/recienNacidos)
+#     con condicionDestinoUsuarioEgreso='02' (PACIENTE MUERTO) como proxy
+#     de fecha de fallecimiento (decisión explícita del usuario, ya que el
+#     RIPS no trae un campo dedicado y RUAF-ND no está disponible en este
+#     pipeline). Implementado en validar_usuarios_malla_0948.
+#   - RVC084 (C08 finalidadTecnologiaSalud ⇒ C18 conceptoRecaudo="05"): se
+#     usa el listado de finalidades de promoción/prevención/materno-
+#     perinatal tomado de TablaReferencia_RIPSFinalidadConsultaVersion2
+#     (códigos 11,12,14,19,20,21,22,23,24,25,27). Implementado en
+#     validar_consultas_malla_0948.
 #   - RVG14/RVG15 (nacimientos múltiples ⇔ procedimiento de parto múltiple;
-#     urgencias con observación ⇔ consulta de urgencia asociada): son
-#     validaciones de relación entre bloques de servicios de distinta
-#     naturaleza (procedimientos vs. recienNacidos; urgencias vs. consultas)
-#     que dependen de catálogos CUPS de parto/observación no disponibles;
-#     se documentan aquí como pendientes en vez de implementarse a ciegas.
+#     urgencias con observación ⇔ consulta de urgencia asociada):
+#     implementados en validar_usuarios_malla_0948 usando los códigos CUPS
+#     de parto múltiple (735930/735931) y de consulta de urgencias
+#     (890701-890793) obtenidos del catálogo CUPS oficial.
 #
 # ── Cronograma de exigibilidad (Resolución 000948 de 2026, art. 23 y
 #    parágrafo transitorio) ──────────────────────────────────────────
@@ -3959,6 +4013,60 @@ def index():
 # hallazgos 0948 con el paso del tiempo, en vez de dejarlos fijos.
 
 from datetime import date as _date
+
+# ── Catálogo oficial CUPS (RVC096/RVC023) ─────────────────────────
+# Cargado perezosamente (una sola vez) desde Cups2026enjson.json en la raíz
+# del repo. Si el archivo no existe o no puede leerse, se cachea un
+# conjunto vacío y los chequeos que dependen de él simplemente se omiten
+# (no se rompe el resto de la validación por falta del catálogo).
+_CUPS_CODIGOS_VALIDOS_0948 = None
+
+
+def _cups_codigos_validos_0948():
+    global _CUPS_CODIGOS_VALIDOS_0948
+    if _CUPS_CODIGOS_VALIDOS_0948 is not None:
+        return _CUPS_CODIGOS_VALIDOS_0948
+    ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Cups2026enjson.json")
+    try:
+        with open(ruta, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        codigos = {
+            normalizar_str(d.get("Codigo"))
+            for d in data
+            if isinstance(d, dict) and d.get("Tabla") == "CUPS"
+            and normalizar_str(d.get("Habilitado")).upper() == "SI"
+        }
+        _CUPS_CODIGOS_VALIDOS_0948 = codigos
+    except Exception:
+        _CUPS_CODIGOS_VALIDOS_0948 = set()
+    return _CUPS_CODIGOS_VALIDOS_0948
+
+
+# Códigos CUPS de "consulta de urgencias" (tabla CUPS, Nombre inicia con
+# "CONSULTA DE URGENCIAS"), usados por RVG15.
+CUPS_CONSULTA_URGENCIAS_0948 = {
+    "890701", "890702", "890703", "890704", "890735",
+    "890750", "890763", "890780", "890781", "890783", "890793",
+}
+
+# Códigos CUPS de "parto múltiple" (asistencia del parto espontáneo/
+# intervenido gemelar o múltiple), usados por RVG14.
+CUPS_PARTO_MULTIPLE_0948 = {"735930", "735931"}
+
+# Finalidades (C08, tabla RIPSFinalidadConsultaVersion2) de promoción y
+# mantenimiento / prevención / materno-perinatal que exigen
+# conceptoRecaudo (C18) = "05" (No aplica pago moderador), según RVC084.
+FINALIDADES_NO_APLICA_PAGO_MODERADOR_0948 = {
+    "11", "12", "14", "19", "20", "21", "22", "23", "24", "25", "27",
+}
+
+# tipoOS (S05) para los que S06 debe corresponder a un código CUPS válido:
+# 02=Traslados, 03=Estancias, 05=Honorarios. Se excluyen 01 (dispositivos
+# médicos e insumos: código IDM/UDI o propio, no CUPS), 04 (servicios
+# complementarios: código de tabla MIPRES, no CUPS) y 06 (servicios de
+# salud a comunidades indígenas, cuya codificación no está documentada en
+# el anexo técnico consultado, así que se omite en vez de adivinar).
+TIPOS_OS_VALIDABLES_CONTRA_CUPS_0948 = {"02", "03", "05"}
 
 FECHA_EXPEDICION_0948 = _date(2026, 5, 14)
 FECHA_RECHAZO_0948 = _date(2026, 6, 1)
@@ -3997,26 +4105,20 @@ def _severidad_escalada_0948(hoy=None):
 def _campo_nuevo_0948(errores, ctx, campo, valor, min_len=None, max_len=None,
                        opcional_transicion=False, id_regla=None):
     """
-    Chequeo genérico e informativo para un campo NUEVO introducido en la
-    Resolución 0948/2026 (numeral 3.1.1 / numeral 4).
+    Chequeo genérico para un campo NUEVO introducido en la Resolución
+    0948/2026 (numeral 3.1.1 / numeral 4).
+
+    IMPORTANTE: la sola AUSENCIA de un campo nuevo NO se reporta como
+    hallazgo. Los RIPS generados bajo 2275 legítimamente no traen estos
+    campos (codigoVIDA, diagnósticos CIE11, etc.) y marcar cada registro
+    como alerta produce miles de falsos positivos sin valor (un campo
+    nuevo por definición no existe aún en datos históricos). Solo se
+    valida el FORMATO cuando el campo sí viene informado.
     """
     id_regla = id_regla or f"0948-{campo}"
     hoy = _date.today()
     val = normalizar_str(valor)
     if not val or val.lower() in {"none", "null"}:
-        exigible = hoy >= FECHA_ESTRUCTURAL_0948
-        if not opcional_transicion or exigible:
-            errores.append({
-                **ctx, "id_regla": id_regla,
-                "severidad": _severidad_0948(hoy=hoy),
-                "campo": campo,
-                "mensaje": f"[0948] Campo '{campo}' no está informado. "
-                           f"Es un campo nuevo en la Resolución 0948 de 2026"
-                           + (" (ya exigible: ajustes estructurales vigentes desde 01-jul-2026)."
-                              if exigible else
-                              " (aún no exigible; opcional durante la transición)."),
-                "valor_actual": "",
-            })
         return
     if min_len is not None and len(val) < min_len:
         errores.append({
@@ -4094,14 +4196,37 @@ def _ctx_base_0948(nombre_archivo, data):
     return num_factura
 
 
+def _parse_fecha_0948(valor):
+    """Parsea una fecha RIPS ('AAAA-MM-DD HH:MM[:SS]' o 'AAAA-MM-DD') a
+    datetime, siguiendo el mismo patrón usado en el resto de la malla 0948
+    (ver validar_urgencias_malla_0948/validar_hospitalizacion_malla_0948).
+    Devuelve None si no se puede parsear."""
+    raw = normalizar_str(valor or "")
+    if not raw:
+        return None
+    try:
+        if len(raw) >= 16:
+            return datetime.strptime(raw[:16], "%Y-%m-%d %H:%M")
+        elif len(raw) == 10:
+            return datetime.strptime(raw, "%Y-%m-%d")
+    except ValueError:
+        return None
+    return None
+
+
 def _condicion_indica_muerto_0948(cond_egr):
-    """CondicionyDestinoUsuarioEgreso: '21' = Paciente fallecido (convención usada en la malla 2275)."""
-    return normalizar_str(cond_egr) == "21"
+    """CondicionyDestinoUsuarioEgreso: '02' = PACIENTE MUERTO (tabla oficial
+    TablaReferencia_CondicionyDestinoUsuarioEgreso). Antes se comparaba
+    erróneamente contra '21'; corregido según la tabla de referencia oficial."""
+    return normalizar_str(cond_egr) == "02"
 
 
 def _condicion_indica_derivado_0948(cond_egr):
-    """Códigos que en la tabla CondicionyDestinoUsuarioEgreso indican traslado/derivación a otro servicio."""
-    return normalizar_str(cond_egr) in {"03", "04"}
+    """Código '03' = PACIENTE DERIVADO A OTRO SERVICIO (tabla oficial
+    CondicionyDestinoUsuarioEgreso). Se excluye '04' (REFERIDO A OTRA
+    INSTITUCION), que es un concepto distinto no referenciado por
+    RVC053/RVC062 en el anexo técnico."""
+    return normalizar_str(cond_egr) in {"03"}
 
 
 # ────────────────────────────────────────────────────────────────
@@ -4115,7 +4240,8 @@ def validar_consultas_malla_0948(data, nombre_archivo=""):
     - Tamaño exacto de C10 (4) y C11-C13 (0,4) — informativo.
     - RVC086/RVC087 escaladas a Rechazo (diagnóstico relacionado repetido /
       igual al principal).
-    - RVC084: no implementada (ver nota de cabecera del módulo).
+    - RVC096 (C04 codConsulta contra catálogo oficial CUPS).
+    - RVC084 (C08 finalidadTecnologiaSalud ⇒ C18 conceptoRecaudo='05').
     """
     errores = []
     if not isinstance(data, dict):
@@ -4174,6 +4300,24 @@ def validar_consultas_malla_0948(data, nombre_archivo=""):
                 _escalada_0948(errores, ctx, "RVC087", "codDiagnosticoRelacionado",
                                 "Existen diagnósticos relacionados repetidos entre sí "
                                 "(RVC087 pasa de Notificación a Rechazo en 0948).")
+
+            # RVC096 (nueva 0948): codConsulta debe existir en el catálogo CUPS.
+            cups_validos = _cups_codigos_validos_0948()
+            cod_consulta = normalizar_str(con.get("codConsulta") or "")
+            if cups_validos and cod_consulta and cod_consulta not in cups_validos:
+                _escalada_0948(errores, ctx, "RVC096", "codConsulta",
+                                f"codConsulta '{cod_consulta}' no existe en el catálogo oficial CUPS "
+                                "(RVC096, nueva en 0948).", cod_consulta)
+
+            # RVC084 (nueva/escalada 0948): finalidad de promoción/prevención/
+            # materno-perinatal ⇒ conceptoRecaudo debe ser "05" (No aplica pago moderador).
+            finalidad = normalizar_str(con.get("finalidadTecnologiaSalud") or "")
+            concepto_recaudo = normalizar_str(con.get("conceptoRecaudo") or "")
+            if finalidad in FINALIDADES_NO_APLICA_PAGO_MODERADOR_0948 and concepto_recaudo != "05":
+                _escalada_0948(errores, ctx, "RVC084", "conceptoRecaudo",
+                                f"finalidadTecnologiaSalud='{finalidad}' exige conceptoRecaudo='05' "
+                                f"(No aplica pago moderador); valor actual='{concepto_recaudo}' "
+                                "(RVC084 pasa de Notificación a Rechazo en 0948).", concepto_recaudo)
     return errores
 
 
@@ -4187,7 +4331,7 @@ def validar_procedimientos_malla_0948(data, nombre_archivo=""):
     - Campos nuevos P21-P27 (CIE11 + codigoVIDA).
     - Tamaño "0,4" para P14 (codDiagnosticoRelacionado) y P15 (codComplicacion) — informativo.
     - RVC086 escalada (diagnóstico relacionado == principal), aplicable a P14.
-    - RVC023 (parto ⇒ recienNacidos): no implementada (ver nota de cabecera).
+    - RVC096 (P05 codProcedimiento contra catálogo oficial CUPS).
     """
     errores = []
     if not isinstance(data, dict):
@@ -4238,6 +4382,14 @@ def validar_procedimientos_malla_0948(data, nombre_archivo=""):
                 _escalada_0948(errores, ctx, "RVC086", "codDiagnosticoRelacionado",
                                 f"codDiagnosticoRelacionado '{diag_rel}' es igual al diagnóstico principal "
                                 "(RVC086 pasa de Notificación a Rechazo en 0948).", diag_rel)
+
+            # RVC096 (nueva 0948): codProcedimiento debe existir en el catálogo CUPS.
+            cups_validos = _cups_codigos_validos_0948()
+            cod_proc = normalizar_str(p.get("codProcedimiento") or "")
+            if cups_validos and cod_proc and cod_proc not in cups_validos:
+                _escalada_0948(errores, ctx, "RVC096", "codProcedimiento",
+                                f"codProcedimiento '{cod_proc}' no existe en el catálogo oficial CUPS "
+                                "(RVC096, nueva en 0948).", cod_proc)
     return errores
 
 
@@ -4698,17 +4850,11 @@ def validar_medicamentos_malla_0948(data, nombre_archivo=""):
                                med.get("nomCodDiagnosticoRelacionadoCIE11"),
                                opcional_transicion=True, id_regla="M27-0948")
 
-            # M28: vrDispensacion, N 0-15; "en caso de no aplicar diligenciar en 0"
+            # M28: vrDispensacion, N 0-15; "en caso de no aplicar diligenciar en 0".
+            # No se reporta la simple ausencia del campo (es normal en RIPS 2275,
+            # donde M28 aún no existe); solo se valida el formato cuando sí viene informado.
             vrd = med.get("vrDispensacion")
-            if vrd is None:
-                errores.append({
-                    **ctx, "id_regla": "M28-0948", "severidad": "media",
-                    "campo": "vrDispensacion",
-                    "mensaje": "[0948] vrDispensacion no está informado. Campo nuevo en 0948; "
-                               "si no aplica debe diligenciarse en 0.",
-                    "valor_actual": "",
-                })
-            else:
+            if vrd is not None:
                 try:
                     if float(vrd) < 0:
                         errores.append({
@@ -4777,6 +4923,14 @@ def validar_otros_servicios_malla_0948(data, nombre_archivo=""):
     - RVC066 (S07 obligatorio si tipoOS=01) escalada a Rechazo — ya existe
       un chequeo equivalente de obligatoriedad condicional en 2275; aquí se
       re-emite con severidad escalada.
+    - RVC096 (S06 codTecnologiaSalud contra catálogo CUPS): SOLO se aplica
+      cuando tipoOS en {02 Traslados, 03 Estancias, 05 Honorarios}, según
+      el anexo técnico ("el código del traslado, transporte o estancia
+      debe corresponder al código CUPS"; "el código de honorarios debe
+      corresponder al código CUPS del procedimiento"). Se omite para
+      tipoOS=01 (dispositivos médicos e insumos: código IDM/UDI o propio,
+      no CUPS) y tipoOS=04 (servicios complementarios: código MIPRES, no
+      CUPS), para evitar falsos positivos.
     """
     errores = []
     if not isinstance(data, dict):
@@ -4800,16 +4954,10 @@ def validar_otros_servicios_malla_0948(data, nombre_archivo=""):
                    "num_doc": num_doc, "consecutivo": normalizar_str(svc.get("consecutivo"))}
             _campo_nuevo_0948(errores, ctx, "codigoVIDA", svc.get("codigoVIDA"),
                                1, 256, opcional_transicion=True, id_regla="S17-0948")
+            # No se reporta la simple ausencia del campo (es normal en RIPS 2275,
+            # donde S18 aún no existe); solo se valida el formato cuando sí viene informado.
             vrd = svc.get("vrDispensacion")
-            if vrd is None:
-                errores.append({
-                    **ctx, "id_regla": "S18-0948", "severidad": "media",
-                    "campo": "vrDispensacion",
-                    "mensaje": "[0948] vrDispensacion no está informado. Campo nuevo en 0948; "
-                               "si no aplica debe diligenciarse en 0.",
-                    "valor_actual": "",
-                })
-            else:
+            if vrd is not None:
                 try:
                     if float(vrd) < 0:
                         errores.append({
@@ -4832,6 +4980,16 @@ def validar_otros_servicios_malla_0948(data, nombre_archivo=""):
                 _escalada_0948(errores, ctx, "RVC066", "nomTecnologiaSalud",
                                 "nomTecnologiaSalud (S07) es obligatorio cuando tipoOS='01' (Dispositivos "
                                 "médicos e insumos) (RVC066 pasa de Notificación a Rechazo en 0948).")
+
+            # RVC096 (nueva 0948): codTecnologiaSalud contra catálogo CUPS,
+            # solo para tipoOS de traslados/estancias/honorarios (ver docstring).
+            if tipo_os in TIPOS_OS_VALIDABLES_CONTRA_CUPS_0948:
+                cups_validos = _cups_codigos_validos_0948()
+                cod_tec_os = normalizar_str(svc.get("codTecnologiaSalud") or "")
+                if cups_validos and cod_tec_os and cod_tec_os not in cups_validos:
+                    _escalada_0948(errores, ctx, "RVC096", "codTecnologiaSalud",
+                                    f"codTecnologiaSalud '{cod_tec_os}' (tipoOS='{tipo_os}') no existe en el "
+                                    "catálogo oficial CUPS (RVC096, nueva en 0948).", cod_tec_os)
     return errores
 
 
@@ -4848,6 +5006,16 @@ def validar_usuarios_malla_0948(data, nombre_archivo=""):
     - RVC007 (edad vs. tipo de documento, tolerancia 1 año menos 1 día):
       ajuste en Regla/Mensaje según 3.2.3; se re-emite el chequeo existente
       en 2275 con severidad escalada y el mensaje ajustado.
+    - RVG14 (nacimientos múltiples ⇒ procedimiento de parto múltiple):
+      escalada de Notificación a Rechazo en 0948.
+    - RVG15 (urgencias con observación ⇒ consulta de urgencia asociada):
+      cambia de Rechazo(2275) a Notificación(0948), severidad fija ("media").
+    - RVC098 (fecha de servicio no debe superar fecha de fallecimiento +
+      24h): usa como proxy fechaEgreso del registro (urgencias/
+      hospitalizacion/recienNacidos) cuyo condicionDestinoUsuarioEgreso
+      indique "PACIENTE MUERTO" (código '02'), por decisión explícita del
+      usuario dado que el RIPS no trae un campo dedicado de fecha de
+      fallecimiento (RUAF-ND no está disponible en este pipeline).
     """
     errores = []
     if not isinstance(data, dict):
@@ -4917,6 +5085,111 @@ def validar_usuarios_malla_0948(data, nombre_archivo=""):
                                     tipo_doc_u)
             except ValueError:
                 pass
+
+        # ── RVG14 / RVG15 / RVC098: chequeos cruzados entre bloques de
+        # servicios del mismo usuario ─────────────────────────────────
+        servicios_u = u.get("servicios", {})
+        if not isinstance(servicios_u, dict):
+            servicios_u = {}
+        consultas_u = servicios_u.get("consultas", []) or []
+        procedimientos_u = servicios_u.get("procedimientos", []) or []
+        urgencias_u = servicios_u.get("urgencias", []) or []
+        hospitalizacion_u = servicios_u.get("hospitalizacion", []) or []
+        recien_nacidos_u = servicios_u.get("recienNacidos", []) or []
+        medicamentos_u = servicios_u.get("medicamentos", []) or []
+        otros_servicios_u = servicios_u.get("otrosServicios", []) or []
+
+        # RVG14: nacimientos múltiples ⇒ procedimiento de parto múltiple.
+        if isinstance(recien_nacidos_u, list) and len(recien_nacidos_u) >= 2:
+            tiene_parto_multiple = any(
+                isinstance(p, dict) and normalizar_str(p.get("codProcedimiento") or "") in CUPS_PARTO_MULTIPLE_0948
+                for p in procedimientos_u if isinstance(procedimientos_u, list)
+            )
+            if not tiene_parto_multiple:
+                _escalada_0948(errores, ctx, "RVG14", "codProcedimiento",
+                                f"El usuario tiene {len(recien_nacidos_u)} registros de recienNacidos "
+                                "(nacimiento múltiple) pero no hay un procedimiento de parto múltiple "
+                                f"({sorted(CUPS_PARTO_MULTIPLE_0948)}) asociado "
+                                "(RVG14 pasa de Notificación a Rechazo en 0948).")
+
+        # RVG15: urgencias con observación ⇒ debe existir consulta de urgencia
+        # asociada con fecha/hora >= ingreso a observación.
+        if isinstance(urgencias_u, list):
+            for r in urgencias_u:
+                if not isinstance(r, dict):
+                    continue
+                fecha_ingreso_urg = _parse_fecha_0948(r.get("fechaInicioAtencion"))
+                if fecha_ingreso_urg is None:
+                    continue
+                tiene_consulta_urgencia = False
+                if isinstance(consultas_u, list):
+                    for c in consultas_u:
+                        if not isinstance(c, dict):
+                            continue
+                        if normalizar_str(c.get("codConsulta") or "") not in CUPS_CONSULTA_URGENCIAS_0948:
+                            continue
+                        fecha_consulta = _parse_fecha_0948(c.get("fechaInicioAtencion"))
+                        if fecha_consulta is not None and fecha_consulta >= fecha_ingreso_urg:
+                            tiene_consulta_urgencia = True
+                            break
+                if not tiene_consulta_urgencia:
+                    errores.append({
+                        **ctx, "id_regla": "RVG15", "severidad": "media",
+                        "campo": "codConsulta",
+                        "mensaje": "El usuario tiene un registro de urgencias con observación pero no se "
+                                   "encontró una consulta de urgencia asociada (codConsulta en "
+                                   f"{sorted(CUPS_CONSULTA_URGENCIAS_0948)}) con fecha/hora posterior o "
+                                   "igual al ingreso a observación (RVG15 cambia de Rechazo en 2275 a "
+                                   "Notificación en 0948).",
+                        "valor_actual": "",
+                    })
+
+        # RVC098: fecha de servicio no debe superar fecha de fallecimiento + 24h.
+        # Proxy aprobado: fechaEgreso del registro (urgencias/hospitalizacion/
+        # recienNacidos) cuyo condicionDestinoUsuarioEgreso='02' (PACIENTE MUERTO).
+        fecha_muerte_dt = None
+        for bloque in (urgencias_u, hospitalizacion_u, recien_nacidos_u):
+            if not isinstance(bloque, list):
+                continue
+            for reg in bloque:
+                if isinstance(reg, dict) and _condicion_indica_muerto_0948(reg.get("condicionDestinoUsuarioEgreso")):
+                    dt = _parse_fecha_0948(reg.get("fechaEgreso"))
+                    if dt is not None:
+                        fecha_muerte_dt = dt
+                        break
+            if fecha_muerte_dt is not None:
+                break
+
+        if fecha_muerte_dt is not None:
+            limite = fecha_muerte_dt + timedelta(hours=24)
+            candidatos = []
+            for c in consultas_u if isinstance(consultas_u, list) else []:
+                if isinstance(c, dict):
+                    candidatos.append((c, "fechaInicioAtencion", c.get("fechaInicioAtencion")))
+            for p in procedimientos_u if isinstance(procedimientos_u, list) else []:
+                if isinstance(p, dict):
+                    candidatos.append((p, "fechaInicioAtencion", p.get("fechaInicioAtencion")))
+            for m in medicamentos_u if isinstance(medicamentos_u, list) else []:
+                if isinstance(m, dict):
+                    candidatos.append((m, "fechaDispensAdmon", m.get("fechaDispensAdmon")))
+            for s in otros_servicios_u if isinstance(otros_servicios_u, list) else []:
+                if isinstance(s, dict):
+                    candidatos.append((s, "fechaSuministroTecnologia", s.get("fechaSuministroTecnologia")))
+
+            for reg, campo_fecha, valor_fecha in candidatos:
+                fecha_serv_dt = _parse_fecha_0948(valor_fecha)
+                if fecha_serv_dt is not None and fecha_serv_dt > limite:
+                    ctx_reg = {"archivo": nombre_archivo, "num_factura": num_factura,
+                               "num_doc": num_doc, "consecutivo": normalizar_str(reg.get("consecutivo"))}
+                    errores.append({
+                        **ctx_reg, "id_regla": "RVC098", "severidad": "critica",
+                        "campo": campo_fecha,
+                        "mensaje": f"'{campo_fecha}'='{normalizar_str(valor_fecha)}' es posterior a la fecha "
+                                   f"de fallecimiento del usuario ('{fecha_muerte_dt.strftime('%Y-%m-%d %H:%M')}') "
+                                   "más 24 horas (RVC098, nueva en 0948; proxy: fechaEgreso del registro con "
+                                   "condicionDestinoUsuarioEgreso='02' PACIENTE MUERTO).",
+                        "valor_actual": normalizar_str(valor_fecha),
+                    })
     return errores
 
 if __name__ == '__main__':

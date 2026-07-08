@@ -573,6 +573,7 @@ def exportar():
         cached["validaciones_general"],
         cached.get("validaciones_auditoria"),
         cached.get("validaciones_pertinencia"),
+        cached.get("validaciones_malla_0948"),
     )
 
     nombre = f"Alertas_Malla_Validadora_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
