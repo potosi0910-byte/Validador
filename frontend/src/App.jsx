@@ -6,7 +6,7 @@ import ResultsSection   from './components/ResultsSection'
 import Sidebar          from './components/Sidebar'
 import MachineLearning  from './components/MachineLearning'
 import Admin            from './components/Admin'
-import { procesar, exportarExcel, logout, getUsuarioGuardado } from './api/client'
+import { procesar, exportarExcel, logout, getUsuarioGuardado, precalentarConexion } from './api/client'
 
 const IcoFactory = () => (
   <svg viewBox="0 0 24 24" fill="currentColor">
@@ -27,6 +27,7 @@ export default function App() {
   const [excelFiles, setExcelFiles] = useState([])
 
   useEffect(() => {
+    precalentarConexion()
     const saved  = getUsuarioGuardado()
     const token  = localStorage.getItem('drf_token')
     if (saved && token) setUsuario(saved)

@@ -22,6 +22,38 @@ api.interceptors.response.use(
   }
 )
 
+// ── Reintento automático ante error de red ────────────────────────────────────
+// En desarrollo (Vite proxy → backend local en Windows) la primera conexión de
+// un socket nuevo a veces se reinicia (ECONNRESET) y el intento siguiente ya
+// funciona porque reutiliza una conexión viva. Esto golpea sobre todo al login,
+// que suele ser la primerísima petición de la sesión. En vez de obligar al
+// usuario a hacer clic varias veces, reintentamos automáticamente (hasta 3
+// intentos, con espera creciente) cuando la petición no obtuvo ninguna
+// respuesta (fallo de red puro, no un error de negocio 4xx/5xx del servidor).
+const MAX_REINTENTOS_RED = 3
+api.interceptors.response.use(
+  res => res,
+  async err => {
+    const config = err.config
+    const esErrorDeRed = !err.response && err.code !== 'ERR_CANCELED'
+    const intento = config?._intentosRed || 0
+    if (config && esErrorDeRed && intento < MAX_REINTENTOS_RED) {
+      config._intentosRed = intento + 1
+      await new Promise(r => setTimeout(r, 300 * config._intentosRed))
+      return api(config)
+    }
+    return Promise.reject(err)
+  }
+)
+
+// ── Precalentar la conexión con el backend ────────────────────────────────────
+// Dispara una petición ligera apenas carga la app, para que cuando el usuario
+// llegue a hacer clic en "Ingresar" el socket hacia el backend ya esté
+// establecido (evita que el login sea quien sufra el primer fallo de red).
+export function precalentarConexion() {
+  api.get('/health').catch(() => {})
+}
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export async function login(username, password) {
   const form = new URLSearchParams()
