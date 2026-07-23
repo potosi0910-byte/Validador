@@ -31,8 +31,9 @@ from app_medicamentos_control import (
     validar_urgencias_malla_2275,
     validar_usuarios_malla_2275,
 )
-from auditoria import validar_auditoria, validar_concepto_recaudo
+from auditoria import validar_auditoria, validar_concepto_recaudo, validar_tipo_identificacion_as
 from pertinencia import validar_pertinencia
+from validacion_xml_fev import es_archivo_ad_xml, validar_xml_fev
 
 # ══════════════════════════════════════════════════════════════
 # APP
@@ -329,6 +330,7 @@ def procesar():
 def _procesar_interno():
     registros, alertas = [], []
     validaciones_malla, validaciones_general, validaciones_auditoria, validaciones_pertinencia = [], [], [], []
+    validaciones_xml_fev = []
     errores_acum = []
 
     json_wrappers = [
@@ -339,6 +341,11 @@ def _procesar_interno():
     excel_wrappers = [
         _FileWrapper(f.filename, f.read())
         for f in request.files.getlist("excel_files") if f and f.filename
+    ]
+    xml_wrappers = [
+        _FileWrapper(f.filename, f.read())
+        for f in request.files.getlist("xml_files")
+        if f and f.filename and es_archivo_ad_xml(os.path.basename(f.filename))
     ]
 
     hay_excel = bool(excel_wrappers)
@@ -353,11 +360,17 @@ def _procesar_interno():
     archivos_procesados = 0
     total_rips = 0
     pacientes_rips_global = {}
+    rips_por_factura = {}
+    rips_archivo_por_factura = {}
 
     for wrapper in json_wrappers:
         try:
             wrapper.seek(0)
             data = json.loads(wrapper.read())
+            num_fact = str(data.get("numFactura") or "").strip()
+            if num_fact:
+                rips_por_factura[num_fact] = data
+                rips_archivo_por_factura[num_fact] = wrapper.filename
             registros.extend(extraer_medicamentos_invalidos(data, wrapper.filename))
             pacientes_rips_global.update(extraer_autorizaciones_rips(data, wrapper.filename))
             total_rips += contar_registros_rips(data)
@@ -372,10 +385,42 @@ def _procesar_interno():
             validaciones_general.extend(validar_otros_servicios_malla_2275(data, wrapper.filename))
             validaciones_auditoria.extend(validar_auditoria(data, wrapper.filename))
             validaciones_auditoria.extend(validar_concepto_recaudo(data, wrapper.filename))
+            validaciones_auditoria.extend(validar_tipo_identificacion_as(data, wrapper.filename))
             validaciones_pertinencia.extend(validar_pertinencia(data, wrapper.filename))
             archivos_procesados += 1
         except Exception as exc:
             errores_acum.append(f"Error en {wrapper.filename}: {exc}")
+
+    # Solo se valida un Ad####.xml cuando existe su RIPS JSON en la misma
+    # carpeta (emparejados por número de factura). Las carpetas incompletas
+    # se reportan en "archivos_faltantes" sin ejecutar validación.
+    from validacion_xml_fev import extraer_invoice_de_ad_xml, extraer_datos_factura, detectar_archivos_faltantes
+    facturas_xml = {}
+    xml_sin_factura = []
+    archivos_xml_procesados = 0
+    for wrapper in xml_wrappers:
+        try:
+            wrapper.seek(0)
+            contenido = wrapper.read()
+            invoice = extraer_invoice_de_ad_xml(contenido)
+            datos_previos = extraer_datos_factura(invoice)
+            factura_xml = str(datos_previos.get("invoice_id") or "").strip()
+            if not factura_xml:
+                xml_sin_factura.append(wrapper.filename)
+                continue
+            facturas_xml[factura_xml] = wrapper.filename
+            rips_asociado = rips_por_factura.get(factura_xml)
+            if rips_asociado is None:
+                continue  # se reporta como "Falta RIPS" en archivos_faltantes
+            validaciones_xml_fev.extend(validar_xml_fev(contenido, rips_asociado, wrapper.filename))
+            archivos_xml_procesados += 1
+        except Exception as exc:
+            errores_acum.append(f"Error validando XML FEV en {wrapper.filename}: {exc}")
+
+    archivos_faltantes = (
+        detectar_archivos_faltantes(rips_archivo_por_factura, facturas_xml, xml_sin_factura)
+        if xml_wrappers else []
+    )
 
     if hay_excel and (registros_excel or set_aut_excel):
         try:
@@ -421,6 +466,12 @@ def _procesar_interno():
         "auditoria_top_reglas": _top_reglas(validaciones_auditoria),
         "pertinencia_total":   len(validaciones_pertinencia),
         "pertinencia_top_reglas": _top_reglas(validaciones_pertinencia),
+        "archivos_xml":        archivos_xml_procesados,
+        "xml_fev_total":       len(validaciones_xml_fev),
+        "xml_fev_criticas":    _count_sev(validaciones_xml_fev, "critica"),
+        "xml_fev_notificaciones": sum(1 for v in validaciones_xml_fev if v.get("severidad") in {"media","alta"}),
+        "xml_fev_top_reglas":  _top_reglas(validaciones_xml_fev),
+        "archivos_faltantes_total": len(archivos_faltantes),
         "tiempo_procesamiento": f"{(datetime.now() - t_proc).total_seconds():.1f}s",
         "errores_procesamiento": errores_acum,
     }
@@ -432,6 +483,8 @@ def _procesar_interno():
         "validaciones_general": validaciones_general,
         "validaciones_auditoria": validaciones_auditoria,
         "validaciones_pertinencia": validaciones_pertinencia,
+        "validaciones_xml_fev": validaciones_xml_fev,
+        "archivos_faltantes": archivos_faltantes,
         "stats": stats,
     }
 
@@ -448,6 +501,8 @@ def _procesar_interno():
             "validaciones_general": [],
             "validaciones_auditoria":   validaciones_auditoria[:_MAX_TABLA],
             "validaciones_pertinencia": validaciones_pertinencia[:_MAX_TABLA],
+            "validaciones_xml_fev":     validaciones_xml_fev[:_MAX_TABLA],
+            "archivos_faltantes":       archivos_faltantes[:_MAX_TABLA],
         }, default=_json_safe),
         status=200,
         mimetype="application/json",
@@ -465,6 +520,8 @@ def exportar():
         cached["validaciones_malla"], cached["validaciones_general"],
         cached.get("validaciones_auditoria"),
         cached.get("validaciones_pertinencia"),
+        validaciones_xml_fev=cached.get("validaciones_xml_fev"),
+        archivos_faltantes=cached.get("archivos_faltantes"),
     )
     nombre = f"Alertas_Malla_Validadora_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
     return send_file(output, as_attachment=True, download_name=nombre,

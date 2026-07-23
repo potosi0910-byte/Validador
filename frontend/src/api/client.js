@@ -86,7 +86,7 @@ export function getUsuarioGuardado() {
 }
 
 // ── Validación RIPS ───────────────────────────────────────────────────────────
-export async function procesar(jsonFiles, excelFiles = [], onProgress) {
+export async function procesar(jsonFiles, excelFiles = [], onProgress, xmlFiles = []) {
   const form = new FormData()
   jsonFiles.forEach(f => form.append('json_files', f))
 
@@ -100,6 +100,8 @@ export async function procesar(jsonFiles, excelFiles = [], onProgress) {
       form.append('excel_files', f)
     }
   }
+
+  xmlFiles.forEach(f => form.append('xml_files', f))
 
   const { data } = await api.post('/procesar', form, {
     headers: { 'Content-Type': 'multipart/form-data' },

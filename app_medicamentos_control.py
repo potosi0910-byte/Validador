@@ -11,6 +11,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, Alignment, PatternFill
 from auditoria import validar_auditoria
+from validacion_xml_fev import es_archivo_ad_xml, validar_xml_fev
  
 app = Flask(__name__)
  
@@ -3231,7 +3232,8 @@ def validar_otros_servicios_malla_2275(data, nombre_archivo=""):
  
 def construir_excel(registros, alertas=None, validaciones_malla=None,
                     validaciones_general=None, validaciones_auditoria=None,
-                    validaciones_pertinencia=None, validaciones_malla_0948=None):
+                    validaciones_pertinencia=None, validaciones_malla_0948=None,
+                    validaciones_xml_fev=None, archivos_faltantes=None):
     wb  = Workbook()
  
     # ── Hoja 1: Medicamentos inválidos ───────────────────────────────────
@@ -3758,12 +3760,94 @@ def construir_excel(registros, alertas=None, validaciones_malla=None,
             )
             ws6.column_dimensions[get_column_letter(i)].width = min(max_len + 3, 80)
 
+    # ── Hoja 7: XML Factura Electrónica (Anexo Técnico 2 - Resolución 948/2026) ──
+    if validaciones_xml_fev:
+        ws7 = wb.create_sheet("XML_Factura_FEV")
+        headers7 = [
+            "Archivo", "Factura", "N° Doc Paciente",
+            "ID Regla", "Severidad", "Campo", "Mensaje", "Valor Actual"
+        ]
+        ws7.append(headers7)
+
+        fill_critica7 = PatternFill("solid", fgColor="C00000")
+        fill_alta7    = PatternFill("solid", fgColor="E26B0A")
+        fill_media7   = PatternFill("solid", fgColor="F0AD00")
+        fill_head7    = PatternFill("solid", fgColor="4A235A")
+
+        for col in range(1, len(headers7) + 1):
+            c = ws7.cell(row=1, column=col)
+            c.font      = Font(bold=True, color="FFFFFF")
+            c.alignment = Alignment(horizontal="center")
+            c.fill      = fill_head7
+
+        for v in validaciones_xml_fev:
+            sev  = v.get("severidad", "")
+            fila = [
+                v.get("archivo",      ""),
+                v.get("num_factura",  ""),
+                v.get("num_doc",      ""),
+                v.get("id_regla",     ""),
+                sev,
+                v.get("campo",        ""),
+                v.get("mensaje",      ""),
+                v.get("valor_actual", ""),
+            ]
+            ws7.append(fila)
+            row_fill = (fill_critica7 if sev == "critica"
+                        else fill_alta7  if sev == "alta"
+                        else fill_media7 if sev == "media"
+                        else None)
+            if row_fill:
+                for col in range(1, len(headers7) + 1):
+                    cell = ws7.cell(row=ws7.max_row, column=col)
+                    cell.fill = row_fill
+                    cell.font = Font(color="FFFFFF" if sev == "critica" else "000000")
+
+        for i in range(1, len(headers7) + 1):
+            max_len = max(
+                (len(str(ws7.cell(r, i).value or "")) for r in range(1, ws7.max_row + 1)),
+                default=10
+            )
+            ws7.column_dimensions[get_column_letter(i)].width = min(max_len + 3, 80)
+
+    # ── Hoja 8: Archivos faltantes (carpetas sin RIPS y/o sin Ad####.xml) ──
+    if archivos_faltantes:
+        ws8 = wb.create_sheet("Archivos_Faltantes")
+        headers8 = ["Factura / Carpeta", "Tipo de faltante", "Archivo encontrado", "Detalle"]
+        ws8.append(headers8)
+
+        fill_head8 = PatternFill("solid", fgColor="8B0000")
+        fill_falta = PatternFill("solid", fgColor="FDE2E2")
+
+        for col in range(1, len(headers8) + 1):
+            c = ws8.cell(row=1, column=col)
+            c.font      = Font(bold=True, color="FFFFFF")
+            c.alignment = Alignment(horizontal="center")
+            c.fill      = fill_head8
+
+        for f in archivos_faltantes:
+            ws8.append([
+                f.get("factura", ""),
+                f.get("tipo_faltante", ""),
+                f.get("archivo", ""),
+                f.get("mensaje", ""),
+            ])
+            for col in range(1, len(headers8) + 1):
+                ws8.cell(row=ws8.max_row, column=col).fill = fill_falta
+
+        for i in range(1, len(headers8) + 1):
+            max_len = max(
+                (len(str(ws8.cell(r, i).value or "")) for r in range(1, ws8.max_row + 1)),
+                default=10
+            )
+            ws8.column_dimensions[get_column_letter(i)].width = min(max_len + 3, 90)
+
     bio = BytesIO()
     wb.save(bio)
     bio.seek(0)
     return bio
- 
- 
+
+
 # ══════════════════════════════════════════════════════════════
 # CACHÉ DEL ÚLTIMO RESULTADO (permite exportar sin re-procesar)
 # ══════════════════════════════════════════════════════════════
@@ -3780,13 +3864,15 @@ def index():
     registros               = []
     alertas                 = None
     validaciones_auditoria  = []
+    validaciones_xml_fev    = []
     error                   = None
     stats                   = {}
- 
+
     if request.method == 'POST':
         action          = request.form.get("action", "view")
         archivos_json   = request.files.getlist('json_files')
         archivos_excel  = request.files.getlist('excel_files')
+        archivos_xml    = request.files.getlist('xml_files')
 
         # ── Exportar desde caché ─────────────────────────────────────────
         # El frontend envía action=excel sin archivos (el input Excel se
@@ -3800,6 +3886,8 @@ def index():
                     _ultimo_resultado['validaciones_malla'],
                     _ultimo_resultado['validaciones_general'],
                     _ultimo_resultado.get('validaciones_auditoria'),
+                    validaciones_xml_fev=_ultimo_resultado.get('validaciones_xml_fev'),
+                    archivos_faltantes=_ultimo_resultado.get('archivos_faltantes'),
                 )
                 nombre = f"Alertas_Malla_Validadora_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
                 return send_file(
@@ -3825,6 +3913,9 @@ def index():
         validaciones_malla    = []
         validaciones_general  = []
         validaciones_auditoria = []
+        validaciones_xml_fev  = []
+        rips_por_factura       = {}
+        rips_archivo_por_factura = {}
 
         # ── Cargar Excel de autorizaciones (opcional) ─────────────────────
         hay_excel = archivos_excel and any(a.filename != "" for a in archivos_excel)
@@ -3841,6 +3932,10 @@ def index():
                 continue
             try:
                 data = json.load(archivo)
+                num_fact_data = str(data.get("numFactura") or "").strip()
+                if num_fact_data:
+                    rips_por_factura[num_fact_data] = data
+                    rips_archivo_por_factura[num_fact_data] = archivo.filename
                 regs = extraer_medicamentos_invalidos(data, archivo.filename)
                 registros.extend(regs)
                 pacientes = extraer_autorizaciones_rips(data, archivo.filename)
@@ -3879,6 +3974,40 @@ def index():
                 archivos_procesados += 1
             except Exception as e:
                 errores_acum.append(f"Error en {archivo.filename}: {e}")
+
+        # ── Procesar XML de factura electrónica (Ad####.xml, Anexo Técnico 2) ──
+        # Solo se valida un Ad####.xml cuando existe su RIPS JSON en la misma
+        # carpeta (emparejados por número de factura). Las carpetas incompletas
+        # se reportan aparte en "archivos_faltantes", sin ejecutar validación.
+        from validacion_xml_fev import extraer_invoice_de_ad_xml, extraer_datos_factura, detectar_archivos_faltantes
+        archivos_xml_procesados = 0
+        facturas_xml = {}
+        xml_sin_factura = []
+        for archivo in archivos_xml:
+            if not archivo or archivo.filename == "" or not es_archivo_ad_xml(os.path.basename(archivo.filename)):
+                continue
+            try:
+                contenido = archivo.read()
+                invoice = extraer_invoice_de_ad_xml(contenido)
+                datos_previos = extraer_datos_factura(invoice)
+                factura_xml = str(datos_previos.get("invoice_id") or "").strip()
+                if not factura_xml:
+                    xml_sin_factura.append(archivo.filename)
+                    continue
+                facturas_xml[factura_xml] = archivo.filename
+                rips_asociado = rips_por_factura.get(factura_xml)
+                if rips_asociado is None:
+                    continue  # se reporta como "Falta RIPS" en archivos_faltantes
+                validaciones_xml_fev.extend(validar_xml_fev(contenido, rips_asociado, archivo.filename))
+                archivos_xml_procesados += 1
+            except Exception as e:
+                errores_acum.append(f"Error validando XML FEV en {archivo.filename}: {e}")
+
+        hay_xml_subido = any(a and a.filename for a in archivos_xml)
+        archivos_faltantes = (
+            detectar_archivos_faltantes(rips_archivo_por_factura, facturas_xml, xml_sin_factura)
+            if hay_xml_subido else []
+        )
 
         # ── Ejecutar validaciones de autorizaciones ───────────────────────
         if hay_excel and (registros_excel or set_aut_excel):
@@ -3920,8 +4049,14 @@ def index():
             'auditoria_criticas':       sum(1 for v in validaciones_auditoria if v.get('severidad') == 'critica'),
             'auditoria_notificaciones': sum(1 for v in validaciones_auditoria if v.get('severidad') in {'media', 'alta'}),
             'auditoria_top_reglas':     _top_reglas(validaciones_auditoria),
+            'archivos_xml':             archivos_xml_procesados,
+            'xml_fev_total':            len(validaciones_xml_fev),
+            'xml_fev_criticas':         sum(1 for v in validaciones_xml_fev if v.get('severidad') == 'critica'),
+            'xml_fev_notificaciones':   sum(1 for v in validaciones_xml_fev if v.get('severidad') in {'media', 'alta'}),
+            'xml_fev_top_reglas':       _top_reglas(validaciones_xml_fev),
+            'archivos_faltantes_total': len(archivos_faltantes),
         }
- 
+
         if errores_acum:
             error = " | ".join(errores_acum)
 
@@ -3932,14 +4067,17 @@ def index():
             'validaciones_malla':     validaciones_malla,
             'validaciones_general':   validaciones_general,
             'validaciones_auditoria': validaciones_auditoria,
+            'validaciones_xml_fev':   validaciones_xml_fev,
+            'archivos_faltantes':     archivos_faltantes,
             'stats':                  stats,
         }
- 
+
     return render_template(
         'index.html',
         registros=registros if registros else None,
         alertas=alertas,
         validaciones_auditoria=validaciones_auditoria if validaciones_auditoria else None,
+        validaciones_xml_fev=validaciones_xml_fev if validaciones_xml_fev else None,
         error=error,
         stats=stats
     )

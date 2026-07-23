@@ -1,0 +1,9250 @@
+---PAGE 0---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 1 de 53 
+ 
+ 
+ 
+1. OBJETO ................................................................................................................. 3 
+2. CAMPOS DE DATOS DEL SECTOR SALUD EN FORMATO XML PARA LAS 
+FACTURAS ELECTRÓNICAS DE VENTA ................................................................... 3 
+3. DESCRIPCIÓN. ...................................................................................................... 4 
+3.1. CODIGO_PRESTADOR - Código del prestador de servicios de salud .......................... 4 
+3.2. MODALIDAD_PAGO - Modalidades de pago ................................ ................................ .. 4 
+3.3. COBERTURA_PLAN_BENEFICIOS - Cobertura o plan de beneficios ........................... 4 
+3.4. NUMERO_CONTRATO - Número de contrato: ................................ ................................  6 
+3.5. NUMERO_POLIZA - Número de póliza ................................ ................................ ............ 7 
+3.6. COPAGO - Copago: ................................ ................................ ................................ .......... 7 
+3.7. CUOTA_MODERADORA - Cuota moderadora ................................ ................................  7 
+3.8. PAGOS_COMPARTIDOS - Pagos compartidos en planes voluntarios de salud .......... 8 
+3.9. ANTICIPO - Anticipo ................................ ................................ ................................ ......... 8 
+3.10. Fecha de inicio del periodo de facturación ................................ ................................ . 8 
+3.11. Fecha final del periodo de facturación ................................ ................................ ........ 8 
+3.12. Factura sin contrato: ................................ ................................ ................................ .... 9 
+4. PROPÓSITO ......................................................................................................... 10 
+5. EXTENSIÓN DEL SECTOR SALUD (ext:UBLExtension). ................................. 10 
+a. COLUMNAS DE LAS TABLAS DE DEFINICIÓN DE LOS DOCUMENTOS 
+ELECTRÓNICOS PARA EL SECTOR SALUD ................................ ................................ ...... 10 
+b. CAMPOS ADICIONALES DEL SECTOR SALUD NO INCLUIDOS EN EL XML ............. 20 
+6. CUERPO XML ...................................................................................................... 20 
+a. FECHAS DE FACTURACIÓN ................................ ................................ .......................... 21 
+b. REGISTRO DEL CONCEPTO DE RECAUDO DE CUOTA MODERADORA – COPAGO 
+– PAGOS COMPARTIDOS EN PLANES VOLUNTARIOS DE SALUD ................................ . 21 
+c. REGISTRO DEL CONCEPTO QUE SE ACREDITARÁ COMO DE CUOTA 
+MODERADORA – COPAGO – PAGOS COMPARTIDOS EN PLANES VOLUNTARIOS DE 
+SALUD - ANTICIPOS ................................ ................................ ................................ ............. 28 
+d. REGISTRO DE OPERACIONES DE COPAGO – CUOTA MODERADORA – PAGOS 
+COMPARTIDOS EN PLANES VOLUNTARIOS DE SALUD, CUYO TRATAMIENTO 
+CONTRACTUAL Y CONTABLE HACE INNECESARIO QUE EL VALOR RECAUDADO SE 
+ACREDITE A LA FACTURA QUE LIBRARÁ EL PRESTADOR DE SERVICIOS DE SALUD 
+O EL PROVEEDOR DE TECNOLOGÍAS EN SALUD A LA ENTIDAD RESPONSABLE DE 
+PAGO Y DEMÁS PAGADORES ................................ ................................ ............................ 30 
+e. EMISIÓN DE FACTURAS ELECTRÓNICAS PARA SERVICIOS DE SALUD SIN 
+RECAUDOS PREVIOS POR OPERACIONES DE COPAGO – CUOTA MODERADORA - 
+PAGOS COMPARTIDOS EN PLANES VOLUNTARIOS DE SALUD ................................ ..... 32 
+f. EMISIÓN DE FACTURAS POR COMPRAS DIRECTAS ................................ ................. 32 
+7. USO DE MODOS DE OPERACIÓN ..................................................................... 37 
+---PAGE 1---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 2 de 53 
+ 
+a. MODOS DE USO – 1: SS-CUFE, SS-CUDE, SS-POS, SS-SNUM ................................ ... 37 
+---PAGE 2---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+Página 3 de 53 
+ 
+b. MODOS DE USO – 2: SS-RECAUDO ................................ ................................ ............. 37 
+c. MODOS DE USO – 3: SS-REPORTE ................................ ................................ .............. 38 
+8. TIPOS DE OPERACIÓN SALUD .......................................................................... 39 
+a. MÉTODO DE CÁLCULO DEL SECTOR SALUD ................................ ............................. 40 
+9. TABLAS ............................................................................................................... 41 
+a. DOCUMENTOS DE IDENTIFICACIÓN ................................ ................................ ............ 41 
+b. MODALIDADES DE PAGO ................................ ................................ ............................. 41 
+c. COBERTURA O PLAN DE BENEFICIOS ................................ ................................ ........ 41 
+d. CONCEPTO DE RECAUDO ................................ ................................ ............................ 41 
+e. FACTURA SIN CONTRATO ................................ ................................ ............................ 41 
+f. CÓDIGOS ................................ ................................ ................................ ........................ 42 
+10. REGLAS DE VALIDACIÓN .................................................................................. 42 
+10.1. VALIDACIONES DE ARCHIVOS ................................ ................................ ................... 42 
+10.2. VALIDACIONES POR ESTRUCTURA ................................ ................................ .......... 42 
+10.3. VALIDACIÓN SOBRE LOS DATOS ................................ ................................ .............. 51 
+10.4. VALIDACIONES EN EL ALMACENAMIENTO ................................ ..............................  53 
+10.5. VALIDACIONES DE LA CONSISTENCIA DE ARCHIVOS ................................ ............ 53 
+---PAGE 3---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+Página 4 de 53 
+ 
+1. OBJETO 
+ 
+Este documento técnico FEV RIPS especifica los detalles de la información que deberá 
+incorporarse a la factura electrónica de venta definida por la DIAN, con el propósito de 
+que los facturadores electrónicos de los servicios y tecnologías de salud cumplan con 
+la generación de este documento electrónico. Igualmente, define y particulariza los 
+contenidos de los campos de datos adicionales del sector salud que se utilizarán para 
+las facturas electrónicas de venta, excepto las que generen los fabricantes, 
+importadores y/o titulares de registro sanitario en las ventas directas a EPS para ser 
+dispensadas ambulatoriamente a través de los gestores farmacéuticos. 
+ 
+ 
+2. CAMPOS DE DATOS DEL SECTOR SALUD EN FORMATO XML PARA LAS 
+FACTURAS ELECTRÓNICAS DE VENTA 
+ 
+Los facturadores electrónicos del sector salud, deberán incluir la siguiente información 
+en campos individuales y separados de tal forma que atiendan las especificaciones de 
+estándares UBL (“Universal Business Language”) en formato XML, según lo dispuesto 
+por la Unidad Administrativa Especial Dirección de Impuestos y Aduanas Nacionales – 
+DIAN, los cuales deberán ser informados en los siguientes grupos de datos: 
+ 
+Información sobre el grupo UBLExtension 
+ 
+✓ Código del prestador de servicios de salud 
+✓ Modalidades de pago 
+✓ Cobertura o plan de beneficios 
+✓ Número de contrato o 
+✓ Número de póliza 
+✓ Factura sin contrato 
+ 
+Información sobre el grupo PrepaidPayment 
+ 
+✓ Copago 
+✓ Cuota moderadora 
+✓ Pagos compartidos en planes voluntarios de salud 
+✓ Anticipos 
+ 
+Información sobre el grupo InvoicePeriod 
+ 
+✓ Fecha de inicio del periodo de facturación 
+✓ Fecha final del periodo de facturación 
+Información sobre el elemento Nota 
+✓ Código único de contrato – CUCON 
+✓ Descripción para el bien/servicio prestado 
+Información sobre el grupo Item 
+✓ Codificación del bien o servicio 
+✓ Descripción del bien o servicio 
+---PAGE 4---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 5 de 53 
+ 
+ 
+ 
+ 
+ 
+3. DESCRIPCIÓN. 
+ 
+ 
+3.1. CODIGO_PRESTADOR - Código del prestador de servicios de salud: 
+ 
+a) Descripción / Contenido: Debe registrarse el código asignado en el Sistema General 
+de Seguridad Social en Salud (SGSSS) a los prestadores de servicios de salud que 
+estén en el Registro Especial de Prestadores de Servicios de Salud (REPS), o el código 
+asignado por el Ministerio de Salud y Protección Social para los Proveedores de 
+Tecnologías en Salud y demás casos de excepción. 
+ 
+b) Diligenciamiento en la factura electrónica de venta/nota crédito/nota debito : 
+Obligatorio. 
+ 
+c) Valores permitidos : Texto. Diligenciar con los valores de la tabla de instituciones 
+“IPSCodHabilitación” para prestadores de servicios de salud o con el código según 
+aplique, de la tabla “IPSnoREPS” para los Proveedores de Tecnologías en Salud o 
+demás casos de excepción. 
+ 
+3.2. MODALIDAD_PAGO - Modalidades de pago: 
+ 
+a) Descripción / Contenido: Debe registrarse la modalidad de pago pactada objeto de 
+facturación. 
+ 
+i. Pago individual por caso / Conjunto integral de atenciones / Paquete / Canasta. 
+ 
+ii. Pago global prospectivo. 
+ 
+iii. Pago por capitación. 
+ 
+iv. Pago por evento. 
+ 
+b) Diligenciamiento en la factura electrónica de venta/nota crédito/nota debito : 
+Obligatorio. Debe registrarse la modalidad de pago acordada, de acuerdo con la 
+definición contenida en el artículo 2.5.3.4.2.3 del Decreto 780 de 2016. En caso de 
+facturas multiusuario, todos deben pertenecer a la misma modalidad de pago y a la 
+misma cobertura o plan de beneficios. 
+ 
+c) Valores permitidos: Texto. Diligenciar con los valores de la tabla de referencia 
+“modalidadPago”, disponible en web.sispro.gov.co., los que son excluyentes entre sí. 
+ 
+3.3. COBERTURA_PLAN_BENEFICIOS - Cobertura o plan de beneficios: 
+---PAGE 5---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 6 de 53 
+ 
+a) Descripción / Contenido: Se registra la entidad responsable de financiar la cobertura 
+o plan de beneficios, y de pagar la prestación de los servicios y tecnologías de salud 
+incluidas en la factura de venta. 
+ 
+1. Plan de beneficios en salud financiado con UPC: Este campo se inactiva y se crean 
+las opciones 16 y 17. 
+ 
+2. Presupuesto máximo: servicios y tecnologías en salud o servicios complementarios no 
+financiados con la UPC y no excluidos de la financiación con recursos del Sistema 
+General de Seguridad Social en Salud (SGSSS), cuya gestión y financiación se 
+encuentran a cargo de las EPS o demás entidades obligadas a compensar (EOC) en 
+los términos definidos en la Resolución 067 de 2025. 
+ 
+3. Prima EPS, no asegurados SOAT : servicios de salud y el transporte al centro 
+asistencial que se presten a víctimas de accidentes de tránsito ocasionados por 
+vehículos no asegurados por seguro obligatorio de accidentes de tránsito (SOAT) o no 
+identificados, que se encuentran afiliadas al SGSSS, y que deben ser garantizadas por 
+las EPS, en los términos señalados en el artículo 106 del Decreto Ley 2106 de 2019. 
+ 
+4. Cobertura póliza SOAT: servicios en salud y el transporte al centro asistencial que se 
+presten a víctimas de accidentes de tránsito ocasionados por vehículos asegurados por 
+una póliza SOAT vigente, en los términos señalados en el Sección 2, Capítulo 4, Título 
+1, Parte 6, Libro 2 del Decreto 780 de 2016. 
+ 
+5. Cobertura ARL: prestaciones asistenciales a cargo de las administradoras de riesgos 
+laborales (ARL), definidas en los artículos 5 y 6 del Decreto 1295 de 1994. 
+ 
+6. Cobertura ADRES: coberturas en salud a cargo de la Administradora de los Recursos 
+del Sistema General de Seguridad Social en Salud (ADRES) en los términos definidos 
+en la Ley 1955 de 2019, el artículo 106 de Decreto Ley 2106 de 2019 
+ 
+ 
+7. Cobertura salud pública: acciones de gestión en salud pública realizadas por la Nación 
+y las entidades territoriales según lo definido en las Leyes 1122 de 2007 y 1438 de 2011, 
+y la Resolución 1597 de 2025. 
+ 
+8. Cobertura entidad territorial, recursos de oferta: corresponde a la prestación de 
+servicios y tecnologías de salud a cargo de la entidad territorial para la población no 
+afiliada al Sistema General de Seguridad Social en Salud en los términos de las Leyes 
+715 de 2001 y 1955 de 2019. 
+ 
+9. Urgencias población migrante: cobertura a cargo de la entidad territorial para atención 
+de urgencias de la población migrante regular no afiliada o irregular, de acuerdo con el 
+artículo 232 de la Ley 1955 de 2019. 
+ 
+10. Plan complementario en salud: corresponde a las coberturas de servicios de salud 
+contratados voluntariamente y financiados en su totalidad por el afiliado o los 
+empleadores que lo establezcan, con recursos distintos a las cotizaciones obligatorias, 
+en los términos del artículo 2.2.4.1.1 del Decreto 780 de 2016. 
+---PAGE 6---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 7 de 53 
+ 
+11. Plan medicina prepagada: corresponde a las coberturas de servicios de salud 
+contratados voluntariamente y financiados en su totalidad por el afiliado o los 
+empleadores que lo establezcan, con recursos distintos a las cotizaciones obligatorias, 
+en los términos del artículo 2.2.4.1.16. del Decreto 780 de 2016. 
+ 
+12. Pólizas en salud: coberturas de servicios de salud contratados voluntariamente y 
+financiados en su totalidad por el afiliado o los empleadores que lo establezcan, con 
+recursos distintos a las cotizaciones obligatorias, en los términos del artículo 2.2.4.3. del 
+Decreto 780 de 2016. 
+ 
+13. Cobertura Régimen Especial o Excepción: prestación de servicios y tecnologías de 
+salud a cargos de los Regímenes Especial o de Excepción definidos en la Ley 647 de 
+2001 y el artículo 279 de la Ley 100 de 1993. 
+ 
+14. Cobertura Fondo Nacional de Salud de las Personas Privadas de la Libertad: 
+corresponde a la prestación de servicios y tecnologías de salud a cargo del Fondo 
+Nacional de Salud de las Personas Privadas de la Libertad o de la entidad que opere el 
+modelo de atención en salud de la población que se encuentren en custodia del Instituto 
+Nacional Penitenciario y Carcelario (INPEC) en los términos de la Ley 1709 de 2014 y 
+el Decreto 1069 de 2015, considerando las excepciones a las derogatorias definidas en 
+el artículo 3.1.1 del mismo. 
+ 
+15. Particular: corresponde a los servicios y tecnologías de salud que asume directamente 
+la persona con cargo a recursos propios. 
+ 
+ 
+16. Plan de beneficios en salud financiado con UPC Regimen Contributivo: servicios y 
+tecnologías en salud financiados con la Unidad de Pago por Capitación (UPC), como 
+mecanismo de protección en salud, que deberán ser garantizadas por las entidades 
+promotoras de salud (EPS) o las que hagan sus veces, a sus afiliados en el territorio 
+nacional, en términos definidos en la Resolución 2765 de 2025 y demás normas que 
+modifiquen aclaren o sustituyan. 
+ 
+17. Plan de beneficios en salud financiado con UPC Regimen Subsidiado : servicios y 
+tecnologías en salud financiados con la Unidad de Pago por Capitación (UPC), como 
+mecanismo de protección en salud, que deberán ser garantizadas por las entidades 
+promotoras de salud (EPS) o las que hagan sus veces, a sus afiliados en el territorio 
+nacional, en términos definidos en la Resolución 2765 de 2025 y demás normas que 
+modifiquen aclaren o sustituyan. 
+ 
+b) Diligenciamiento en la factura electrónica de venta/nota crédito/nota debito: 
+Obligatorio. Debe registrarse la cobertura o el plan de beneficios a la que pertenece el 
+usuario. En caso de facturas multiusuario, todos deben pertenecer a la misma cobertura 
+o plan de beneficios, la misma modalidad de pago, y al mismo contrato o acuerdo de 
+voluntades. 
+ 
+c) Valores permitidos: Texto. Diligenciar con los valores de la tabla de referencia 
+“coberturaPlan”, disponible en web.sispro.gov.co., los que son excluyentes entre sí. 
+ 
+3.4. NUMERO_CONTRATO - Número de contrato: 
+---PAGE 7---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 8 de 53 
+ 
+a) Descripción / Contenido: Se debe registrar el número del contrato objeto de 
+facturación. 
+ 
+b) Diligenciamiento en la factura electrónica de venta/nota crédito/nota debito/nota 
+de ajuste: Obligatorio cuando exista contrato o en caso contrario irá vacío. Se reporta 
+solo si se ha suscrito contrato que cubra los ítems facturados. Las entidades obligadas 
+a registrarse en el portal del Registro de Contratación de Servicios y Tecnologías de 
+Salud (Artículo 4, Ley 1966 de 2019), deberán diligenciar el código del número de 
+contrato (CUCON) que les expida esta plataforma una vez esté disponible. 
+ 
+c) Valores permitidos: Un valor único. Alfanumérico. 
+ 
+3.5. NUMERO_POLIZA - Número de póliza: 
+ 
+a) Descripción / Contenido: Se debe registrar el número de póliza SOAT o del número 
+de póliza de planes voluntarios de salud. 
+ 
+b) Diligenciamiento en la factura electrónica de venta : Obligatorio cuando se trate de 
+atenciones SOAT o de planes voluntarios de salud. Se diligencia cuando se trata de 
+atenciones por accidente de tránsito o por atención como particular por una póliza de 
+salud. En los demás casos, no debe diligenciarse (vacío). 
+ 
+c) Valores permitidos: Un valor único. Alfanumérico. 
+ 
+3.6. COPAGO - Copago: 
+ 
+a) Descripción / Contenido: Se debe registrar el valor total efectivamente pagado por el 
+usuario y recaudado por el prestador de servicios de salud o el proveedor de tecnologías 
+en salud, correspondiente al copago. En caso de facturas multiusuario, se registra la 
+sumatoria del valor total del copago pagado por cada usuario. Este valor debe 
+corresponder con el valor total de los copagos registrados en RIPS. 
+ 
+b) Diligenciamiento en la factura electrónica de venta: Obligatorio cuando se facture por usuario 
+o multiusuario. 
+ 
+c) Valores permitidos: Numérico. Se valida que no existan valores negativos. Valor sin 
+símbolos ni separadores de miles y con el signo punto como separador de decimales. 
+ 
+3.7. CUOTA_MODERADORA - Cuota moderadora: 
+ 
+a) Descripción / Contenido: Se debe registrar el valor efectivamente pagado por el 
+usuario y recaudado por el prestador de servicios de salud o el proveedor de 
+tecnologías en salud, correspondiente a la cuota moderadora. Se debe registrar el valor 
+pagado por el usuario. En caso de facturas multiusuario, se registra la sumatoria del 
+valor total de cuotas moderadoras pagado por cada usuario. Este valor debe 
+corresponder con el valor total de las cuotas moderadoras registradas en RIPS. 
+b) Diligenciamiento en la factura electrónica de venta : Obligatorio cuando se facture por 
+usuario o multiusuario. 
+---PAGE 8---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 9 de 53 
+ 
+ 
+ 
+c) Valores permitidos: Numérico. Se valida que no existan valores negativos. Valor sin 
+símbolos ni separadores de miles y con el signo punto como separador de decimales. 
+3.8. PAGOS_COMPARTIDOS - Pagos compartidos en planes voluntarios de 
+salud: 
+ 
+a) Descripción / Contenido: Se debe registrar el valor efectivamente pagado por el 
+usuario y recaudado por el prestador de servicios de salud, correspondiente al pago 
+compartido en los planes voluntarios de salud (medicina prepagada, pólizas de salud y 
+planes complementarios en salud). Se registra únicamente el valor total del pago 
+compartido recaudado directamente por el prestador de servicios de salud. En caso de 
+facturas multiusuario, se registra la sumatoria del valor total de pagos compartidos 
+pagado por cada usuario. Este valor debe corresponder con el valor total de los pagos 
+compartidos registrados en RIPS. 
+ 
+b) Diligenciamiento en la factura electrónica de venta: Obligatorio cuando se facture por usuario 
+o multiusuario. 
+ 
+c) Valores permitidos: Numérico. Se valida que no existan valores negativos. Valor sin 
+símbolos ni separadores de miles y con el signo punto como separador de decimales. 
+ 
+3.9. ANTICIPO - Anticipo: 
+ 
+a) Descripción / Contenido: Se debe registrar el valor del anticipo a legalizar, que se 
+restará al valor de la presente factura en ejecución del contrato señalado en el numeral 
+3.4. 
+ 
+b) Diligenciamiento en la factura electrónica de venta : Obligatorio cuando se hayan pactado 
+anticipos en el acuerdo de voluntades. 
+ 
+c) Valores permitidos: Numérico. Se valida que no existan valores negativos. Valor sin símbolos 
+ni separadores de miles y con el signo punto como separador de decimales. 
+ 
+3.10. Fecha de inicio del periodo de facturación: 
+ 
+a) Descripción / Contenido: Se debe registrar la fecha de inicio de la prestación o 
+provisión del servicio o tecnología de salud cuando se factura por un solo usuario o la 
+fecha de inicio del periodo de facturación cuando se factura multiusuario según 
+modalidad de pago. 
+ 
+b) Diligenciamiento en la factura electrónica de venta: Obligatorio. 
+ 
+c) Valores permitidos: Fecha con la estructura: AAAA-MM-DD. 
+ 
+3.11. Fecha final del periodo de facturación: 
+---PAGE 9---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 10 de 53 
+ 
+a) Descripción / Contenido: Se debe registrar la fecha final de la prestación o provisión 
+del servicio o tecnología de salud cuando se factura por un solo usuario o la fecha final 
+del periodo de facturación cuando se factura multiusuario según modalidad de pago 
+ 
+b) Diligenciamiento en la factura electrónica de venta/nota crédito/nota debito : 
+Obligatorio. 
+ 
+c) Valores permitidos: Fecha con la estructura: AAAA-MM-DD. 
+ 
+3.12. Factura sin contrato: 
+ 
+a) Descripción / Contenido: Se debe registrar por parte de los prestadores de servicios 
+de salud y los proveedores de tecnologías en salud que prestan servicio sin  contrato 
+con las entidades responsables de pagos, únicamente en los siguientes casos: 
+ 
+1. Atención de urgencias. 
+2. Atención a cargo de ADRES, Aseguradoras SOAT, Planes voluntarios de Salud. 
+3. Atención en salud por fallos de tutela/órdenes judiciales. 
+4. Atención en salud por Portabilidad o en los casos de asignación masiva de afiliados 
+- artículo 2.5.3.4.7.9 del Decreto 780/2016 
+5. Atención en salud en casos excepcionales por cotizaciones o autorizaciones sin 
+contrato. 
+6. Gestión recuperación de órganos para trasplante 
+b) Diligenciamiento en la factura electrónica de venta/nota crédito/nota debito: 
+Obligatorio según la lógica implementada para el campo. 
+ 
+c) Valores permitidos: Un valor único numérico. 
+---PAGE 10---
+ 
+ 
+DOCUMENTO TECNICO 1 
+ 
+“ESPECIFICACIONES TÉCNICAS DE LOS CAMPOS DE DATOS Y LAS REGLAS DE VALIDACIÓN DEL RIPS COMO 
+SOPORTE DE LA FEV EN SALUD” 
+ 
+4. PROPÓSITO 
+ 
+La metodología de registro de datos en los documentos electrónicos UBL adoptada por 
+la Unidad Administrativa Especial Dirección de Impuestos y Aduanas Nacionales DIAN 
+prevé que los sectores económicos, industriales, comerciales, de servicios, de salud, de 
+transporte, de gobierno, etcétera, puedan incluir informaciones particulares a las que los 
+motores de análisis de cumplimiento del diccionario XSD omitirán durante la compilación 
+de un artefacto XML, porque los elementos contenedores de estas informaciones, al ser 
+definidos en el XSD, usan las convenciones previstas de omisión de validación de 
+contenido en el esquema estándar XML. 
+ 
+ 
+Se trata del fragmento /ext:UBLExtensions, que puede aparecer máximo una vez dentro 
+del   objeto   UBL,   y   que   puede   tener   todos   los   hijos 
+../ext:UBLExtensions/ext:UBLExtension que requiera el modelo de negocio en el que se 
+usa el documento UBL. 
+ 
+ 
+En conclusión, los facturadores electrónicos de los documentos electrónicos de la 
+Unidad Administrativa Especial Dirección de Impuestos y Aduanas Nacionales DIAN 
+podrán incluir informaciones sin afectar el procesamiento de los esquemas ni de los 
+fines definidos por la Unidad Administrativa Especial Dirección de Impuestos y Aduanas 
+Nacionales DIAN para los datos de carácter mercantil del vocabulario UBL. 
+ 
+ 
+Dichos datos deben estar bien formados, según la definición de las reglas XML. La 
+Unidad Administrativa Especial Dirección de Impuestos y Aduanas Nacionales DIAN 
+ayudará a quien lo solicite en su definición. Si las reglas particulares de los sectores 
+mencionados infieren el cumplimiento de otros reglamentos para el soporte de 
+comprobantes contables de reconocimiento y medición de cuantías, entonces la Unidad 
+Administrativa Especial Dirección de Impuestos y Aduanas Nacionales DIAN facilita el 
+uso de definiciones para dicho sector como métodos de cálculo particulares dentro de 
+los registros propios de los documentos electrónicos UBL, y estos métodos serán 
+identificados de manera conveniente y apropiada para los fines de control del sector que 
+lo requiera y del control fiscal de la Unidad Administrativa Especial Dirección de 
+Impuestos y Aduanas Nacionales DIAN. 
+ 
+ 
+5. EXTENSIÓN DEL SECTOR SALUD (ext:UBLExtension). 
+ 
+a. COLUMNAS DE LAS TABLAS DE DEFINICIÓN DE LOS DOCUMENTOS 
+ELECTRÓNICOS PARA EL SECTOR SALUD 
+ 
+ 
+Las columnas de las tablas definición siguen las descripciones que se encuentran en la 
+Tabla 1. 
+Estas extensiones deben ser utilizadas para la facturación de servicios y tecnologías en 
+salud así mismo con las notas crédito y débito. 
+Se recomienda que el orden de los registros de información en los grupos de datos 
+ext:UBLExtension correspondan a: 
+---PAGE 11---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ 
+1) Los datos de control de la Unidad Administrativa Especial Dirección de Impuestos y 
+Aduanas Nacionales DIAN. 
+2) Las variables propias del sector salud, las cuales se determina sobre este documento. 
+3) Los datos del cálculo de la firma digital La siguiente estructura aplica para los 
+documentos electrónicos de factura, nota crédito y nota débito. 
+ 
+Tabla 1 – Convenciones Utilizadas en la Tablas de Definición de los Formatos XML 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+  
+ 
+ext 
+ 
+ 
+UBLExtensions 
+Debe usar como 
+mínimo las 
+extensiones definidas 
+por la DIAN para toda 
+factura electrónica 
+ 
+ 
+G 
+   
+ 
+Invoice 
+ 
+ 
+1..1 
+  
+ 
+1.0 
+ 
+root/ext:UBLExtensio 
+ns 
+  
+ 
+ 
+ 
+ 
+ext 
+ 
+ 
+ 
+ 
+ 
+UBLExtension 
+Fragmento 
+UBLExtension para 
+información de control 
+de la DIAN. 
+Extensión 1 de N 
+Debe corresponder a la 
+primera extension 
+dentro del contenedor 
+UBLExtensions 
+ 
+ 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+ 
+UBLEx 
+tensio 
+ns 
+ 
+ 
+ 
+ 
+ 
+1..N 
+  
+ 
+ 
+ 
+ 
+1.0 
+ 
+ 
+ 
+ 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[1] 
+  
+ext 
+ 
+ExtensionContent 
+Grupo que contiene la 
+información 
+personalizada de la 
+DIAN 
+ 
+G 
+  UBLEx 
+tensio 
+n 
+ 
+1..1 
+  
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[1]/ext:ExtensionCon 
+tent 
+  
+sts 
+ 
+DianExtensions 
+ 
+Informaciones de 
+control de operaciones 
+   Extens 
+ionCon 
+tent 
+ 
+1..1 
+  
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[1]/ext:ExtensionCon 
+tent/DianExtensions 
+  
+ 
+ext 
+ 
+ 
+UBLExtension 
+Grupo UBLExtension 
+para información 
+comercial adicional 
+estandarizada entre 
+sectores 
+ 
+ 
+G 
+   
+UBLEx 
+tensio 
+ns 
+ 
+ 
+2..N 
+  
+ 
+1.0 
+ 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2] 
+  
+ext 
+ 
+ExtensionContent 
+Grupo que contiene la 
+información 
+personalizada del 
+sector 
+ 
+G 
+  UBLEx 
+tensio 
+n 
+ 
+1..1 
+  
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent 
+   
+ 
+CustomTagGeneral 
+ 
+Grupo de información 
+personalizable 
+dependiendo del sector 
+ 
+ 
+G 
+   
+Extens 
+ionCon 
+tent 
+ 
+ 
+1..1 
+  
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral 
+   
+ 
+Name 
+ 
+Descripción del 
+contenido; Valor 
+constante 
+ 
+ 
+E 
+   
+Custo 
+mTag 
+Gener 
+al 
+ 
+ 
+1..1 
+ 
+Debe ser 
+informado el 
+literal 
+“Responsable” 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Name[1]=”Resp 
+onsable” 
+ 
+ 
+ 
+ 
+DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 11 de 53 
+---PAGE 12---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+   
+ 
+ 
+Value 
+Responsable del 
+mantenimiento de la 
+UBLExtension; 
+Ministerio de Salud y 
+Protección Social de 
+Colombia 
+ 
+ 
+ 
+E 
+   
+Custo 
+mTag 
+Gener 
+al 
+ 
+ 
+ 
+1..1 
+https://www.sispr 
+o.gov.co/central-
+financiamiento/P 
+ages/facturacion 
+-electronica.aspx 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Value[1]=”url 
+www.minsalud.gov.c 
+o” 
+   
+ 
+ 
+Name 
+ 
+ 
+Descripción del 
+contenido; Valor 
+constante 
+ 
+ 
+ 
+E 
+   
+Custo 
+mTag 
+Gener 
+al 
+ 
+ 
+ 
+1..1 
+ 
+Debe ser 
+informado el 
+literal “Tipo, 
+identificador:año 
+” 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Name[2]=”Tipo, 
+identificador:año del 
+acto administrativo” 
+   
+ 
+ 
+ 
+ 
+ 
+ 
+Value 
+Acto  administrativo; 
+cambie   la   cadena 
+“NNNN”    por  el 
+identificador asignado 
+a este    acto 
+administrativo: 
+Resolución,  Circular, 
+Directriz, etcétera; 
+Cambie la  cadena 
+“AAAA” por el año de la 
+publicación del acto 
+administrativo: 
+Resolución  Circular, 
+Directriz etcétera 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+E 
+   
+ 
+ 
+ 
+ 
+Custo 
+mTag 
+Gener 
+al 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1..1 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Resolución 
+NNNN:AAAA 
+  
+ 
+ 
+ 
+ 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Value[2] 
+   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Interoperabilidad 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Grupo que identifica el 
+sector administrativo, 
+de gobierno, poder 
+público, comercial, 
+industrial, etcétera 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Custo 
+mTag 
+Gener 
+al 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1..1 
+• La extensión 
+donde se 
+incluyen las 
+variables del 
+Sector Salud 
+no se debe 
+informar para 
+las 
+operaciones 
+“SS- 
+Recaudo” 
+ 
+• Para  los 
+demás tipos 
+de operación 
+debe ser 
+informado la 
+extensión con 
+los campos 
+correspondie 
+ntes. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1.0 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d 
+   
+ 
+Group 
+ 
+Fragmento de sector 
+que se reporta; 
+agrupamiento de 
+“grupos Collection”; 
+ 
+ 
+G 
+   
+Interop 
+erabili 
+dad 
+ 
+ 
+1..1 
+  
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group 
+   
+ 
+ 
+@schemeName 
+ 
+Nombre el sector; 
+constante obligatoria, 
+valor en columna 
+“Observaciones” 
+ 
+ 
+ 
+A 
+ 
+ 
+ 
+A 
+  
+ 
+ 
+Group 
+ 
+ 
+ 
+1..1 
+ 
+ 
+ 
+Sector Salud 
+ 
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/@schemeN 
+ame=”Sector Salud” 
+DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 12 de 53 
+---PAGE 13---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 13 de 53 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+   
+ 
+ 
+Collection 
+Instancia. Detalles 
+individuales de la 
+información de un 
+miembro o de una 
+unidad del sector. 
+Elementos de 
+información sobre la 
+instancia. 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+Group 
+ 
+ 
+ 
+1..1 
+  
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+] 
+   
+ 
+ 
+@schemeName 
+ 
+ 
+Nombre del miembro o 
+unidad del sector; 
+constante obligatoria 
+ 
+ 
+ 
+A 
+   
+ 
+ 
+Collect 
+ion 
+ 
+ 
+ 
+1..1 
+ 
+ 
+ 
+ 
+Usuario 
+ 
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/@schemeName=”U 
+suario” 
+   
+ 
+ 
+AdditionalInformation 
+ 
+ 
+ 
+Detalle individual; 
+pareja Nombre / Valor 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+Collect 
+ion 
+ 
+ 
+ 
+1..1 
+  
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[1] 
+   
+ 
+ 
+Name 
+ 
+ 
+ 
+CODIGO_PRESTADO 
+R 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+A 
+  
+ 
+Additio 
+nalInfo 
+rmatio 
+n 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Debe ser 
+informado el 
+literal 
+“CODIGO_PRE 
+STADOR” 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[1]/Name 
+   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Value 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Siga las instrucciones 
+del subtítulo “3.1. 
+CODIGO_PRESTADO 
+R - Código prestador 
+de servicios de salud” 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+A 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Additio 
+nalInfo 
+rmatio 
+n 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1..1 
+Corresponde al 
+Código del PSS 
+a 10 digitos 
+informado en la 
+tabla 
+IPSCodHabilitaci 
+on de SISPRO 
+en la columna 
+Extra_III:Codigo 
+Prestador o al 
+Código del PTS 
+informado en la 
+tabla 
+IPSnoREPS de 
+SISPRO en la 
+columna 
+Extra_II:Gerente 
+y   debe 
+corresponder al 
+NIT del 
+Facturador 
+electrónico que 
+tiene  a  cargo 
+este código 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d[1]/Group/Collectio 
+n[1]/AdditionalInform 
+ation/Value 
+---PAGE 14---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 14 de 53 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+   
+ 
+ 
+AdditionalInformation 
+ 
+ 
+ 
+Detalle individual; 
+pareja Nombre / Valor 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+Collect 
+ion 
+ 
+ 
+ 
+1..1 
+  
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[2] 
+   
+ 
+ 
+Name 
+ 
+ 
+ 
+MODALIDAD_PAGO 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+A 
+ 
+ 
+ 
+1-40 
+ 
+ 
+Additio 
+nalInfo 
+rmatio 
+n 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Debe ser 
+informado el 
+literal 
+“MODALIDAD_ 
+PAGO” 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[2]/Name 
+   
+ 
+ 
+Value 
+ 
+ 
+Siga las instrucciones 
+del subtítulo “3.2. 
+MODALIDAD_PAGO - 
+Modalidades de pago” 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+A 
+   
+ 
+ 
+1..1 
+Ver lista de 
+valores posibles 
+en la columna 
+Modalidades de 
+pago numeral 9. 
+Inciso b de este  
+documento. 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[2]/Value 
+   
+ 
+ 
+ 
+@schemeName 
+  
+ 
+ 
+ 
+A 
+ 
+ 
+ 
+ 
+A 
+   
+ 
+ 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Debe ser 
+informado el 
+literal 
+“salud_modalida 
+d_pago.gc” 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[2]/Value/@schem 
+eName 
+   
+ 
+ 
+ 
+@schemeID 
+  
+ 
+ 
+ 
+A 
+ 
+ 
+ 
+ 
+A 
+   
+ 
+ 
+ 
+ 
+1..1 
+ 
+Ver lista de 
+valores posibles 
+en la columna 
+código del 
+numeral 9. Inciso 
+b de este  
+documento. 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[2]/Value/@schem 
+eID 
+   
+ 
+ 
+AdditionalInformation 
+  
+ 
+ 
+G 
+   
+ 
+ 
+Collect 
+ion 
+ 
+ 
+ 
+1..1 
+  
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[3] 
+   
+ 
+ 
+Name 
+ 
+ 
+ 
+COBERTURA_PLAN_ 
+BENEFICIOS 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+A 
+  
+ 
+Additio 
+nalInfo 
+rmatio 
+n 
+ 
+ 
+ 
+1..1 
+ 
+Debe ser 
+informado el 
+literal 
+“COBERTURA_ 
+PLAN_BENEFI 
+CIOS” 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[3]/Name 
+---PAGE 15---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 15 de 53 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+   
+ 
+ 
+Value 
+ 
+Siga las instrucciones 
+del subtítulo “3.3. 
+COBERTURA_PLAN_ 
+BENEFICIOS - 
+Cobertura o plan de 
+beneficios” 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+A 
+  
+ 
+Additio 
+nalInfo 
+rmatio 
+n 
+ 
+ 
+ 
+1..1 
+Ver  lista  de 
+valores posibles 
+en la columna 
+cobertura 
+numeral 9. Inciso 
+c de este 
+documento. 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[3]/Value 
+   
+ 
+ 
+ 
+@schemeName 
+  
+ 
+ 
+ 
+A 
+ 
+ 
+ 
+ 
+A 
+   
+ 
+ 
+ 
+1..1 
+ 
+ 
+Debe ser 
+informado el 
+literal 
+“salud_cobertura 
+.gc” 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[3]/Value/@schem 
+eName 
+   
+ 
+ 
+ 
+@schemeID 
+  
+ 
+ 
+ 
+A 
+ 
+ 
+ 
+ 
+A 
+   
+ 
+ 
+ 
+1..1 
+ 
+Ver lista de 
+valores posibles 
+en la columna 
+Código del 
+numeral 9. Inciso 
+c de este  
+documento. 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[3]/Value/@schem 
+eID 
+   
+ 
+ 
+AdditionalInformation 
+  
+ 
+ 
+G 
+   
+ 
+ 
+Collcti 
+on 
+ 
+ 
+ 
+1..1 
+  
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[4] 
+   
+ 
+ 
+ 
+Name 
+ 
+ 
+ 
+NUMERO_CONTRAT 
+O 
+ 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+ 
+A 
+  
+ 
+Additio 
+nalInfo 
+rmatio 
+n 
+ 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Debe ser 
+informado el 
+literal 
+“NUMERO_CON 
+TRATO” 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[4]/Name=“NUME 
+RO_CONTRATO” 
+---PAGE 16---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 16 de 53 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+         Cuando   sea 
+informado   un 
+numero de 
+contrato no se 
+podrá informar  
+un  número  de 
+póliza. 
+  
+ 
+ 
+ 
+Value 
+ 
+Siga las instrucciones 
+del subtítulo “3.4. 
+NUMERO_CONTRAT 
+O - Número de 
+contrato” 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+A 
+ 
+ 
+Additio 
+nalInfo 
+rmatio 
+n 
+ 
+ 
+ 
+0..1 
+ 
+Debe 
+corresponder al 
+contrato 
+establecido entre 
+los PSS/PTS y 
+las ERP el cual 
+deberá estar 
+registrado en el 
+SIIFA sobre el 
+módulo  de 
+contratos y 
+generado el 
+código único de 
+contrato 
+“CUCON” 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[4]/Value 
+   
+ 
+ 
+AdditionalInformation 
+  
+ 
+ 
+G 
+   
+ 
+ 
+Collect 
+ion 
+ 
+ 
+ 
+1..1 
+  
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[5] 
+   
+ 
+ 
+Name 
+ 
+ 
+ 
+NUMERO_POLIZA 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+A 
+  
+ 
+Additio 
+nalInfo 
+rmatio 
+n 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Debe ser 
+informado el 
+literal 
+“NUMERO_POL 
+IZA” 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[5]/Name 
+         Debe   
+      corresponder al  
+      número de póliza  
+      del usuario, o al  
+      número de póliza root/ext:UBLExtensio 
+      del vehículo ns/ext:UBLExtension 
+ Siga las instrucciones   Additio  asegurado, va [2]/ext:ExtensionCon 
+Value del subtítulo “3.5. 
+NUMERO_POLIZA - E A nalInfo 
+rmatio 0..1 vació en el caso 
+de los vehículos 
+tent/CustomTagGen 
+eral/Interoperabilida 
+ Número de póliza”   n  asegurados. 
+Cuando sea 
+d/Group/Collection[1 
+]/AdditionalInformati 
+      informado un on[5]/Value 
+      número de  
+      Póliza,  no  se  
+      podrá informar  
+      un  número  de  
+      contrato.  
+---PAGE 17---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 17 de 53 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+   
+ 
+ 
+AdditionalInformation 
+Campo opcional. 
+Se vuelve obligatorio 
+cuando el grupo de 
+datos de 
+NUMERO_CONTRAT 
+O viene vacío 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+Collect 
+ion 
+ 
+ 
+ 
+0..1 
+Obligatorio 
+cuando el grupo 
+de datos de 
+NUMERO_CON 
+TRATO no sea 
+informado con 
+algún número de 
+contrato 
+“CUCON” 
+ 
+ 
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[6] 
+   
+ 
+ 
+Name 
+ 
+ 
+ 
+FACTURA_SIN_CON 
+TRATO 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+A 
+  
+ 
+Additio 
+nalInfo 
+rmatio 
+n 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Debe ser 
+informado el 
+literal 
+“FACTURA_SIN 
+_CONTRATO” 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[6]/Name 
+   
+ 
+ 
+Value 
+ 
+ 
+Siga las instrucciones 
+del subtítulo “3.12. 
+Factura sin contrato” 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+A 
+  
+ 
+Additio 
+nalInfo 
+rmatio 
+n 
+ 
+ 
+ 
+1..1 
+Ver lista de 
+valores posibles 
+en la columna 
+Descripción de la 
+tabla del numeral 
+9. Inciso e  de 
+este documento. 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[6]/Value 
+   
+ 
+ 
+ 
+@schemeName 
+  
+ 
+ 
+ 
+A 
+ 
+ 
+ 
+ 
+A 
+   
+ 
+ 
+ 
+1..1 
+ 
+ 
+Debe ser 
+informado el 
+literal 
+“salud_cobertura 
+.gc” 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[6]/Value/@schem 
+eName 
+   
+ 
+ 
+ 
+@schemeID 
+  
+ 
+ 
+ 
+A 
+ 
+ 
+ 
+ 
+A 
+   
+ 
+ 
+ 
+1..1 
+ 
+Ver lista de 
+valores posibles 
+en la columna 
+Código de la 
+tabla del numeral 
+9. Inciso e  de 
+este documento 
+ root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/ext:ExtensionCon 
+tent/CustomTagGen 
+eral/Interoperabilida 
+d/Group/Collection[1 
+]/AdditionalInformati 
+on[6]/Value/@schem 
+eID 
+Las informaciones siguientes deben ser utilizadas por quienes utilizan servicios de interoperabilidad para el intercambio 
+automatizado de documentos electrónicos. Los detalles normativos se encuentran en el Anexo Técnico emitido por la Dirección de 
+Impuestos y Aduanas Nacionales - DIAN, y en la información técnica del proveedor del servicio de interoperabilidad. 
+   
+ 
+InteroperabilidadPT 
+ 
+Grupo de información 
+complementaria a la 
+transacción 
+ 
+ 
+G 
+   
+Interop 
+erabili 
+dad 
+ 
+ 
+0..1 
+  
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT 
+---PAGE 18---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 18 de 53 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+   
+ 
+ 
+ 
+URLDescargaAdjuntos 
+ 
+Grupo de información 
+para indicar la 
+descarga de 
+documentos 
+complementarios a los 
+documentos 
+electrónicos para el 
+Adquirente 
+ 
+ 
+ 
+ 
+E 
+   
+ 
+ 
+Interop 
+erabili 
+dadPT 
+ 
+ 
+ 
+ 
+1..1 
+No se podrá 
+disponer de este 
+grupo de 
+información para 
+que el 
+adquiriente 
+descargue el 
+documento 
+electrónico 
+“AttachedDocum 
+ent” 
+ 
+ 
+ 
+ 
+1.0 
+ 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+URLDescargaAdjunt 
+os 
+   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+URL 
+ 
+ 
+ 
+ 
+ 
+ 
+URL para la descargar 
+de los documentos 
+complementarios a los 
+documentos e 
+instrumentos 
+electrónicos 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+E 
+   
+ 
+ 
+ 
+ 
+ 
+ 
+URLD 
+escarg 
+aAdjun 
+tos 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1..1 
+Corresponde a 
+una dirección 
+donde el 
+emisor dispone 
+de la información 
+complementaria 
+a los 
+documentos 
+electrónicos que 
+el adquiriente 
+puede 
+ingresar y 
+descargar 
+directamente sin 
+la necesidad de 
+ingresas 
+credenciales 
+(Usuario/Contras 
+eña) 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1.0 
+ 
+ 
+ 
+ 
+ 
+ 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+URLDescargaAdjunt 
+os/URL 
+   
+ 
+ 
+ParametrosArgumento 
+s 
+  
+ 
+ 
+G 
+   
+ 
+URLD 
+escarg 
+aAdjun 
+tos 
+ 
+ 
+ 
+0..1 
+  
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+URLDescargaAdjunt 
+os/ParametrosArgu 
+mentos 
+   
+ 
+ 
+ 
+ParametroArgumento 
+ 
+ 
+Grupo de información 
+para indicar 
+características 
+adicionales a la URL ya 
+informada. 
+ 
+ 
+ 
+ 
+G 
+   
+ 
+Param 
+etrosA 
+rgume 
+ntos 
+ 
+ 
+ 
+ 
+0..N 
+  
+ 
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+URLDescargaAdjunt 
+os/ParametrosArgu 
+mentos/ParametroAr 
+gumento 
+   
+ 
+ 
+ 
+Name 
+ 
+ 
+ 
+Nombre del elemento a 
+informar 
+ 
+ 
+ 
+ 
+E 
+   
+ 
+Param 
+etroAr 
+gumen 
+to 
+ 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Corresponde al 
+nombre de 
+parámetros o 
+característica 
+información para 
+la conexión. 
+ 
+ 
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+URLDescargaAdjunt 
+os/ParametrosArgu 
+mentos/ParametroAr 
+gumento/Name 
+---PAGE 19---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 19 de 53 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+   
+ 
+ 
+ 
+Value 
+ 
+ 
+ 
+Valor del elemento a 
+informar 
+ 
+ 
+ 
+ 
+E 
+   
+ 
+Param 
+etroAr 
+gumen 
+to 
+ 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Corresponde  a 
+información 
+adicional, claves, 
+nombre de 
+archivos o 
+características. 
+ 
+ 
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+URLDescargaAdjunt 
+os/ParametrosArgu 
+mentos/ParametroAr 
+gumento/Value 
+   
+ 
+EntregaDocumento 
+ 
+Grupo de información 
+para indicar la entrega 
+que hará el Adquirente 
+de los eventos 
+ 
+ 
+G 
+   
+Interop 
+erabili 
+dadPT 
+ 
+ 
+0..1 
+  
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+EntregaDocumento 
+   
+ 
+ 
+ 
+ 
+WS 
+ 
+ 
+ 
+Web Service informado 
+por el Facturador 
+electrónico al 
+Adquirente 
+ 
+ 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+ 
+ 
+A 
+  
+ 
+ 
+ 
+Entreg 
+aDocu 
+mento 
+ 
+ 
+ 
+ 
+ 
+1..1 
+El Web Service 
+es utilizado para 
+la recepción los 
+eventos que se 
+genere por parte 
+de Adquiriente. 
+Corresponde a 
+un acuerdo o 
+formalidad entre 
+las partes 
+(Emisor   y 
+Recepto). 
+ 
+ 
+ 
+ 
+ 
+1.0 
+ 
+ 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+EntregaDocumento/ 
+WS 
+   
+ 
+ 
+ParametrosArgumento 
+s 
+  
+ 
+ 
+G 
+   
+ 
+Entreg 
+aDocu 
+mento 
+ 
+ 
+ 
+1..1 
+  
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+EntregaDocumento/ 
+WS/ParametrosArgu 
+mentos 
+   
+ 
+ 
+ 
+ParametroArgumento 
+  
+ 
+ 
+ 
+G 
+   
+ 
+Param 
+etrosA 
+rgume 
+ntos 
+ 
+ 
+ 
+ 
+1..N 
+  
+ 
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+EntregaDocumento/ 
+WS/ParametrosArgu 
+mentos/ParametroAr 
+gumento 
+   
+ 
+ 
+ 
+Name 
+ 
+ 
+ 
+Nombre del elemento a 
+informar 
+ 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+ 
+A 
+  
+ 
+Param 
+etroAr 
+gumen 
+to 
+ 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Corresponde al 
+nombre de 
+parámetros o 
+característica 
+información para 
+la conexión. 
+ 
+ 
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+EntregaDocumento/ 
+WS/ParametrosArgu 
+mentos/ParametroAr 
+gumento/Name 
+---PAGE 20---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 20 de 53 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+   
+ 
+ 
+ 
+Value 
+ 
+ 
+ 
+Valor del elemento a 
+informar 
+ 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+ 
+A 
+  
+ 
+Param 
+etroAr 
+gumen 
+to 
+ 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Corresponde  a 
+información 
+adicional, claves, 
+nombre de 
+archivos o 
+características. 
+ 
+ 
+ 
+ 
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[2]/CustomTagGener 
+al/Interoperabilidad/I 
+nteroperabilidadPT/ 
+EntregaDocumento/ 
+WS/ParametrosArgu 
+mentos/ParametroAr 
+gumento/Value 
+  
+ 
+ 
+ 
+ext 
+ 
+ 
+ 
+ 
+UBLExtension 
+Fragmento 
+UBLExtension para 
+información de la firma 
+digital 
+Extensión N 
+Debe ser el último 
+dentro del contenedor 
+UBLExtensions 
+ 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+UBLEx 
+tensio 
+ns 
+ 
+ 
+ 
+ 
+N..N 
+  
+ 
+ 
+ 
+1.0 
+ 
+ 
+ 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[3] 
+  
+ext 
+ 
+ExtensionContent 
+Grupo que contiene la 
+información 
+personalizada del 
+sector 
+ 
+G 
+  UBLEx 
+tensio 
+n 
+ 
+1..1 
+  
+1.0 
+root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[3]/ext:ExtensionCon 
+tent 
+  
+ds 
+ 
+Signature 
+ 
+Firma digital XAdES – 
+EPES de www.etsi.org 
+   Extens 
+ionCon 
+tent 
+ 
+1..1 
+  root/ext:UBLExtensio 
+ns/ext:UBLExtension 
+[3]/ext:ExtensionCon 
+tent/ds:Signature 
+ 
+NOTA: el elemento root/ en el vocabulario UBL corresponde, y según el caso, a: Invoice, CreditNote, DebitNote 
+ 
+ 
+b. CAMPOS ADICIONALES DEL SECTOR SALUD NO INCLUIDOS EN EL XML 
+ 
+ 
+Los campos relacionados a continuación serán reportados dentro de la estructura de los 
+RIPS como soporte de la factura electrónica de venta en salud, en los términos que defina 
+el Ministerio de Salud y Protección Social. 
+• Tipo de documento de identificación del usuario. 
+• Número de documento de identificación del usuario 
+• Tipo de usuario 
+• Número de autorización 
+• Número de mi prescripción (MIPRES) 
+• Número de ID entrega de mi prescripción (MIPRES) 
+ 
+Los Así mismo, la descripción de los campos para la generación de los RIPS en estructura 
+Json son definidos en la primera parte de este documento técnico 
+ 
+ 
+6. CUERPO XML 
+---PAGE 21---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 21 de 53 
+ 
+a. FECHAS DE FACTURACIÓN 
+ 
+ 
+Corresponde a las fechas de inicio y fin de la prestación de los bienes y servicios ya sea 
+para facturas del periodo de facturación cuando se factura multiusuario o monousuario 
+según modalidad de pago, en los casos de hospitalización o urgencias con observación que 
+se facturen por modalidad de pago capita o PGP, si el paciente ingreso en una fecha anterior 
+al periodo de facturación se deberá registrar en el campo fecha de inicio este campo la 
+fecha de ingreso del paciente. 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+ 
+Descripción 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+  
+ 
+ 
+ 
+ 
+cac 
+ 
+ 
+ 
+ 
+InvoicePeri 
+odc 
+ 
+ 
+Grupo de campos 
+relativos al Periodo 
+de Facturación: 
+Intervalo de fechas  
+en las que se prestó 
+el servicio de salud 
+ 
+ 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+ 
+ 
+Invoice 
+ 
+ 
+ 
+ 
+ 
+1..1 
+Salud: Corresponde al 
+periodo facturado de  
+los servicios prestados. 
+Siga las instrucciones 
+de “Fecha de inicio del 
+periodo de facturación: 
+Siga las instrucciones 
+de “Fecha de inicio del 
+periodo de facturación 
+ 
+ 
+ 
+ 
+ 
+1.0 
+ 
+ 
+ 
+ 
+ 
+/root/cac:InvoicePeriod 
+  
+ 
+ 
+cbc 
+ 
+ 
+ 
+StartDate 
+Fecha de inicio del 
+periodo de 
+facturación: 
+Corresponde a la 
+fecha de inicio de la 
+prestación del 
+servicio. 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+F 
+ 
+ 
+ 
+10 
+ 
+ 
+ 
+Invoice 
+Period 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Obligatorio informar la 
+fecha de inicio del 
+periodo de facturación 
+ 
+ 
+ 
+1.0 
+ 
+ 
+ 
+/root/cac:InvoicePeriod 
+/cbc:StartDate 
+  
+cbc 
+ 
+StartTime 
+Hora de inicio del 
+periodo de 
+facturación 
+ 
+E 
+ 
+H 
+ 
+14 Invoice 
+Period 
+ 
+0..1 
+  
+1.0 /root/cac:InvoicePeriod 
+/cbc:StartTime 
+  
+ 
+ 
+cbc 
+ 
+ 
+ 
+EndDate 
+Fecha de fin del 
+periodo de 
+facturación: 
+Corresponde a la 
+fecha de finalización 
+de la prestación del 
+servicio. 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+F 
+ 
+ 
+ 
+10 
+ 
+ 
+ 
+Invoice 
+Period 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Obligatorio informar la 
+fecha de fin del periodo 
+de facturación 
+ 
+ 
+ 
+1.0 
+ 
+ 
+ 
+/root/cac:InvoicePeriod 
+/cbc:EndDate 
+  
+cbc 
+ 
+EndTime 
+Hora de fin del 
+periodo de 
+facturación 
+ 
+E 
+ 
+H 
+ 
+14 Invoice 
+Period 
+ 
+0..1 
+  
+1.0 /root/cac:InvoicePeriod 
+/cbc:EndTime 
+ 
+NOTA: el elemento root/ en el vocabulario UBL corresponde, y según el caso, a: Invoice, 
+CreditNote, DebitNote 
+Este grupo de información debe ser informado y aplica para facturas, notas crédito y notas 
+debito. 
+ 
+ 
+b. REGISTRO DEL CONCEPTO DE RECAUDO DE CUOTA MODERADORA – COPAGO – 
+PAGOS COMPARTIDOS EN PLANES VOLUNTARIOS DE SALUD. 
+ 
+ 
+Las tablas a continuación ejemplifican la utilización de algunos de los campos de datos en 
+la Factura de Venta. 
+---PAGE 22---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 22 de 53 
+ 
+Corresponde a las facturas generas por parte de los PSS/PTS a los pacientes por conceptos 
+de recaudos de copagos, cuotas moderadoras o pagos compartidos. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+l 
+l 
+ 
+ 
+ 
+ 
+l 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+l 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+l 
+ 
+ 
+ID 
+ 
+ 
+ns 
+ 
+ 
+Campo 
+Descripción 
+Recaudo aportes 
+del usuario del 
+Sector Salud con 
+facturas 
+ 
+ 
+T 
+ 
+ 
+F 
+ 
+ 
+Tam 
+ 
+ 
+Padre 
+ 
+ 
+Oc 
+Observaciones 
+No se incluye 
+fragmento del sector 
+salud 
+ 
+ 
+V 
+ 
+ 
+Xpath 
+   
+ 
+Invoice 
+Grupo de campos 
+para información 
+relacionadas con el 
+recaudo de los 
+aportes 
+ 
+ 
+G 
+    
+ 
+1..1 
+  
+ 
+1.0 
+ 
+ 
+Invoice 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+  
+ 
+Cbc 
+ 
+Customiza 
+tionID 
+Indicador del tipo de 
+operación  de 
+recaudo del Sector 
+Salud; valor 
+constante 
+ 
+ 
+E 
+  
+ 
+1..12 
+ 
+Invoic 
+e 
+ 
+ 
+1..1 
+ 
+Debe ser informado el 
+literal “SS-Recaudo” 
+ 
+ 
+1.0 
+ 
+Invoice/cbc:Customization 
+ID 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el 
+INVOICE documentado por la DIAN 
+  
+Cac 
+Accounting 
+Customer 
+Party 
+  
+G 
+  Invoic 
+e 
+ 
+1.1 
+  Invoice/cac:AccountingC 
+ustomerParty 
+ 
+ 
+FAK02 
+ 
+ 
+Cbc 
+ 
+ 
+Additional 
+AccountID 
+Formato de datos de 
+adquirente: Persona 
+natural; ID de  
+usuario del servicio 
+de salud; valor 
+constante 
+ 
+ 
+E 
+ 
+ 
+A 
+ 
+ 
+1 
+Accou 
+ntingC 
+ustom 
+erPart 
+y 
+ 
+ 
+1..1 
+Debe ser informado el 
+valor “2” 
+Indica que será 
+utilizado el elemento 
+/Person 
+  
+Invoice/cac:AccountingC 
+ustomerParty/ 
+AdditionalAccountID=”2” 
+ 
+ 
+ 
+ 
+FAK03 
+ 
+ 
+ 
+ 
+Cac 
+ 
+ 
+ 
+ 
+Party 
+*** Datos de quien 
+paga cuota de 
+servicio en 
+//cac:PartyTaxSche 
+me 
+*** Datos del Usuario 
+del servicio de salud 
+en //cac:Person 
+ 
+ 
+ 
+ 
+G 
+   
+ 
+Accou 
+ntingC 
+ustom 
+erPart 
+y 
+ 
+ 
+ 
+ 
+1..1 
+*** Datos de quien 
+paga cuota del servicio 
+en 
+//cac:PartyTaxScheme 
+*** Datos del Usuario 
+del servicio de salud 
+en //cac:Person 
+  
+ 
+ 
+Invoice/cac:AccountingC 
+ustomerParty /Party 
+ 
+ 
+ 
+ 
+ 
+FAK19 
+ 
+ 
+ 
+ 
+ 
+Cac 
+ 
+ 
+ 
+ 
+PartyTaxS 
+cheme 
+ 
+ 
+ 
+Grupo de 
+información 
+tributarias de 
+Adquiriente. 
+ 
+ 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+ 
+ 
+Party 
+ 
+ 
+ 
+ 
+ 
+1..1 
+Seguir instrucciones 
+del Anexo Técnico 
+vigente por la DIAN. 
+Si   el   usuario 
+beneficiario del 
+servicio de salud no es 
+quien se informe este 
+grupo, se deberá 
+utilizar el grupo Person 
+para realizarlo. 
+  
+ 
+ 
+ 
+/Invoice/cac:Accounting 
+CustomerParty/cac:Part 
+y/cac:PartyTaxScheme 
+  
+Cac 
+ 
+Person 
+  
+G 
+   
+Party 
+ 
+0..1 
+Grupo de información 
+del Usuario 
+beneficiario del 
+servicio de salud 
+ Invoice/cac:AccountingC 
+ustomerParty 
+/Party/cac:Person 
+  
+Cbc 
+ 
+ID 
+Identificador de 
+Usuario beneficiario 
+del servicio de salud 
+ 
+E 
+  
+1..30 Perso 
+n 
+ 
+0..1 
+  Invoice/cac:AccountingC 
+ustomerParty 
+/Party/cac:Person/ID 
+ 
+---PAGE 23---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 23 de 53 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ns 
+ 
+ 
+Campo 
+Descripción 
+Recaudo aportes 
+del usuario del 
+Sector Salud con 
+facturas 
+ 
+ 
+T 
+ 
+ 
+F 
+ 
+ 
+Tam 
+ 
+ 
+Padre 
+ 
+ 
+Oc 
+Observaciones 
+No se incluye 
+fragmento del sector 
+salud 
+ 
+ 
+V 
+ 
+ 
+Xpath 
+   
+ 
+ 
+ 
+ 
+@schemeI 
+D 
+ 
+ 
+ 
+ 
+ 
+Códigos para 
+identificación fiscal 
+ 
+ 
+ 
+ 
+ 
+ 
+A 
+  
+ 
+ 
+ 
+ 
+ 
+1..2 
+ 
+ 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ 
+ 
+ 
+ 
+1..1 
+Código; Use la lista 
+expuesta en el anexo 
+técnico Unidad 
+Administrativa 
+Especial Dirección de 
+Impuestos y Aduanas 
+Nacionales DIAN 
+sobre el numeral 
+13.2.1. 
+Si no se encuentra, 
+utilice el valor “91” 
+  
+ 
+ 
+ 
+Invoice/cac:AccountingC 
+ustomerParty 
+/Party/cac:Person/ID/@s 
+chemeID 
+  
+Cbc 
+ 
+FirstName 
+Nombres del Usuario 
+beneficiario del 
+servicio de salud 
+ 
+E 
+  
+1..45 
+ 
+Perso 
+n 
+ 
+0..1 
+  Invoice/cac:AccountingC 
+ustomerParty 
+/Party/cac:Person/cbc:Fi 
+rstName 
+  
+Cbc 
+ 
+FamilyNa 
+me 
+Apellidos del Usuario 
+beneficiario del 
+servicio de salud 
+ 
+E 
+  
+1..45 
+ 
+Perso 
+n 
+ 
+0..1 
+  Invoice/cac:AccountingC 
+ustomerParty 
+/Party/cac:Person/cbc:F 
+amilyName 
+  
+ 
+Cac 
+ 
+IdentityDo 
+cumentRef 
+erence 
+  
+ 
+G 
+   
+Perso 
+n 
+ 
+ 
+0..1 
+Corresponde con el 
+emisor del documento 
+de Identificación 
+presentado por el 
+beneficiario 
+ Invoice/cac:AccountingC 
+ustomerParty 
+/Party/cac:Person/ 
+cac:IdentityDocumentRe 
+ference 
+  
+ 
+Cbc 
+ 
+ 
+ID 
+ 
+Identificador del 
+Usuario beneficiario 
+del servicio de salud 
+ 
+ 
+E 
+  
+ 
+1..20 
+Identit 
+yDocu 
+mentR 
+eferen 
+ce 
+ 
+ 
+0..1 
+  Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/ 
+cac:IdentityDocumentRe 
+ference /ID 
+   
+ 
+@schemeID 
+ 
+ 
+Tipo de identificación 
+ 
+ 
+A 
+  
+ 
+1..2 
+ 
+ 
+ID 
+ 
+ 
+1..1 
+Debe corresponder al 
+código de la columna 
+abreviación del 
+numeral 9 inciso a  de 
+este documento. 
+ Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/ 
+cac:IdentityDocumentRe 
+ference /ID/@schemeID 
+   
+ 
+@scheme 
+Name 
+ 
+ 
+Nombre del tipo de 
+identificación 
+ 
+ 
+ 
+A 
+  
+ 
+ 
+1..32 
+ 
+ 
+ 
+ID 
+ 
+ 
+ 
+1..1 
+Debe corresponder al 
+nombre de columna 
+tipo de documento de 
+identificación del 
+usuario del numeral 
+numeral 9 inciso a  de 
+este documento. 
+ Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/ 
+cac:IdentityDocumentRe 
+ference 
+/ID/@schemeName 
+  
+ 
+Cac 
+ 
+ 
+IssuerParty 
+Parte expedidora del 
+documento del 
+Usuario beneficiario 
+del servicio de salud 
+ 
+ 
+G 
+   
+ 
+ID 
+ 
+ 
+1..1 
+Ejemplo: 
+República de Ecuador 
+República de 
+Colombia 
+ Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/ 
+cac:IdentityDocumentRe 
+ference /cac:IssuerParty 
+  
+ 
+ 
+Cac 
+ 
+ 
+PartyNam 
+e 
+ 
+ 
+Nombre de la entidad 
+expedidora del 
+documento 
+ 
+ 
+ 
+G 
+   
+ 
+Issuer 
+Party 
+ 
+ 
+ 
+1..1 
+  Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/ 
+cac:IdentityDocumentRe 
+ference 
+/cac:IssuerParty/cac:Par 
+tyName 
+---PAGE 24---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 24 de 53 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ns 
+ 
+ 
+Campo 
+Descripción 
+Recaudo aportes 
+del usuario del 
+Sector Salud con 
+facturas 
+ 
+ 
+T 
+ 
+ 
+F 
+ 
+ 
+Tam 
+ 
+ 
+Padre 
+ 
+ 
+Oc 
+Observaciones 
+No se incluye 
+fragmento del sector 
+salud 
+ 
+ 
+V 
+ 
+ 
+Xpath 
+  
+ 
+ 
+Cbc 
+ 
+ 
+ 
+Name 
+ 
+ 
+Nombre de la entidad 
+expedidora del 
+documento 
+ 
+ 
+ 
+E 
+  
+ 
+1..45 
+ 
+ 
+PartyN 
+ame 
+ 
+ 
+ 
+0..1 
+  Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/ 
+cac:IdentityDocumentRe 
+ference 
+/cac:IssuerParty/cac:Par 
+tyName/Name 
+  
+ 
+ 
+Cac 
+ 
+ 
+PostalAddr 
+ess 
+  
+ 
+ 
+G 
+   
+ 
+Issuer 
+Party 
+ 
+ 
+ 
+0..1 
+  Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/ 
+cac:IdentityDocumentRe 
+ference 
+/cac:IssuerParty/cac:Pos 
+talAddress 
+  
+ 
+ 
+Cac 
+ 
+ 
+ 
+Country 
+ 
+Nombre del país de 
+la entidad 
+expedidora del 
+documento 
+ 
+ 
+ 
+G 
+   
+ 
+Postal 
+Addre 
+ss 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Referenciar con listas 
+de la DIAN 
+ Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/ 
+cac:IdentityDocumentRe 
+ference 
+/cac:IssuerParty/cac:Pos 
+talAddress/cac:Country 
+  
+ 
+ 
+Cbc 
+ 
+ 
+ 
+Identificati 
+onCode 
+  
+ 
+ 
+E 
+  
+ 
+ 
+3 
+ 
+ 
+ 
+Countr 
+y 
+ 
+ 
+ 
+1..1 
+ 
+Ver lista de valores 
+posibles   en   el 
+numeral    13.4.1, 
+columna “Código 
+alfa-2” del anexo 
+técnico de la DIAN 
+ Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/ 
+cac:IdentityDocumentRe 
+ference 
+/cac:IssuerParty/cac:Pos 
+talAddress/cac:Country/ 
+cbc:IdentificationCode 
+  
+ 
+ 
+Cbc 
+ 
+ 
+ 
+Name 
+  
+ 
+ 
+E 
+  
+ 
+ 
+4..41 
+ 
+ 
+ 
+Countr 
+y 
+ 
+ 
+ 
+1..1 
+ 
+Ver lista de valores 
+posibles   en   el 
+numeral 13.4.1, 
+columna “Nombre 
+Común” del anexo 
+técnico de la DIAN 
+ Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/ 
+cac:IdentityDocumentRe 
+ference 
+/cac:IssuerParty/cac:Pos 
+talAddress/cac:Country/ 
+cbc:Name 
+  
+Cac 
+ 
+Residence 
+Address 
+Dirección del Usuario 
+beneficiario del 
+servicio de salud 
+ 
+G 
+   
+Perso 
+n 
+ 
+0..1 
+  Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/R 
+esidenceAddress 
+  
+ 
+ 
+ 
+Cbc 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ 
+Códigode la ciudad 
+del Usuario 
+beneficiario  del 
+servicio de salud 
+ 
+ 
+ 
+ 
+E 
+  
+ 
+ 
+ 
+5 
+ 
+ 
+ 
+Reside 
+nceAd 
+dress 
+ 
+ 
+ 
+ 
+1..1 
+ 
+Este código de la 
+ciudad debe 
+corresponder a un 
+valor válido de lista de 
+municipios en el 
+numeral 13.4.3. del 
+anexo técnico vigente 
+de la DIAN 
+  
+ 
+ 
+Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/R 
+esidenceAddress/ID 
+---PAGE 25---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 25 de 53 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ns 
+ 
+ 
+Campo 
+Descripción 
+Recaudo aportes 
+del usuario del 
+Sector Salud con 
+facturas 
+ 
+ 
+T 
+ 
+ 
+F 
+ 
+ 
+Tam 
+ 
+ 
+Padre 
+ 
+ 
+Oc 
+Observaciones 
+No se incluye 
+fragmento del sector 
+salud 
+ 
+ 
+V 
+ 
+ 
+Xpath 
+  
+ 
+ 
+Cbc 
+ 
+ 
+ 
+CityName 
+ 
+ 
+Nombre de la ciudad 
+del Usuario 
+beneficiario  del 
+servicio de salud 
+ 
+ 
+ 
+E 
+  
+ 
+ 
+1..56 
+ 
+ 
+Reside 
+nceAd 
+dress 
+ 
+ 
+ 
+1..1 
+Este código de la 
+ciudad debe 
+corresponder a un 
+valor válido de lista de 
+municipios en el 
+numeral 13.4.3. del 
+anexo técnico vigente 
+de la DIAN 
+  
+Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/R 
+esidenceAddress/CityNa 
+me 
+  
+ 
+Cac 
+ 
+AddressLi 
+ne 
+  
+ 
+G 
+   
+Reside 
+nceAd 
+dress 
+ 
+ 
+1..N 
+  Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/R 
+esidenceAddress/Addre 
+ssLine[1] 
+  
+ 
+Cbc 
+ 
+ 
+Line 
+ 
+ 
+Dirección Línea-1 
+ 
+ 
+E 
+  
+1..30 
+ 
+Addre 
+ssLine 
+[1] 
+ 
+ 
+1..1 
+  Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/R 
+esidenceAddress/Addre 
+ssLine[1]/Line 
+  
+ 
+Cac 
+ 
+ 
+Country 
+ 
+Nombre del país del 
+Usuario beneficiario 
+del servicio de salud 
+ 
+ 
+G 
+   
+Reside 
+nceAd 
+dress 
+ 
+ 
+1..1 
+ 
+Referenciar con listas 
+de la DIAN 
+ Invoice/cac:AccountingC 
+ustomerParty 
+/cac:Party/cac:Person/R 
+esidenceAddress/Countr 
+y 
+  
+ 
+Cbc 
+ 
+ 
+Identificati 
+onCode 
+  
+ 
+E 
+  
+ 
+3 
+ 
+ 
+Countr 
+y 
+ 
+ 
+1..1 
+Ver lista de valores 
+posibles   en   el 
+numeral    13.4.1, 
+columna “Código 
+alfa-2” del anexo 
+técnico de la DIAN 
+ Invoice/cac:AccountingC 
+ustomerParty/cac:Party/ 
+cac:Person/ResidenceA 
+ddress/cac:Country/cbc:I 
+dentificationCode 
+  
+ 
+Cbc 
+ 
+ 
+Name 
+  
+ 
+E 
+  
+ 
+1..45 
+ 
+ 
+Countr 
+y 
+ 
+ 
+1..1 
+Ver lista de valores 
+posibles   en   el 
+numeral 13.4.1, 
+columna “Nombre 
+Común” del anexo 
+técnico de la DIAN 
+ Invoice/cac:AccountingC 
+ustomerParty/cac:Party/ 
+cac:Person/ResidenceA 
+ddress/cac:Country/cbc: 
+Name 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+ cac InvoiceLin 
+e Concepto de la venta G   Invoic 
+e 1..1   Invoice/cac:InvoiceLine 
+FAV02 cbc ID Número de Línea E N 1..4 Invoic 
+eLine 
+1..1 Notificación: si 
+contiene un valor ya 
+utilizado en el 
+elemento 
+/Invoice/cac:InvoiceLin 
+e/cbc:ID en otro grupo 
+de este archivo 
+Notificación: si los 
+números utilizados en 
+los diferentes grupos 
+no son consecutivos, 
+empezando en “1” 
+1.0 /Invoice/cac:InvoiceLine/ 
+cbc:ID 
+ 
+ 
+FAV08 
+ 
+ 
+@schemeI 
+D 
+ 
+ 
+Identificador 
+ 
+ 
+A 
+ 
+ 
+N 
+ 
+ 
+1-3 
+ 
+ 
+ID 
+ 
+ 
+0..1 
+Valida los posibles 
+valores en el numeral 
+13.3.13 previstos en la 
+0165 de 2023 o la 
+norma   que   los 
+modifique o sustituya 
+ 
+ 
+1.0 
+ 
+Invoice/cac:InvoiceLine/ 
+cbc:ID/ @schemeID 
+---PAGE 26---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 26 de 53 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ns 
+ 
+ 
+Campo 
+Descripción 
+Recaudo aportes 
+del usuario del 
+Sector Salud con 
+facturas 
+ 
+ 
+T 
+ 
+ 
+F 
+ 
+ 
+Tam 
+ 
+ 
+Padre 
+ 
+ 
+Oc 
+Observaciones 
+No se incluye 
+fragmento del sector 
+salud 
+ 
+ 
+V 
+ 
+ 
+Xpath 
+ Cac Item Línea de producto 
+que se factura G   Invoic 
+eLine 1..1   Invoice/cac:InvoiceLine/ 
+cac:Item 
+         Debe reportarse uno 
+de los siguientes 
+Conceptos 
+  
+ 
+Cbc Descriptio 
+n[1] 
+Descripción del 
+recaudo facturado 
+ 
+E 
+ 
+Item 
+ 
+1..3 
+• Copago 
+• Cuota 
+Moderadora 
+• Pagos 
+compartidos 
+en planes 
+voluntarios 
+de salud 
+Invoice/cac:InvoiceLine/ 
+cac:Item/cbc:Description 
+[1] 
+  
+Cbc Descriptio 
+n[2] 
+Descripción 
+complementaria 
+recaudo 
+ 
+del 
+ 
+E 
+   
+Item 1..3   Invoice/cac:InvoiceLine/ 
+cac:Item/cbc:Description 
+[2] 
+FBA01 cac Informatio 
+nContentP 
+roviderPart 
+y 
+Grupo de 
+información   que 
+describen el 
+Mandante de la 
+operación de venta. 
+Aplica solo para 
+mandatos, y se debe 
+informar a nivel de 
+ítem 
+G   Item 1..1 Obligatorio: Si la 
+venta de bienes o la 
+prestación de servicios 
+la realiza el FE a 
+nombre de este 
+tercero,   entonces 
+indique aquí el 
+documento. 
+1.0 /Invoice/cac:InvoiceLine/ 
+cac:Item/cac:Information 
+ContentProviderParty 
+       
+No informar este 
+grupo cuando el 
+recaudo se hace 
+directamente por la 
+entidad responsable 
+de pago o pagador 
+  
+ 
+ 
+FBA02 
+ 
+ 
+cac 
+ 
+PowerOfAt 
+torney 
+  
+ 
+G 
+  Inform 
+atiionC 
+ontent 
+Provid 
+er 
+ 
+ 
+1..1 
+Obligatorio:  si 
+InformationContentPro 
+viderParty es 
+informado 
+ 
+ 
+1.0 
+/Invoice/cac:InvoiceLine/ 
+cac:Item/cac:Information 
+ContentProviderParty/ca 
+c:PowerOfAttorney 
+ 
+ 
+FBA03 
+ 
+ 
+cac 
+ 
+ 
+AgentParty 
+  
+ 
+G 
+   
+Power 
+OfAtto 
+rney 
+ 
+ 
+1..1 
+Obligatorio:  si 
+InformationContentPro 
+viderParty es 
+informado 
+ 
+ 
+1.0 
+/Invoice/cac:InvoiceLine/ 
+cac:Item/cac:Information 
+ContentProviderParty/ca 
+c:PowerOfAttorney/cac: 
+AgentParty 
+ 
+ 
+FBA04 
+ 
+ 
+cac 
+ 
+ 
+PartyIdenti 
+fication 
+     
+ 
+Agent 
+Party 
+ 
+ 
+1..1 
+ 
+Obligatorio:  si 
+InformationContentPro 
+viderParty es 
+informado 
+ 
+ 
+1.0 
+/Invoice/cac:InvoiceLine/ 
+cac:Item/cac:Information 
+ContentProviderParty/ca 
+c:PowerOfAttorney/cac: 
+AgentParty/cac:PartyIde 
+ntification 
+ 
+ 
+FBA05 
+ 
+ 
+cbc 
+ 
+ 
+ID 
+ 
+ 
+Identificación 
+Mandante 
+ 
+ 
+del 
+ 
+ 
+E 
+ 
+ 
+N 
+ 
+ 
+113 
+ 
+PartyI 
+dentifi 
+cation 
+ 
+ 
+1..1 
+ 
+Identificación del 
+mandante. 
+Rechazo: Si 
+informado 
+ 
+ 
+ 
+no 
+ 
+ 
+1.0 
+/Invoice/cac:InvoiceLine/ 
+cac:Item/cac:Information 
+ContentProviderParty/ca 
+c:PowerOfAttorney/cac: 
+AgentParty/cac:PartyIde 
+ntification/cbc:ID 
+---PAGE 27---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 27 de 53 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ns 
+ 
+ 
+Campo 
+Descripción 
+Recaudo aportes 
+del usuario del 
+Sector Salud con 
+facturas 
+ 
+ 
+T 
+ 
+ 
+F 
+ 
+ 
+Tam 
+ 
+ 
+Padre 
+ 
+ 
+Oc 
+Observaciones 
+No se incluye 
+fragmento del sector 
+salud 
+ 
+ 
+V 
+ 
+ 
+Xpath 
+ 
+ 
+ 
+FBA06 
+  
+ 
+@scheme 
+AgencyID 
+     
+ 
+ 
+ID 
+ 
+ 
+ 
+1..1 
+ 
+ 
+Debe ser informado el 
+literal “195” 
+ /Invoice/cac:InvoiceLine/ 
+cac:Item/cac:Information 
+ContentProviderParty/ca 
+c:PowerOfAttorney/cac: 
+AgentParty/cac:PartyIde 
+ntification/cbc:ID/@sche 
+meAgencyID 
+ 
+ 
+ 
+FBA09 
+  
+ 
+@shemeA 
+gencyNam 
+e 
+     
+ 
+ 
+ID 
+ 
+ 
+ 
+0..1 
+Debe ser informado el 
+literal “CO, DIAN 
+(Dirección de 
+Impuestos y 
+Aduanas 
+Nacionales)” 
+ /Invoice/cac:InvoiceLine/ 
+cac:Item/cac:Information 
+ContentProviderParty/ca 
+c:PowerOfAttorney/cac: 
+AgentParty/cac:PartyIde 
+ntification/cbc:ID/@sche 
+meAgencyName 
+ 
+ 
+ 
+FBA07 
+  
+ 
+@schemeI 
+D 
+ 
+ 
+DV del NIT del 
+mandante 
+    
+ 
+ 
+ID 
+ 
+ 
+ 
+0..1 
+ 
+DV del NIT debe ser 
+informado en 
+@schemeID si 
+schameName=31 
+ /Invoice/cac:InvoiceLine/ 
+cac:Item/cac:Information 
+ContentProviderParty/ca 
+c:PowerOfAttorney/cac: 
+AgentParty/cac:PartyIde 
+ntification/cbc:ID/@sche 
+meID 
+---PAGE 28---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 28 de 53 
+ 
+c. REGISTRO DEL CONCEPTO QUE SE ACREDITARÁ COMO DE CUOTA MODERADORA – 
+COPAGO – PAGOS COMPARTIDOS EN PLANES VOLUNTARIOS DE SALUD - ANTICIPOS 
+Corresponde a la factura electrónica de venta en salud -FEV generada por los PSS/PTS a las 
+entidades responsables de pago y demás pagadores cuando en esta sean registradas valores 
+recaudados por conceptos de copagos, cuotas moderadoras y/o pagos compartidos que sean 
+acreditados al total de la FEV. 
+ 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ 
+ 
+ns 
+ 
+ 
+ 
+ 
+Campo 
+Descripción 
+Acreditación de 
+aportes del usuario 
+del Sector Salud a 
+las facturas que 
+pagará la 
+ERP/demás 
+pagadores 
+ 
+ 
+ 
+ 
+T 
+ 
+ 
+ 
+ 
+F 
+ 
+ 
+ 
+ 
+Tam 
+ 
+ 
+ 
+ 
+Padre 
+ 
+ 
+ 
+ 
+Oc 
+ 
+ 
+ 
+ 
+Observaciones 
+ 
+ 
+ 
+ 
+V 
+ 
+ 
+ 
+ 
+Xpath 
+   
+ 
+Invoice 
+Grupo de campos 
+para información 
+relacionadas con la 
+acreditación de los 
+aportes 
+ 
+ 
+G 
+    
+ 
+1..1 
+  
+ 
+1.0 
+ 
+ ext UBLExte 
+nsions 
+    Invoice 1..1   Invoice/ext:UBLExtensi 
+ons 
+  
+ 
+ext 
+ 
+UBLExte 
+nsion[2] 
+     
+UBLEx 
+tensio 
+ns 
+ 
+ 
+1..1 
+Corresponde a la 
+extensión de los datos 
+del sector salud 
+definidos en el 
+numeral 5, inciso a de 
+este documento 
+  
+Invoice/ext:UBLExtensi 
+ons/ 
+ext:UBLExtension[2] 
+  
+ 
+cbc 
+ 
+ 
+Customiz 
+ationID 
+ 
+Indicador del tipo de 
+operación del Sector 
+Salud 
+ 
+ 
+E 
+  
+ 
+1..12 
+ 
+ 
+Invoice 
+ 
+ 
+1..1 
+Debe reportarse uno 
+de los siguientes 
+códigos: 
+• “SS-CUFE” 
+• “SS-CUDE” 
+• “SS-POS” 
+• “SS-Num” 
+ 
+ 
+1.0 
+ 
+ 
+Invoice/cbc:Customizat 
+ionID 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+  
+ 
+ 
+ 
+ 
+cac 
+ 
+ 
+ 
+ 
+ 
+PrepaidP 
+ayment 
+ 
+ 
+ 
+Cantidad total 
+acreditar por 
+concepto asociado a 
+esta factura que se 
+libra a la ERP/demás 
+pagadores. 
+ 
+ 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+ 
+ 
+Invoice 
+ 
+ 
+ 
+ 
+ 
+1..4 
+Grupo para informar 
+cada concepto de los 
+recaudos generados 
+por parte del prestador, 
+así mismo el anticipo. 
+• Debe ser informado 
+de un grupo 
+PrepaidPayment por 
+cada lo conceptos: 
+informados en el 
+numeral 9, inciso d, 
+de este documento 
+  
+ 
+ 
+ 
+ 
+Invoice/cac:PrepaidPa 
+yment/ 
+  
+cbc 
+ 
+ID 
+ 
+ 
+Identificación del pago 
+ 
+E 
+ 
+A 
+1- Prepai 
+dPaym 
+ent 
+ 
+1..1 
+Empieza con “1”, los 
+números utilizados en 
+los diferentes grupos 
+deben ser consecutivos 
+  
+Invoice/cac:PrepaidPa 
+yment/cbc:ID 
+   
+ 
+@schem 
+eID 
+ 
+ 
+Identificador del 
+concepto recaudado 
+ 
+ 
+A 
+ 
+ 
+A 
+ 
+ 
+2-2 
+ 
+ 
+ID 
+ 
+ 
+1..1 
+Debe corresponde a 
+uno de los valores 
+posibles en la columna 
+código del numeral 9, 
+inciso d, de este  
+documento 
+  
+Invoice/cac:PrepaidPa 
+yment/cbc:ID/@schem 
+eID 
+---PAGE 29---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 29 de 53 
+ 
+ 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ 
+ 
+ns 
+ 
+ 
+ 
+ 
+Campo 
+Descripción 
+Acreditación de 
+aportes del usuario 
+del Sector Salud a 
+las facturas que 
+pagará la 
+ERP/demás 
+pagadores 
+ 
+ 
+ 
+ 
+T 
+ 
+ 
+ 
+ 
+F 
+ 
+ 
+ 
+ 
+Tam 
+ 
+ 
+ 
+ 
+Padre 
+ 
+ 
+ 
+ 
+Oc 
+ 
+ 
+ 
+ 
+Observaciones 
+ 
+ 
+ 
+ 
+V 
+ 
+ 
+ 
+ 
+Xpath 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+cbc 
+ 
+ 
+ 
+ 
+ 
+ 
+PaidAmo 
+unt 
+ 
+ 
+ 
+ 
+Cantidad  total 
+acreditar a esta 
+factura que se libra a 
+la ERP/demás 
+pagadores. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+N 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+4..15 
+ 
+ 
+ 
+ 
+ 
+Prepai 
+dPaym 
+ent 
+ Corresponde a la 
+sumatoria total de cada 
+concepto informado en 
+el atributo @schemeID 
+del campo ID de este 
+grupo generado por el 
+facturador electrónico 
+del sector salud, 
+registrados en el 
+archivo de RIPS, 
+cuando este aplique, 
+cuyo valor no podrá ser 
+mayor al valor total de 
+la factura 
+  
+ 
+ 
+ 
+ 
+ 
+Invoice/cac:PrepaidPa 
+yment/cbc:PaidAmount 
+  @curren 
+cyID 
+Código de moneda; 
+valor constante 
+ 
+A 
+  PaidA 
+mount 
+ 
+1..1 Debe reportarse el 
+literal “COP” 
+ Invoice/cac:PrepaidPa 
+yment/cbc:PaidAmount 
+/@currencyID 
+  
+ 
+cbc 
+ 
+Received 
+Date 
+ 
+Fecha en la cual el 
+pago fue recibido 
+ 
+ 
+E 
+ 
+ 
+F 
+ 
+ 
+10 
+ 
+Prepai 
+dPaym 
+ent 
+ 
+ 
+1..1 
+Corresponde a la fecha 
+en la cual fue recibido 
+el recaudo, en los 
+casos que se informe 
+más de un reporte 
+  
+Invoice/cac:PrepaidPa 
+yment/cbc:ReceivedDa 
+te 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+            
+  
+ 
+ 
+cbc 
+ 
+ 
+PrepaidA 
+mount 
+Valor Total a 
+acreditar; número 
+real; sin formato; sin 
+signo; con dos 
+decimales y 
+separador signo 
+punto; nnn.nn 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+N 
+ 
+ 
+ 
+4..15 
+ 
+Legal 
+Monet 
+aryTot 
+al 
+ 
+ 
+ 
+1..1 
+ 
+ 
+El valor reportado no 
+podrá ser mayor al 
+valor total de la factura 
+  
+ 
+Invoice/cac:LegalMone 
+taryTotal 
+/cbc:PrepaidAmount 
+   
+@curren 
+cyID 
+ 
+Código de moneda; 
+valor constante 
+ 
+A 
+  Prepai 
+dAmou 
+nt 
+ 
+1..1 
+ 
+Debe reportarse el 
+literal “COP” 
+ Invoice/cac:LegalMone 
+taryTotal 
+/cbc:PrepaidAmount/@ 
+currencyID 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+---PAGE 30---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ 
+ 
+ 
+d. REGISTRO DE OPERACIONES DE COPAGO – CUOTA MODERADORA – PAGOS 
+COMPARTIDOS EN PLANES VOLUNTARIOS DE SALUD, CUYO TRATAMIENTO 
+CONTRACTUAL Y CONTABLE HACE INNECESARIO QUE EL VALOR RECAUDADO SE 
+ACREDITE A LA FACTURA QUE LIBRARÁ EL PRESTADOR DE SERVICIOS DE SALUD O 
+EL PROVEEDOR DE TECNOLOGÍAS EN SALUD A LA ENTIDAD RESPONSABLE DE PAGO 
+Y DEMÁS PAGADORES 
+Corresponde a la factura electrónica de venta en salud -FEV generada por los PSS/PTS a las 
+entidades responsables de pago y demás pagadores cuando en esta sean registradas valores 
+recaudados por conceptos de copagos, cuotas moderadoras y/o pagos compartidos que sean 
+informativos en la generación de la FEV. 
+ 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ 
+ 
+Ns 
+ 
+ 
+ 
+ 
+Campo 
+Descripción 
+Reporte de aportes 
+del usuario del SS y 
+aplicación de 
+tratamientos 
+contractuales  y 
+contables con 
+facturas 
+ 
+ 
+ 
+ 
+T 
+ 
+ 
+ 
+ 
+F 
+ 
+ 
+ 
+ 
+Tam 
+ 
+ 
+ 
+ 
+Padre 
+ 
+ 
+ 
+ 
+Oc 
+ 
+ 
+ 
+ 
+Observaciones 
+ 
+ 
+ 
+ 
+V 
+ 
+ 
+ 
+ 
+Xpath 
+ 
+   
+ 
+Invoice 
+Grupo de campos 
+para información 
+relacionadas con el 
+recaudo de los 
+aportes 
+ 
+ 
+G 
+    
+ 
+1..1 
+  
+ 
+1.0 
+  
+ ext UBLExte 
+nsions 
+ G   Invoice 1..1   Invoice/ext:UBLExte 
+nsions 
+ 
+  
+ 
+ext 
+ 
+UBLExte 
+nsion[2] 
+  
+ 
+G 
+   
+UBLEx 
+tensio 
+ns 
+ 
+ 
+1..1 
+Corresponde a la 
+extensión de los datos 
+del sector salud definidos 
+en el numeral 5, inciso a  
+de este documento 
+  
+Invoice/ext:UBLExte 
+nsions/ 
+ext:UBLExtension[2] 
+ 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+ 
+   Indicador del tipo de           
+cbc Customiz 
+ationID 
+operación de 
+recaudo del Sector E 1..12 Invoice 1..1 Debe  reportarse 
+Reporte” 
+“SS- 1.0 Invoice/cbc:Customi 
+zationID 
+  Salud         
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+ 
+         Grupo para informar 
+cada concepto de los 
+recaudos generados 
+por parte del prestador, 
+así mismo el anticipo. 
+   
+ 
+ 
+ 
+cac 
+ 
+ 
+ 
+PrepaidP 
+ayment 
+Cantidad total 
+acreditar por 
+concepto asociado a 
+esta factura que NO 
+se libra a la 
+ERP/demás 
+pagadores. 
+ 
+ 
+ 
+G 
+ 
+ 
+ 
+Invoice 
+ 
+ 
+ 
+1..4 
+• Debe ser informado 
+de un grupo 
+PrepaidPayment por 
+cada lo conceptos: 
+informados numeral 
+9, inciso d, de este 
+documento 
+• Esta valores serán 
+informativos y no 
+entraran 
+ 
+ 
+ 
+Invoice/cac:PrepaidPa 
+yment/ 
+      
+Estos valores serán 
+informativos. 
+ 
+DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 30 de 53 
+---PAGE 31---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 31 de 53 
+ 
+ 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ 
+ 
+Ns 
+ 
+ 
+ 
+ 
+Campo 
+Descripción 
+Reporte de aportes 
+del usuario del SS y 
+aplicación de 
+tratamientos 
+contractuales  y 
+contables con 
+facturas 
+ 
+ 
+ 
+ 
+T 
+ 
+ 
+ 
+ 
+F 
+ 
+ 
+ 
+ 
+Tam 
+ 
+ 
+ 
+ 
+Padre 
+ 
+ 
+ 
+ 
+Oc 
+ 
+ 
+ 
+ 
+Observaciones 
+ 
+ 
+ 
+ 
+V 
+ 
+ 
+ 
+ 
+Xpath 
+  
+cbc 
+ 
+ID 
+ 
+ 
+Identificación del pago 
+ 
+E 
+ 
+A 
+1- Prepai 
+dPaym 
+ent 
+ 
+1..1 
+Empieza con “1”, los 
+números utilizados en 
+los diferentes grupos 
+deben ser consecutivos 
+  
+Invoice/cac:PrepaidPa 
+yment/cbc:ID 
+   
+ 
+@schem 
+eID 
+ 
+ 
+Identificador del 
+concepto recaudado 
+ 
+ 
+A 
+ 
+ 
+A 
+ 
+ 
+2-2 
+ 
+ 
+ID 
+ 
+ 
+1..1 
+Debe corresponde a 
+uno de los valores 
+posibles en la columna 
+código del numeral 9, 
+inciso d, de este  
+documento 
+  
+Invoice/cac:PrepaidPa 
+yment/cbc:ID/@schem 
+eID 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+cbc 
+ 
+ 
+ 
+ 
+ 
+ 
+PaidAmo 
+unt 
+ 
+ 
+ 
+ 
+Cantidad  total 
+acreditar a esta 
+factura que se libra a 
+la ERP/demás 
+pagadores. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+N 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+4..15 
+ 
+ 
+ 
+ 
+ 
+Prepai 
+dPaym 
+ent 
+ Corresponde a la 
+sumatoria total de cada 
+concepto informado en 
+el atributo @schemeID 
+del campo ID de este 
+grupo generado por el 
+facturador electrónico 
+del sector salud, 
+registrados en el 
+archivo de RIPS, 
+cuando este aplique, 
+cuyo valor no podrá ser 
+mayor al valor total de 
+la factura 
+  
+ 
+ 
+ 
+ 
+ 
+Invoice/cac:PrepaidPa 
+yment/cbc:PaidAmount 
+  @curren 
+cyID 
+Código de moneda; 
+valor constante 
+ 
+A 
+  PaidA 
+mount 
+ 
+1..1 Debe reportarse el 
+literal “COP” 
+ Invoice/cac:PrepaidPa 
+yment/cbc:PaidAmount 
+/@currencyID 
+  
+ 
+cbc 
+ 
+Received 
+Date 
+ 
+Fecha en la cual el 
+pago fue recibido 
+ 
+ 
+E 
+ 
+ 
+F 
+ 
+ 
+10 
+ 
+Prepai 
+dPaym 
+ent 
+ 
+ 
+1..1 
+Corresponde a la fecha 
+en la cual fue recibido 
+el recaudo, en los 
+casos que se informe 
+más de un reporte 
+  
+Invoice/cac:PrepaidPa 
+yment/cbc:ReceivedDa 
+te 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+  
+ 
+ 
+cbc 
+ 
+ 
+ 
+PrepaidA 
+mount 
+Valor Total a 
+acreditar; número 
+real; sin formato; sin 
+signo; con dos 
+decimales y 
+separador signo 
+punto 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+N 
+ 
+ 
+ 
+4..15 
+ 
+ 
+Legal 
+Monet 
+aryTot 
+al 
+ 
+ 
+ 
+1..1 
+El valor reportado no 
+podrá ser mayor al 
+valor total de la factura 
+Este valor es 
+Informativo y no 
+restará al total de la 
+FEV en salud. 
+  
+ 
+Invoice/cac:LegalMone 
+taryTotal 
+/cbc:PrepaidAmount 
+   
+@curren 
+cyID 
+ 
+Código de moneda; 
+valor constante 
+ 
+A 
+  Prepai 
+dAmou 
+nt 
+ 
+1..1 
+ 
+Debe reportarse el 
+literal “COP” 
+ Invoice/cac:LegalMone 
+taryTotal 
+/cbc:PrepaidAmount/@ 
+currencyID 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+---PAGE 32---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 32 de 53 
+ 
+ 
+ 
+e. EMISIÓN DE FACTURAS ELECTRÓNICAS PARA SERVICIOS DE SALUD SIN RECAUDOS 
+PREVIOS POR OPERACIONES DE COPAGO – CUOTA MODERADORA - PAGOS 
+COMPARTIDOS EN PLANES VOLUNTARIOS DE SALUD 
+ 
+Corresponde a la factura electrónica de venta en salud -FEV generar por los PSS/PTS a las 
+entidades responsables de pago y demás pagadores cuando el pago de esta sea asumida por 
+ 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ 
+ns 
+ 
+ 
+ 
+Campo 
+Descripción 
+Facturación de 
+bienes y servicios del 
+SS sin recaudos de 
+aportes del usuario 
+del SS 
+ 
+ 
+ 
+T 
+ 
+ 
+ 
+F 
+ 
+ 
+ 
+Tam 
+ 
+ 
+ 
+Padre 
+ 
+ 
+ 
+Oc 
+ 
+ 
+ 
+Observaciones 
+ 
+ 
+ 
+V 
+ 
+ 
+ 
+Xpath 
+   
+ 
+Invoice 
+Grupo de campos 
+para información 
+relacionadas con el 
+recaudo de los 
+aportes 
+ 
+ 
+G 
+    
+ 
+1..1 
+  
+ 
+1.0 
+ 
+ ext UBLExten 
+sions 
+ G   Invoice 1..1   Invoice/ext:UBLExte 
+nsions 
+  
+ 
+ext 
+ 
+UBLExten 
+sion[2] 
+  
+ 
+G 
+   
+UBLEx 
+tensio 
+ns 
+ 
+ 
+1..1 
+Corresponde a la 
+extensión de los datos 
+del sector salud definidos 
+en el numeral 5, inciso a 
+de este documento 
+  
+Invoice/ext:UBLExte 
+nsions/ 
+ext:UBLExtension[2] 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+  
+cbc 
+ 
+Customiza 
+tionID 
+Indicador del tipo de 
+operación de 
+recaudo del Sector 
+Salud 
+ 
+E 
+  
+1..12 
+ 
+Invoice 
+ 
+1..1 
+ 
+Debe reportarse “SS-
+SinAporte” 
+ 
+1.0 
+ 
+Invoice/cbc:Customi 
+zationID 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+ 
+ 
+f. EMISIÓN DE FACTURAS POR COMPRAS DIRECTAS 
+ 
+ 
+Aplica para las facturas emitidas por los laboratorios, fabricantes, importadores o titulares de 
+registro sanitario que venden directamente a las EPS y otros pagadores para ser dispensados 
+por los Gestores Farmacéuticos. Esta será una factura convencional (sin campos adicionales 
+del sector salud y sin RIPS). 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+  
+ 
+ext 
+ 
+ 
+UBLExtensions 
+Debe usar como 
+mínimo las 
+extensiones definidas 
+por la DIAN para toda 
+factura electrónica 
+ 
+ 
+G 
+   
+ 
+Invoice 
+ 
+ 
+1..1 
+  
+ 
+1.0 
+ 
+root/ext:UBLExtensio 
+ns 
+---PAGE 33---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 33 de 53 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+         Aplica para   
+         entidades 
+         fabricantes, 
+         importadores y 
+         titulares de 
+         Registro 
+         Sanitario, acorde 
+         a la Resolución 
+         1962 de 2025, 
+         que venden 
+         medicamentos y 
+         dispositivos 
+         médicos 
+         directamente a 
+         las entidades 
+         responsables de 
+         pago para que 
+         sean 
+         dispensados a 
+         través de los 
+         gestores 
+         farmacéuticos. 
+          
+Deberá 
+         informarse la 
+ 
+ 
+FAC13 
+ 
+ 
+cbc 
+ 
+ 
+Note 
+Información adicional: 
+Texto libre, relativo al 
+documento 
+ 
+ 
+E 
+ 
+ 
+A 
+ 
+1- 
+500 
+ 
+ 
+Invoice 
+ 
+ 
+0..N 
+siguiente 
+estructura: 
+CUCON:132321 
+3213213213123 
+         12312132 
+         Donde la palabra 
+         CUCON debe 
+         ser literal y en 
+         mayúsculas 
+         como de define 
+         en el ejemplo. 
+         El separador 
+         lógico es “:” dos 
+         puntos, seguido 
+         del código único 
+         del contrato que 
+         corresponde a la 
+         cadena  de  64 
+         caracteres del 
+         contrato 
+         establecido entre 
+         el Fabricantes, 
+         Importadores  y 
+         Titulares de 
+         Registro 
+         Sanitario  y  la 
+         Entidad 
+         responsable  de 
+         pago 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+---PAGE 34---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 34 de 53 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+ 
+ 
+ 
+ 
+FAV01 
+ 
+ 
+ 
+ 
+cac 
+ 
+ 
+ 
+ 
+InvoiceLine 
+Grupo de campos para 
+información 
+relacionadas con una 
+línea de  factura 
+Cuando  se  deba 
+facturar un producto y 
+un servicio, se deberán 
+informar     en 
+Items(InvoiceLine) por 
+seprado. 
+ 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+ 
+Invoice 
+ 
+ 
+ 
+ 
+1..N 
+  
+ 
+ 
+ 
+1.0 
+ 
+ 
+ 
+ 
+/Invoice/cac:InvoiceL 
+ine 
+         Se debe informar 
+el bien/servicio 
+que se vende. 
+  
+ 
+ 
+FAV03 
+ 
+ 
+cbc 
+ 
+ 
+Note 
+Información Adicional: 
+Texto libre para añadir 
+información adicional  
+al artículo. 
+ 
+ 
+E 
+ 
+ 
+A 
+ 
+20… 
+5000 
+ 
+ 
+0..1 
+Dispositivos 
+medicos 
+Medicamentos 
+ 
+ 
+1.0 
+ 
+/Invoice/cac:InvoiceL 
+ine/cbc:Note 
+        Alimentos de 
+propósito medico 
+especial - APME 
+  
+         Se debe   
+ 
+ 
+FAZ09 
+ 
+ 
+cac 
+ 
+StandardItemId 
+entification 
+Grupo de datos de 
+identificación del 
+artículo o servicio  
+de acuerdo con un 
+estándar 
+ 
+ 
+G 
+ 
+ 
+Item 
+ 
+ 
+0..1 
+informar  la 
+identificación 
+del artículo o 
+servicio  de 
+acuerdo con 
+ 
+1. 
+0 
+/Invoice/cac:Invoi 
+ceLine/cac:Item/c 
+ac:StandardItemId 
+entification 
+       el estándar   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+FAZ10 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+cbc 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Código de acuerdo 
+con el estándar 
+descrito  en el 
+atributo 
+ID/@schemeAgency 
+ID 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+A 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Stand 
+ardIte 
+mIde 
+ntifica 
+tion 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1..1 
+Se podrá 
+utilizar   los 
+códigos de las 
+tablas  IUM 
+(identificador 
+único    de 
+medicamentos 
+), o de no 
+tenerlo el CUM 
+(código único 
+de 
+medicamentos 
+). Para los 
+dispositivos 
+médicos  e 
+insumos se 
+preferirá el uso 
+del UDI 
+(identificador 
+único de 
+dispositivos) 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1. 
+0 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+/Invoice/cac:Invoi 
+ceLine/cac:Item/c 
+ac:StandardItemId 
+entification/cbc:I 
+D 
+---PAGE 35---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 35 de 53 
+ 
+ 
+ 
+ID 
+ 
+ns 
+ 
+Campo 
+Descripción 
+Extensión del Sector 
+Salud. 
+ 
+T 
+ 
+F 
+ 
+Tam 
+ 
+Padre 
+ 
+Oc 
+ 
+Observaciones 
+ 
+V 
+ 
+Xpath 
+ 
+ 
+ 
+FAZ11 
+ 
+ 
+ 
+cbc 
+ 
+ 
+ 
+@schemeID 
+ 
+ 
+ 
+Código del estándar 
+ 
+ 
+ 
+A 
+ 
+ 
+ 
+A 
+ 
+Stand 
+ardIte 
+mIde 
+ntifica 
+tion 
+ 
+ 
+ 
+1..1 
+Se debe 
+informar los 
+valores 
+establecidos 
+según 
+estándares de 
+la tabla 0 
+ 
+ 
+1. 
+0 
+/Invoice/cac:Invoi 
+ceLine/cac:Item/c 
+ac:StandardItemId 
+entification/cbc:I 
+D@schemeID 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+FAZ12 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+cbc 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+@schemeName 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Nombre del 
+estándar 
+informando a 
+nivel de item. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+A 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+A 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ID 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+0..1 
+Rechazo si el 
+valor 
+informado es 
+diferente al 
+de la tabla 
+13.3.5 de la 
+columna 
+@schemeNa 
+me 
+Este valor 
+debe ser el 
+siguiente de 
+la columna 
+informado en 
+el @schemeID 
+Ejemplo: 
+Si @ 
+schemeID = 
+001 el valor 
+esperado en 
+@ 
+schemeName 
+= UNSPSC 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1. 
+0 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+/Invoice/cac:Invoi 
+ceLine/cac:Item/c 
+ac:StandardItemId 
+entification/cbc:I 
+D/@schemeName 
+ 
+ 
+FAZ13 
+ 
+ 
+cbc 
+ 
+ 
+@schemeName 
+  
+ 
+A 
+ 
+ 
+A 
+  
+ 
+ID 
+ 
+ 
+0..1 
+ 
+ 
+1. 
+0 
+/Invoice/cac:Invoi 
+ceLine/cac:Item/c 
+ac:StandardItemId 
+entification/cbc:I 
+D/@schemeName 
+ 
+ 
+FAZ14 
+ 
+ 
+cbc 
+ 
+ 
+@schemeAgenc 
+yID 
+  
+ 
+A 
+ 
+ 
+A 
+  
+ 
+ID 
+ 
+ 
+0..1 
+Notificación: 
+Si 
+ID@schemeI 
+D  =  010  y 
+ID@schemeA 
+gencyID <> 9 
+ 
+ 
+1. 
+0 
+/Invoice/cac:Invoi 
+ceLine/cac:Item/c 
+ac:StandardItemId 
+entification/cbc:I 
+D/@schemeAgen 
+cyID 
+ 
+ 
+FAZ15 
+ 
+ 
+cbc 
+ 
+ 
+@schemeAgenc 
+yName 
+  
+ 
+A 
+ 
+ 
+A 
+  
+ 
+ID 
+ 
+ 
+0..1 
+  
+ 
+1. 
+0 
+/Invoice/cac:Invoi 
+ceLine/cac:Item/c 
+ac:StandardItemId 
+entification/cbc:I 
+D/@schemeAgen 
+cyName 
+---PAGE 36---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 36 de 53 
+ 
+ 
+ 
+g. REGISTRO DE UN MISMO CUPS CON DIFERENTE VALOR Y NOTA ACLARATORIA 
+ 
+Aplica para facturas que manejan un mismo CUPS con distinto valor asociado a características 
+propias del servicio pactadas por las partes. 
+ID ns Campo Descripción T F Tam Padre Oc Observaciones V Xpath 
+De aquí en adelante se deben incluir los demás campos que correspondan tal y como aparece en el XSD y en el INVOICE 
+documentado por la DIAN 
+ 
+ 
+ 
+FAV01 
+ 
+ 
+ 
+cac 
+ 
+ 
+ 
+InvoiceLine 
+Grupo de campos para 
+información relacionadas con 
+una línea de factura Cuando 
+se deba facturar un producto 
+y un servicio, se deberán 
+informar en 
+Items(InvoiceLine) por 
+seprado. 
+ 
+ 
+ 
+G 
+   
+ 
+ 
+Invoice 
+ 
+ 
+ 
+1..N 
+  
+ 
+ 
+1.0 
+ 
+ 
+ 
+/Invoice/cac:InvoiceL 
+ine 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+FAV03 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+cbc 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Note 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Información Adicional: Texto 
+libre para añadir información 
+adicional al artículo. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+E 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+A 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+20… 
+5000 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1..1 
+Se deberá 
+registrar en los 
+casos  que 
+aplique, los 
+detalles de un 
+mismo   CUPS 
+con distinta 
+descripción y 
+distinto valor, 
+esta información 
+no será objeto de 
+validación por 
+parte del MUV y 
+tendrá carácter 
+informativo para 
+el pagador 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1.0 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+/Invoice/cac:InvoiceL 
+ine/cbc:Note 
+---PAGE 37---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 37 de 53 
+ 
+ 
+7. USO DE MODOS DE OPERACIÓN 
+ 
+a. MODOS DE USO – 1: SS-CUFE, SS-CUDE, SS-POS, SS-SNUM 
+ 
+Nota: Debe ser informado la extensión con los datos del sector salud 
+ 
+b. MODOS DE USO – 2: SS-RECAUDO 
+ 
+---PAGE 38---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 38 de 53 
+ 
+c. MODOS DE USO – 3: SS-REPORTE 
+ 
+Nota: Debe ser informado la extensión con los datos del sector salud 
+ 
+ 
+MODOS DE USO – 4: SS-SINAPORTE 
+ 
+Nota: Debe ser informada la extensión del sector salud cuando se deba reportar uno de los valores allí 
+reportados. 
+---PAGE 39---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 39 de 53 
+ 
+8. TIPOS DE OPERACIÓN SALUD 
+ 
+La siguiente tabla muestra la definición para cada uno de los tipos de operación definidos para 
+las facturas electrónicas. 
+ 
+ 
+ 
+Código 
+Tipos de operación Salud 
+Resolución 058:2020 de la Contaduría General de la Nación 
+/Invoice/cbc:CustomizationID 
+Definición 
+ 
+ 
+SS-CUFE 
+Acreditación. Este documento incluye referencia(s) de Factura Electrónica de Venta (tipo 01 o 
+04) que comprueba el recaudo de Cuotas Moderadoras o Copagos, como recursos a favor de 
+terceros, así como la legalización de anticipos, los cuales son acreditados a la presente Factura 
+Electrónica de Venta con destino a la aseguradora que aparece como adquiriente. – Activa el 
+Método de cálculo del Sector Salud. 
+ 
+SS-CUDE 
+Acreditación. Este documento incluye referencia(s) de Factura de Contingencia (tipos 03) que 
+reconoce valores recaudados correspondientes a Cuotas Moderadoras o Copagos, como 
+recursos a favor de terceros, así como la legalización de anticipos, los cuales son acreditados 
+a la presente Factura Electrónica de Venta con destino a la aseguradora que aparece como 
+adquiriente. – Activa el Método de cálculo del Sector Salud. 
+ 
+ 
+SS-POS 
+Acreditación. Este documento incluye referencia(s) de Documento Equivalente de Venta POS 
+o de Documento equivalente electrónico tiquete de máquina registradora con sistema P.O.S. 
+según los lineamientos establecidos en la Resolución 0165 de 2023 que comprueba el recaudo 
+de Cuotas Moderadoras o Copagos, como recursos a favor de terceros, así como la legalización 
+de anticipos, los cuales son acreditados a la presente Factura Electrónica de Venta con destino 
+a la aseguradora que aparece como adquiriente. – Activa el Método de cálculo del Sector Salud. 
+ 
+SS-SNum 
+Acreditación. Este documento incluye referencia(s) de Factura Talonario que comprueba el 
+recaudo de Cuotas Moderadores o Copagos, como recursos a favor de terceros, así como la 
+legalización de anticipos, los cuales son acreditados a la presente Factura Electrónica de Venta 
+con destino a la aseguradora que aparece como adquiriente. – Activa el Método de cálculo del 
+Sector Salud. 
+ 
+SS-Recaudo 
+Recaudación. Comprobante de recaudo de Cuotas Moderadores, Copagos o Pagos 
+compartidos en planes voluntarios de salud, recaudados directamente por la ERP o entidad 
+autorizada para ofrecer planes voluntarios de salud o por parte de PSS o PTS como recursos 
+a favor de un tercero. – No Activa el Método de cálculo del Sector Salud. 
+ 
+SS-Reporte 
+Reporte. Este documento reporta referencia(s) de diversa índole que comprueban recaudo de 
+Cuotas Moderadoras o Copagos, a las cuales ya se les dio tratamiento contable. – No Activa 
+el Método de cálculo del Sector Salud. 
+SS-SinAporte 
+Reporte. Sin aporte, ni recaudo en dinero por parte de los afiliados del régimen contributivo por 
+concepto de Cuotas Moderadoras o Copagos. – No Activa el Método de cálculo del Sector 
+Salud. 
+ 
+En los casos de las notas crédito y notas debito se deben utilizar los tipos de operación definidos 
+por la Unidad Administrativa Especial Dirección de Impuestos y Aduanas Nacionales DIAN, en 
+los numerales que se detallan a continuación, previstos en la Resolución 0165 de 2023: 
+ 
+• 13.1.5.2. Documento CreditNote – Nota Crédito y 
+• 13.1.5.3. Documento DebitNote – Nota Débito del anexo técnico. 
+ 
+Para las validaciones realizadas por el mecanismo único de validación, los únicos tipos de 
+operación permitidos son: 
+ 
+Documento Código Valor 
+Nota Debito 20 Nota Crédito que referencia una factura electrónica. 
+Nota Debito 30 Nota Débito que referencia una factura electrónica. 
+Ver ejemplificaciones disponibles en el micrositio de factura electrónica en salud: 
+https://www.sispro.gov.co/central-financiamiento/Pages/facturacion-electronica.aspx 
+---PAGE 40---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 40 de 53 
+ 
+ 
+ 
+ 
+ 
+ 
+a. MÉTODO DE CÁLCULO DEL SECTOR SALUD 
+ 
+Mediante la Resolución 058 de 2020 la Contaduría General de la Nación detalló cómo se 
+realizan los reconocimientos en la contabilidad sobre los ingresos y recaudos, por la prestación 
+de servicios del sector salud. 
+En la factura electrónica de venta con destino a las aseguradoras del sector salud podrán 
+incluirse los identificadores y los valores recaudados de las facturas (papel y electrónicas), o 
+los documentos equivalentes electrónicos tiquete de máquina registradora con sistema P.O.S., 
+donde conste dicho ingreso, o las notas crédito a que haya lugar. Los identificadores 
+corresponderán a operaciones soportadas mediante facturas electrónicas con validación previa 
+DIAN, o con facturas de talonario o papel usadas en periodos de inconveniente tecnológico del 
+facturador, o de documentos equivalentes electrónicos, tiquete de máquina registradora con 
+sistema P.O.S., cuyos rangos deberán corresponder a los autorizados por la UAE DIAN. 
+Si efectivamente acreditan la factura, entonces usará los códigos SS -CUFE, SS-CUDE, SS-
+POS o SS-SNum en el campo /Invoice/cbc:CustomizationID. Los códigos mencionados para el 
+/Invoice/cbc:CustomizationID activan el método de cálculo del sector salud informando los 
+valores acreditados, estos valores se acumularán por cada concepto definido en el numeral 9, 
+inciso d, en un fragmento /Invoice/cac:PrepaidPayment, como se define en el numeral 6 Cuerpo 
+XML  inciso  c,  y  estos  valores  posteriormente  participarán  de  la  operación 
+/Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount, cuyo valor no podrá ser mayor al valor 
+total de la factura. 
+Si el emisor determina que los valores registrados en los fragmentos 
+/Invoice/cac:PrepaidPayment, no acreditan la factura que los contiene, con destino a la 
+aseguradora, entonces usará los códigos SS-Reporte o SS-SinAporte en el campo 
+/Invoice/cbc:CustomizationID. Este valor no activará el método de cálculo del sector salud. 
+ 
+Para identificar que una factura electrónica fue expedida para recaudar cuotas moderadoras, 
+copagos o pagos compartidos en planes voluntarios de salud, se usará el código SS-Recaudo 
+en el campo /Invoice/cbc:CustomizationID. 
+b. ENVÍO DE LA FACTURA ELECTRÓNICA DE VENTA EN SALUD AL MINISTERIO DE 
+SALUD Y PROTECCIÓN SOCIAL 
+Las disposiciones establecidas en el presente anexo técnico tienen como propósito 
+fundamental establecer los campos de datos adicionales en formato XML para la generación 
+de la factura electrónica de venta en salud, la cual corresponde a la generada por los 
+facturadores electrónicos del sector salud definidos en el artículo segundo de la presente 
+resolución, con destino a las entidades responsables de pago y demás pagadores, para el cobro 
+de la prestación o provisión de los servicios y tecnologías de salud. 
+ 
+La factura electrónica de venta en salud deberá ser enviada al adquiriente y al Ministerio de 
+Salud y Protección Social en los términos definidos en la presente resolución. 
+La factura electrónica de venta relacionada con el recaudo de pagos moderadores se expide 
+por parte del facturador electrónico del sector salud de manera individual a cada usuario, no 
+debe incluir los campos adicionales del sector salud en formato XML a nivel de extensión. 
+La información las facturas relacionadas con el recaudo de pagos moderadores, no hace parte 
+de la información que se envía a las entidades responsables de pago y demás pagadores al 
+---PAGE 41---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 41 de 53 
+ 
+interior de las facturas electrónicas de venta en salud relacionadas con el cobro de la prestación 
+o provisión de los servicios y tecnologías de salud. 
+La mención de estas facturas en los tipos de operación SS -Recaudo y SS-SinAporte tienen la 
+finalidad de informar a los facturadores electrónicos del sector salud, el tipo de operación que 
+deben utilizar para el registro de estos recaudos. 
+c. FACTURACIÓN DE PAGOS MODERADORES 
+ 
+Los pagos moderadores recaudados efectivamente por los Prestadores de Servicios de Salud 
+-PSS y Proveedores de Tecnologías en Salud -PTS, corresponden a recursos recibidos a favor 
+de terceros que no hacen parte de los ingresos de estas entidades, deben ser acreditados a la 
+ERP o pagador en la FEV en salud y relacionados en el RIPS soporte de la misma. Para el 
+recaudo de pagos moderadores los Prestadores de Servicios de Salud -PSS y Proveedores de 
+Tecnologías en Salud -PTS, deberán utilizar FEV convencional con el tipo de operación SS -
+Recaudo, identificando el tercero al cual corresponden los recursos recaudados. 
+ 
+9. TABLAS 
+ 
+a. DOCUMENTOS DE IDENTIFICACIÓN: 
+ 
+Informar dato según la tabla de referencia “TipoIdPISIS”, disponible en web.sispro.gov.co. No 
+son válidas las opciones relacionadas con personas sin identificar. Las opciones relacionadas 
+con menores de edad solo pueden utilizarse en el grupo Person, atributos: 
+/Invoice/cac:AccountingCustomerParty/cac:Party/cac:Person/cac:IdentityDocumentReference/ 
+cbc:ID/@schemeID 
+ 
+/Invoice/cac:AccountingCustomerParty/cac:Party/cac:Person/cac:IdentityDocumentReference/ 
+cbc:ID/@schemeName 
+b. MODALIDADES DE PAGO 
+ 
+Informar dato según la tabla de referencia “modalidadPago”, disponible en web.sispro.gov.co. 
+ 
+c. COBERTURA O PLAN DE BENEFICIOS 
+ 
+Informar dato según la tabla de referencia “coberturaPlan”, disponible en web.sispro.gov.co. 
+ 
+d. CONCEPTO DE RECAUDO 
+ 
+Informar dato según la tabla de referencia “conceptoRecaudo”, disponible en 
+web.sispro.gov.co. 
+El concepto “Anticipos” aplica únicamente para el reporte de dichos valores en la FEV en salud 
+y no debe utilizarse en la generación del RIPS como soporte de la FEV en salud. Los anteriores 
+conceptos de recaudo pueden ser utilizados para su reporte por parte del facturador electrónico 
+del sector salud, cuando así se haya pactado en los acuerdos de voluntades relacionados con 
+coberturas diferentes a las del SGSSS. 
+ 
+e. FACTURA SIN CONTRATO 
+---PAGE 42---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 42 de 53 
+ 
+Informar dato según la tabla de referencia “facturaSinContrato”, disponible en 
+web.sispro.gov.co. 
+f. CÓDIGOS 
+ 
+Informar dato según las tablas de referencia: 
+• identificador único de medicamentos “IUM” disponible en web.sispro.gov.co. 
+• código único de medicamentos “CUM” disponible en web.sispro.gov.co. 
+• identificador único de dispositivos “UDI” disponible en web.sispro.gov.co. 
+ 
+10. REGLAS DE VALIDACIÓN 
+ 
+Las validaciones sobre los documentos electrónicos establecidas desde el mecanismo único 
+de validación se dividen en: 
+10.1. VALIDACIONES DE ARCHIVOS 
+Las validaciones aplicadas sobres los documentos electrónicos, cumpliendo con las 
+características técnicas y de condiciones para la recepción de estos por parte del mecanismo 
+único de validación expuesto por el Ministerio. 
+ 
+Tipo Código Descripción 
+RECHAZO GI008 El tamaño del archivo XML es mayor a 16 MB 
+RECHAZO GI005 Solo se admiten archivos con extensión XML, para el envío 
+de las FEV, ND, NC 
+RECHAZO GI006 El archivo XML está vacío 
+RECHAZO VPQ004 Falta el archivo XMLXML en la carpeta 
+RECHAZO VPQ005 Falta el archivo Json en la carpeta 
+ 
+10.2. VALIDACIONES POR ESTRUCTURA 
+Estas validaciones se centran en la estructura del XMLXML (esquema UBL 2.1) sobre los 
+documentos electrónicos (Invoice, CreditNote, DebitNote, ApplicationResponse y 
+AttachedDocument) en sus etiquetas y anidamientos. 
+Estas validaciones se realizan una vez la DIAN ha emitido su aprobación y la factura será 
+expedida al adquiriente, para validar que el facturador electrónico del sector salud haya 
+conformado el contenedor electrónico de la factura que será soportada con el RIPS, para el 
+reconocimiento y pago de los servicios y tecnologías de salud. 
+En la conformación del contenedor electrónico de la FEV en salud que será soportada con el 
+RIPS, para el emisor de la factura no es dable realizar ninguna modificación sobre la 
+información validada y aprobada por la DIAN. 
+Las validaciones se dividen en notificaciones y rechazos, las cuales se informan a continuación: 
+ 
+Tipo Código Descripción 
+RECHAZO FEV001 Hay un error en la estructura del XML en el apartado 
+[AttachedDocument] 
+RECHAZO FEV002 Hay un error en la estructura del XML en apartado [Invoice] 
+---PAGE 43---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 43 de 53 
+ 
+ 
+Tipo Código Descripción 
+RECHAZO FEV003 Hay un error en la estructura del XML en el apartado 
+[ApplicationResponse] 
+RECHAZO FEV004 Atributo desconocido de la estructura del XML 
+RECHAZO FEV005 Nodo Desconocido de la estructura del XML 
+RECHAZO FEV006 Elemento desconocido de la estructura del XML 
+RECHAZO FEV007 Objeto no referenciado de la estructura del XML 
+RECHAZO FEV008 El Documento Electrónico seleccionado NO es una Factura 
+Electrónica de Venta 
+RECHAZO PFE001 [AttachedDocument] El apartado no existe o no tiene valor en el 
+XML del documento electrónico 
+RECHAZO PFE002 [Invoice] El apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+ 
+RECHAZO 
+ 
+PFE003 
+[ApplicationResponse] El apartado no existe o no tiene valor en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED001 
+[Fev.Invoice.CustomizationID] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED003 
+[Fev.Invoice.ID] El apartado no existe o no tiene valor en el 
+XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED004 
+[Fev.Invoice.UUID] El apartado no existe o no tiene valor en el 
+XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED005 
+[Fev.Invoice.IssueDate] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED008 
+[Fev.Invoice.InvoiceTypeCode] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED017 
+[Fev.Invoice.LegalMonetaryTotal.PayableAmount] El apartado 
+no existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED020 
+[Fev.Invoice.AccountingSupplierParty.AdditionalAccountID] El 
+apartado no existe o no tiene valor en el XML del documento 
+electrónico 
+ 
+RECHAZO 
+ 
+FED021 
+[Fev.Invoice.AccountingSupplierParty.Party.PartyTaxScheme.C 
+ompanyID] El apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+ 
+RECHAZO 
+ 
+FED022 
+[Fev.Invoice.AccountingSupplierParty.Party.PartyTaxScheme.C 
+ompanyID.schem eID] El apartado no existe o no tiene valor en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED023 
+[Fev.Invoice.AccountingSupplierParty.Party.PartyTaxScheme.R 
+egistrationName] El apartado no existe o no tiene valor en el 
+XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED034 
+[Invoice.AccountingCustomerParty.Party.PartyTaxScheme.Com 
+panyID] El apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+ 
+RECHAZO 
+ 
+FED036 
+[Invoice.AccountingCustomerParty.Party.PartyTaxScheme.Regi 
+strationName] El apartado no existe o no tiene valor en el XML 
+del documento electrónico 
+ 
+RECHAZO 
+ 
+FED018 
+[Fev.Invoice.AccountingSupplierParty] El apartado no existe en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED019 
+[Fev.Invoice.AccountingSupplierParty.Party] El apartado no 
+existe en el XML del documento electrónico 
+---PAGE 44---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 44 de 53 
+ 
+ 
+Tipo Código Descripción 
+ 
+RECHAZO 
+ 
+FED030 
+[Fev.Invoice.AccountingSupplierParty.Party.PartyTaxScheme] 
+El apartado no existe en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED060 
+[Invoice.UBLExtensions.CustomTagGeneral] El apartado no 
+existe en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED061 
+[/Invoice/cac:PrepaidPayment] El apartado debe ser informado 
+una única vez por concepto 
+RECHAZO NCV001 Hay un error en la estructura del XML en el apartado 
+[AttachedDocument] 
+RECHAZO NCV002 Hay un error en la estructura del XML en apartado [CreditNote] 
+RECHAZO NCV003 Hay un error en la estructura del XML en el apartado 
+[ApplicationResponse] 
+RECHAZO NCV004 Atributo desconocido de la estructura del XML 
+RECHAZO NCV005 Nodo Desconocido de la estructura del XML 
+RECHAZO NCV006 Elemento desconocido de la estructura del XML 
+RECHAZO NCV007 Objeto no referenciado de la estructura del XML 
+RECHAZO NCV008 El Documento Electrónico seleccionado NO es una Nota 
+Crédito 
+RECHAZO NDV001 Hay un error en la estructura del XML en el apartado 
+[AttachedDocument] 
+RECHAZO NDV002 Hay un error en la estructura del XML en apartado [DebitNote] 
+RECHAZO NDV003 Hay un error en la estructura del XML en el apartado 
+[ApplicationResponse] 
+RECHAZO NDV004 Atributo desconocido de la estructura del XML 
+RECHAZO NDV005 Nodo desconocido de la estructura del XML 
+RECHAZO NDV006 Elemento desconocido de la estructura del XML 
+RECHAZO NDV007 Objeto no referenciado de la estructura del XML 
+RECHAZO NDV008 El Documento Electrónico seleccionado NO es una Nota Débito 
+ 
+RECHAZO 
+ 
+PNC001 
+[AttachedDocument] El apartado no existe o no tiene valor en el 
+XML de la Nota Crédito 
+RECHAZO PNC002 [CreditNote] El apartado no existe o no tiene valor en el XML de 
+la Nota Crédito 
+ 
+RECHAZO 
+ 
+PNC003 
+[ApplicationResponse] El apartado no existe o no tiene valor en 
+el XML de la Nota Crédito 
+ 
+RECHAZO 
+ 
+PNC012 
+No existe el Tag [BillingReference.InvoiceDocumentReference] 
+de la Factura Electrónica referenciada en el XML 
+ 
+RECHAZO 
+ 
+CND001 
+[CreditNote.CustomizationID] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND003 
+[CreditNote.ID] El apartado no existe o no tiene valor en el XML 
+del documento electrónico 
+ 
+RECHAZO 
+ 
+CND004 
+[CreditNote.UUID] El apartado no existe o no tiene valor en el 
+XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND005 
+[CreditNote.IssueDate] El apartado no existe o no tiene valor en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND017 
+[CreditNote.LegalMonetaryTotal.PayableAmount] El apartado 
+no existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND020 
+[CreditNote.AccountingSupplierParty.AdditionalAccountID[0].Va 
+lue] El apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+---PAGE 45---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ 
+ 
+Tipo Código Descripción 
+ 
+RECHAZO 
+ 
+CND021 
+[CreditNote.AccountingSupplierParty.Party.PartyTaxScheme[0]. 
+CompanyID.Valu e] El apartado no existe o no tiene valor en el 
+XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND022 
+[CreditNote.AccountingSupplierParty.Party.PartyTaxScheme[0]. 
+CompanyID.sche meID] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND023 
+[CreditNote.AccountingSupplierParty.Party.PartyTaxScheme[0]. 
+RegistrationNam e.Value] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND031 
+[Invoice.AccountingCustomerParty.AdditionalAccountID[0].Valu 
+e] El apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+ 
+RECHAZO 
+ 
+CND034 
+[CreditNote.AccountingCustomerParty.Party.PartyTaxScheme[ 
+0].CompanyID.Val ue] El apartado no existe o no tiene valor en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND036 
+[CreditNote.AccountingCustomerParty.Party.PartyTaxScheme[ 
+0].RegistrationNa me.Value] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND018 
+[CreditNote.AccountingSupplierParty] El apartado no existe en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND019 
+[CreditNote.AccountingSupplierParty.Party] El apartado no 
+existe en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND030 
+[CreditNote.AccountingSupplierParty.Party.PartyTaxScheme] El 
+apartado no existe en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND060 
+[Invoice.UBLExtensions.CustomTagGeneral] El apartado no 
+existe en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+PDN001 
+[AttachedDocument] El apartado no existe o no tiene valor en el 
+XML de la Nota Débito 
+RECHAZO PDN002 [DebitNote] El apartado no existe o no tiene valor en el XML de 
+la Nota Débito 
+ 
+RECHAZO 
+ 
+PDN003 
+[ApplicationResponse] El apartado no existe o no tiene valor en 
+el XML de la Nota Débito 
+ 
+RECHAZO 
+ 
+PDN012 
+No existe el Tag [BillingReference.InvoiceDocumentReference] 
+de la Factura Electrónica referenciada en el XML 
+ 
+RECHAZO 
+ 
+CCV000 
+[ARCHIVO(S) INVALIDOS] El CUV generado a partir de los 
+archivos XML y/o Json adjuntos, no concuerdan con el CUV a 
+consultar 
+ 
+RECHAZO 
+ 
+CCV001 
+El Código Unico de Validacion Suministrado NO está validado 
+por el Ministerio de Salud y Protección Social 
+ 
+RECHAZO 
+ 
+DND001 
+[DebitNote.CustomizationID] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND003 
+[DebitNote.ID] El apartado no existe o no tiene valor en el XML 
+del documento electrónico 
+ 
+RECHAZO 
+ 
+DND004 
+[DebitNote.UUID] El apartado no existe o no tiene valor en el 
+XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND005 
+[DebitNote.IssueDate] El apartado no existe o no tiene valor en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND017 
+[DebitNote.RequestedMonetaryTotal.PayableAmount] El 
+apartado no existe o no tiene valor en el XML del documento 
+electrónico 
+DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 45 de 53 
+---PAGE 46---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 46 de 53 
+ 
+ 
+Tipo Código Descripción 
+ 
+RECHAZO 
+ 
+DND020 
+[DebitNote.AccountingSupplierParty.AdditionalAccountID] El 
+apartado no existe o no tiene valor en el XML del documento 
+electrónico 
+ 
+RECHAZO 
+ 
+DND021 
+[DebitNote.AccountingSupplierParty.Party.PartyTaxScheme.Co 
+mpanyID] El apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+ 
+RECHAZO 
+ 
+DND022 
+[DebitNote.AccountingSupplierParty.Party.PartyTaxScheme.Co 
+mpanyID.schemeI D] El apartado no existe o no tiene valor en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND023 
+[DebitNote.AccountingSupplierParty.Party.PartyTaxScheme.Re 
+gistrationName] El apartado no existe o no tiene valor en el 
+XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND034 
+[DebitNote.AccountingCustomerParty.Party.PartyTaxScheme.C 
+ompanyID] El apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+ 
+RECHAZO 
+ 
+DND036 
+[DebitNote.AccountingCustomerParty.Party.PartyTaxScheme.R 
+egistrationName] El apartado no existe o no tiene valor en el 
+XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND018 
+[DebitNote.AccountingSupplierParty] El apartado no existe en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND019 
+[DebitNote.AccountingSupplierParty.Party] El apartado no 
+existe en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND030 
+[DebitNote.AccountingSupplierParty.Party.PartyTaxScheme] El 
+apartado no existe en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND060 
+[Invoice.UBLExtensions.CustomTagGeneral] El apartado no 
+existe en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND100 
+[InvoicePeriod.StartDate] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND101 
+[InvoicePeriod.EndDate] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND104 
+[PrepaidPayment.ID.schemeID] El apartado no existe o no 
+tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND105 
+[PrepaidPayment.PaidAmount] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND108 
+Cargo(Charge): [AllowanceCharge.MultiplierFactorNumeric] El 
+apartado no existe o no tiene valor en el XML del documento 
+electrónico 
+ 
+RECHAZO 
+ 
+DND109 
+Cargo(Charge): [AllowanceCharge.Amount] El apartado no 
+existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND110 
+Cargo(Charge): [AllowanceCharge.BaseAmount] El apartado 
+no existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND111 
+Descuento(Discount): 
+[AllowanceCharge.MultiplierFactorNumeric] El apartado no 
+existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND112 
+Descuento(Discount): [AllowanceCharge.Amount] El apartado 
+no existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND113 
+Descuento(Discount): [AllowanceCharge.BaseAmount] El 
+apartado no existe o no tiene valor en el XML del documento 
+electrónico 
+---PAGE 47---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 47 de 53 
+ 
+ 
+Tipo Código Descripción 
+ 
+RECHAZO 
+ 
+DND114 
+[Invoice.InvoiceLine.TaxTotal.TaxAmount] El apartado no existe 
+o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND115 
+[tributo.RoundingAmount] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND116 
+[tributoInfo.TaxableAmount] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND117 
+[tributoInfo.TaxAmount] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND122 
+[tributoInfo.TaxCategory.TaxScheme.ID] El apartado no existe 
+o no tiene valor en el XML del documento electrónico 
+NOTIFICAC ION 
+ 
+ 
+DND123 
+[Interoperabilidad.Group.Collection.AdditionalInformation.CODI 
+GO_PRESTADO R.Value] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+ 
+RECHAZO 
+ 
+ 
+DND124 
+[Interoperabilidad.Group.Collection.AdditionalInformation.CODI 
+GO_PRESTADO R] No Existe el grupo en la extensión salud 
+del archivo XML del documento 
+electrónico 
+ 
+RECHAZO 
+ 
+DND125 
+[Interoperabilidad.Group.Collection.AdditionalInformation.MOD 
+ALIDAD_PAGO.S chemeId] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND133 
+[Interoperabilidad.Group.Collection.AdditionalInformation.MOD 
+ALIDAD_PAGO] El valor reportado no es válido o está vacío 
+ 
+RECHAZO 
+ 
+DND126 
+[Interoperabilidad.Group.Collection.AdditionalInformation.MOD 
+ALIDAD_PAGO] No Existe el grupo en la extensión salud del 
+archivo XML del documento electrónico 
+ 
+ 
+RECHAZO 
+ 
+ 
+DND127 
+[Interoperabilidad.Group.Collection.AdditionalInformation.COBE 
+RTURA_PLAN_B ENEFICIOS.SchemeId] El apartado no existe 
+o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND134 
+[Interoperabilidad.Group.Collection.AdditionalInformation.COBE 
+RTURA_PLAN_B ENEFICIOS] El valor reportado no es válido 
+o está vacío 
+ 
+ 
+ 
+RECHAZO 
+ 
+ 
+ 
+DND128 
+[Interoperabilidad.Group.Collection.AdditionalInformation.COBE 
+RTURA_PLAN_B ENEFICIOS] No Existe el grupo en la 
+extensión salud del archivo XML del 
+documento electrónico] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+NOTIFICAC ION 
+ 
+ 
+DND129 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_CONTRATO 
+.Value] El apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+ 
+RECHAZO 
+ 
+DND130 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_CONTRATO 
+] No Existe el grupo en la extensión salud del archivo XML del 
+documento electrónico 
+ 
+NOTIFICAC ION  
+DND131 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_POLIZA.Val ue] El apartado no existe o no tiene valor en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+DND132 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_POLIZA] No Existe el grupo en la extensión salud del 
+archivo XML del documento electrónico 
+---PAGE 48---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 48 de 53 
+ 
+ 
+Tipo Código Descripción 
+ 
+RECHAZO 
+ 
+CND100 
+[InvoicePeriod.StartDate] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND101 
+[InvoicePeriod.EndDate] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+RCG018 
+No se pueden procesar facturas , cuyo período de facturación 
+(fecha de inicio y fecha fin) sean anteriores al 2023-01-01 
+ 
+RECHAZO 
+ 
+CND104 
+[PrepaidPayment.ID.schemeID] El apartado no existe o no 
+tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND105 
+[PrepaidPayment.PaidAmount] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND108 
+Cargo(Charge): [AllowanceCharge.MultiplierFactorNumeric] El 
+apartado no existe o no tiene valor en el XML del documento 
+electrónico 
+ 
+RECHAZO 
+ 
+CND109 
+Cargo(Charge): [AllowanceCharge.Amount] El apartado no 
+existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND110 
+Cargo(Charge): [AllowanceCharge.BaseAmount] El apartado 
+no existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND111 
+Descuento(Discount): 
+[AllowanceCharge.MultiplierFactorNumeric] El apartado no 
+existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND112 
+Descuento(Discount): [AllowanceCharge.Amount] El apartado 
+no existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND113 
+Descuento(Discount): [AllowanceCharge.BaseAmount] El 
+apartado no existe o no tiene valor en el XML del documento 
+electrónico 
+ 
+RECHAZO 
+ 
+CND114 
+[Invoice.InvoiceLine.TaxTotal.TaxAmount] El apartado no existe 
+o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND115 
+[tributo.RoundingAmount] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND116 
+[tributoInfo.TaxableAmount] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND117 
+[tributoInfo.TaxAmount] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND122 
+[tributoInfo.TaxCategory.TaxScheme.ID] El apartado no existe 
+o no tiene valor en el XML del documento electrónico 
+NOTIFICAC ION  
+CND123 
+[Interoperabilidad.Group.Collection.AdditionalInformation.CODI 
+GO_PRESTADO R] El apartado no existe o no tiene valor en el 
+XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND124 
+[Interoperabilidad.Group.Collection.AdditionalInformation.CODI 
+GO_PRESTADO R.Value] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND125 
+[Interoperabilidad.Group.Collection.AdditionalInformation.CODI 
+GO_PRESTADO R] No Existe el grupo en la extensión salud 
+del archivo XML del documento electrónico 
+ 
+ 
+RECHAZO 
+ 
+ 
+CND133 
+[Interoperabilidad.Group.Collection.AdditionalInformation.MOD 
+ALIDAD_PAGO.S 
+chemeId] El apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+---PAGE 49---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 49 de 53 
+ 
+ 
+Tipo Código Descripción 
+ 
+RECHAZO 
+ 
+CND126 
+[Interoperabilidad.Group.Collection.AdditionalInformation.MOD 
+ALIDAD_PAGO] El valor reportado no es válido o está vacío 
+ 
+ 
+RECHAZO 
+ 
+ 
+CND127 
+[Interoperabilidad.Group.Collection.AdditionalInformation.MOD 
+ALIDAD_PAGO] No Existe el grupo en la extensión salud del 
+archivo XML del documento 
+electrónico 
+ 
+ 
+RECHAZO 
+ 
+ 
+CND134 
+[Interoperabilidad.Group.Collection.AdditionalInformation.COBE 
+RTURA_PLAN_B 
+ENEFICIOS.SchemeId] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+CND128 
+[Interoperabilidad.Group.Collection.AdditionalInformation.COBE 
+RTURA_PLAN_B ENEFICIOS] El valor reportado no es válido 
+o está vacío 
+ 
+ 
+NOTIFICACION 
+ 
+ 
+ 
+CND129 
+[Interoperabilidad.Group.Collection.AdditionalInformation.COBE 
+RTURA_PLAN_B ENEFICIOS] No Existe el grupo en la 
+extensión salud del archivo XML del documento electrónico] El 
+apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+ 
+ 
+RECHAZO 
+ 
+ 
+CND130 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_CONTRATO 
+.Value] El apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+ 
+NOTIFICAC ION 
+ 
+ 
+CND131 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_CONTRATO 
+] No Existe el grupo en la extensión salud del archivo XML del 
+documento electrónico 
+ 
+RECHAZO 
+ 
+CND132 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_POLIZA.Val ue] El apartado no existe o no tiene valor en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED100 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_POLIZA] No Existe el grupo en la extensión salud del 
+archivo XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED101 
+[InvoicePeriod.EndDate] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED104 
+[PrepaidPayment.ID.schemeID] El apartado no existe o no 
+tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED105 
+[PrepaidPayment.PaidAmount] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED108 
+Cargo(Charge): [AllowanceCharge.MultiplierFactorNumeric] El 
+apartado no existe o no tiene valor en el XML del documento 
+electrónico 
+ 
+RECHAZO 
+ 
+FED109 
+Cargo(Charge): [AllowanceCharge.Amount] El apartado no 
+existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED110 
+Cargo(Charge): [AllowanceCharge.BaseAmount] El apartado 
+no existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED111 
+Descuento(Discount): 
+[AllowanceCharge.MultiplierFactorNumeric] El apartado no 
+existe o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED112 
+Descuento(Discount): [AllowanceCharge.Amount] El apartado 
+no existe o no tiene valor en el XML del documento electrónico 
+---PAGE 50---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 50 de 53 
+ 
+ 
+Tipo Código Descripción 
+ 
+RECHAZO 
+ 
+FED113 
+Descuento(Discount): [AllowanceCharge.BaseAmount] El 
+apartado no existe o no tiene valor en el XML del documento 
+electrónico 
+ 
+RECHAZO 
+ 
+FED114 
+[Invoice.InvoiceLine.TaxTotal.TaxAmount] El apartado no existe 
+o no tiene valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED115 
+[tributo.RoundingAmount] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED116 
+[tributoInfo.TaxableAmount] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED117 
+[tributoInfo.TaxAmount] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED122 
+[tributoInfo.TaxCategory.TaxScheme.ID] El apartado no existe 
+o no tiene valor en el XML del documento electrónico 
+ 
+NOTIFICAC ION 
+ 
+ 
+FED123 
+[Interoperabilidad.Group.Collection.AdditionalInformation.CODI 
+GO_PRESTADO R.Value] El apartado no existe o no tiene 
+valor en el XML del documento 
+Electrónico 
+ 
+ 
+RECHAZO 
+ 
+ 
+FED124 
+[Interoperabilidad.Group.Collection.AdditionalInformation.CODI 
+GO_PRESTADO 
+R] No Existe el grupo en la extensión salud del archivo XML del 
+documento electrónico 
+ 
+RECHAZO 
+ 
+FED125 
+[Interoperabilidad.Group.Collection.AdditionalInformation.MOD 
+ALIDAD_PAGO.S chemeId] El apartado no existe o no tiene 
+valor en el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED133 
+[Interoperabilidad.Group.Collection.AdditionalInformation.MOD 
+ALIDAD_PAGO] El valor reportado no es válido o está vacío 
+ 
+ 
+RECHAZO 
+ 
+ 
+FED126 
+[Interoperabilidad.Group.Collection.AdditionalInformation.MOD 
+ALIDAD_PAGO] No Existe el grupo en la extensión salud del 
+archivo XML del documento electrónico 
+ 
+ 
+RECHAZO 
+ 
+ 
+FED127 
+[Interoperabilidad.Group.Collection.AdditionalInformation.COBE 
+RTURA_PLAN_B ENEFICIOS.SchemeId] El apartado no existe 
+o no tiene valor en el XML del 
+documento electrónico 
+ 
+RECHAZO 
+ 
+FED134 
+[Interoperabilidad.Group.Collection.AdditionalInformation.COBE 
+RTURA_PLAN_B ENEFICIOS] El valor reportado no es válido 
+o está vacío 
+ 
+ 
+ 
+RECHAZO 
+ 
+ 
+ 
+FED128 
+[Interoperabilidad.Group.Collection.AdditionalInformation.COBE 
+RTURA_PLAN_B ENEFICIOS] No Existe el grupo en la 
+extensión salud del archivo XML del 
+documento electrónico] El apartado no existe o no tiene valor 
+en el XML del documento electrónico 
+ 
+NOTIFICAC ION 
+ 
+ 
+FED129 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_CONTRATO 
+.Value] El apartado no existe o no tiene valor en el XML del 
+documento electrónico 
+ 
+RECHAZO 
+ 
+FED130 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_CONTRATO 
+] No Existe el grupo en la extensión salud del archivo XML del 
+documento electrónico 
+---PAGE 51---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 51 de 53 
+ 
+ 
+Tipo Código Descripción 
+NOTIFICAC ION  
+FED131 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_POLIZA.Val ue] El apartado no existe o no tiene valor en 
+el XML del documento electrónico 
+ 
+RECHAZO 
+ 
+FED132 
+[Interoperabilidad.Group.Collection.AdditionalInformation.NUM 
+ERO_POLIZA] No Existe el grupo en la extensión salud del 
+archivo XML del documento electrónico 
+ 
+10.3. VALIDACIÓN SOBRE LOS DATOS 
+Estas validaciones se enfocan en el contenido de los datos reportados en los elementos del 
+XML, verificando la precisión y coherencia de la información contenida en los elementos según 
+las pautas establecidas por el esquema UBL y las resoluciones 000165 de 2023 expedida por 
+la Unidad Administrativa Especial Dirección de Impuestos y Aduanas Nacionales -DIAN en sus 
+artículos 23 y 68), y la Resolución 2275 de 2023 expedida por el Ministerio de Salud y 
+Protección Social o la norma que la modifica o sustituya, en lo de su competencia. 
+ 
+Esta validación no genera efectos sobre el contenido aprobado por la DIAN y su alcance se 
+limita a la validación del relacionamiento que necesariamente debe existir entre el RIPS y la 
+FEV en salud y sus demás documentos electrónicos relacionados. 
+ 
+En la conformación del contenedor electrónico de la FEV en salud que será soportada con el 
+RIPS, para el emisor de la factura no es dable realizar ninguna modificación sobre la 
+información validada y aprobada por la DIAN. 
+ 
+Tipo Código Descripción 
+RECHAZO VFE001 [Invoice.InvoiceTypeCode] El valor reportado no es válido o está 
+vacío 
+RECHAZO VFE002 
+[Invoice.InvoiceTypeCode] El valor reportado no es válido para 
+Factura Electrónica 
+ 
+RECHAZO 
+ 
+VFE003 
+[Invoice.CustomizationID] El valor reportado de la Factura 
+Electrónica no es válido del sector Salud o está vacío 
+RECHAZO VFE005 [Invoice.ID] El valor reportado contiene caracteres inválidos o 
+está vacío 
+RECHAZO VFE006 
+[Invoice.UUID] El valor reportado contiene caracteres inválidos o 
+está vacío 
+RECHAZO VFE007 [Invoice.UUID] El valor reportado del documento electrónico está 
+errado, no cumple con las especificaciones técnicas del código o 
+está vacío 
+ 
+RECHAZO 
+ 
+VFE011 
+[Invoice.AccountingSupplierParty.Party.PartyTaxScheme[0].Co 
+mpanyID.schemeName] Debe informar literal '31' 
+RECHAZO VFE012 
+[Invoice.AccountingSupplierParty.Party.PartyTaxScheme[0].Co 
+mpanyID.schemeID] Debe informar el Dígito de Verificación o 
+está vacío 
+ 
+RECHAZO 
+ 
+VFE020 
+[Invoice.InvoicePeriod.StartDate] Debe reportar la fecha de inicio 
+del periodo de la Factura Electrónica 
+ 
+RECHAZO 
+ 
+VFE021 
+[Invoice.InvoicePeriod.EndDate] Debe reportar la fecha final del 
+periodo de la Factura Electrónica 
+RECHAZO VFE022 [Invoice.AccountingSupplierParty.Party.PartyTaxScheme.Comp 
+anyID] La Entidad Responsable de Pago informada en el XML no 
+corresponde a una entidad para la cobertura o plan de beneficio 
+informado 
+---PAGE 52---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 52 de 53 
+ 
+ 
+Tipo Código Descripción 
+RECHAZO PFP001 El número de Factura Electrónica no corresponde al reportado 
+por Rips 
+RECHAZO GI012 No existe una Factura electrónica asociada a esta Nota Crédito 
+ 
+RECHAZO 
+ 
+GI013 
+El Código CUFE de la factura referenciada en la Nota Crédito, no 
+está registrada en el Sistema del MSPS 
+ 
+RECHAZO 
+ 
+GI014 
+El Documento Invoice – Factura electrónica no corresponde a la 
+aprobada por la DIAN 
+RECHAZO VCN001 
+[CreditNote.CreditNoteTypeCode] El valor reportado no es válido 
+o está vacío 
+ 
+RECHAZO 
+ 
+VCN002 
+[CreditNote.CreditNoteTypeCode] El valor reportado no es válido 
+para Nota Crédito 
+ 
+RECHAZO 
+ 
+VCN004 
+[CreditNote.ID] El valor reportado contiene caracteres inválidos o 
+está vacío 
+RECHAZO VCN005 
+[CreditNote.UUID] El valor reportado contiene caracteres 
+inválidos o está vacío 
+RECHAZO VCN006 
+[CreditNote.UUID] El valor reportado del documento electrónico 
+está errado, no cumple con las especificaciones técnicas del 
+código o está vacío 
+ 
+RECHAZO 
+ 
+VCN010 
+[CreditNote.AccountingSupplierParty.Party.PartyTaxScheme[0]. 
+CompanyID.sch emeName] Debe informar literal '31' 
+RECHAZO VCN011 
+[CreditNote.AccountingSupplierParty.Party.PartyTaxScheme[0]. 
+CompanyID.sch emeID] Debe informar el Dígito de Verificación o 
+está vacío 
+ 
+RECHAZO 
+ 
+VCN019 
+[CreditNote.InvoicePeriod.StartDate] Debe reportar la fecha de 
+inicio del periodo de la Nota Crédito 
+ 
+RECHAZO 
+ 
+VCN020 
+[CreditNote.InvoicePeriod.EndDate] Debe reportar la fecha final 
+del periodo de la Nota Crédito 
+RECHAZO GI016 No existe la Factura Electrónica referenciada en el sistema. 
+RECHAZO GI015 No existe una Factura electrónica asociada a esta Nota Débito 
+RECHAZO GI017 La Nota Débito no corresponde a la aprobada por la DIAN 
+RECHAZO VDN002 
+[DebitNote.ID] El valor reportado contiene caracteres inválidos o 
+está vacío 
+RECHAZO VDN003 
+[DebitNote.UUID] El valor reportado contiene caracteres inválidos 
+o está vacío 
+RECHAZO VDN004 
+[DebitNote.UUID] El valor reportado del documento electrónico 
+está errado, no cumple con las especificaciones técnicas del 
+código o está vacío 
+ 
+RECHAZO 
+ 
+VDN008 
+[DebitNote.AccountingSupplierParty.Party.PartyTaxScheme[0].C 
+ompanyID.sch emeName] Debe informar literal '31' 
+ 
+RECHAZO 
+ 
+VDN009 
+[DebitNote.AccountingSupplierParty.Party.PartyTaxScheme[0].C 
+ompanyID.sch emeID] Debe informar el Dígito de Verificación o 
+está vacío 
+RECHAZO VDN017 
+[DebitNote.InvoicePeriod.StartDate] Debe reportar la fecha de 
+inicio del periodo de la Nota Débito 
+ 
+RECHAZO 
+ 
+VDN018 
+[DebitNote.InvoicePeriod.EndDate] Debe reportar la fecha final 
+del periodo de la Nota Débito 
+ 
+RECHAZO 
+ 
+AAR001 
+[ApplicationResponse.DocumentResponse[0].Response.Respon 
+seCode] El valor reportado no es válido o está vacío 
+ 
+RECHAZO 
+ 
+RVG018 
+No se pueden procesar facturas, cuyo período de facturación 
+(fecha de inicio y fecha fin) sean anteriores al 2024-10-01 o al 
+---PAGE 53---
+DOCUMENTO TECNICO No. 2 
+CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES A LA GENERACIÓN DE 
+LA FEV 
+ 
+ DOCUMENTO TÉCNICO 2 
+“CAMPOS DE DATOS DEL SECTOR SALUD, ADICIONALES 
+A LA GENERACIÓN DE LAFEV” 
+ 
+Versión: Lanzamiento 
+Abril 29 de 2026 
+ 
+Página 53 de 53 
+ 
+ 
+Tipo Código Descripción 
+  inicio del período de entrada en operación de cada Grupo 
+definido en la Resolución 1884 de 2024. 
+RECHAZO GI010 
+[ApplicationResponse.DocumentResponse[0].Response.Respon 
+seCode] El documento electrónico fue rechazado por la DIAN 
+RECHAZO GI011 
+El Documento Invoice – Factura electrónica no corresponde a la 
+aprobada por la DIAN 
+RECHAZO FED135 
+Hubo errores en los datos del Documento Electrónico, no cumple 
+con las validaciones requeridas 
+RECHAZO CND135 
+Hubo errores en los datos del Documento Electrónico, no cumple 
+con las validaciones requeridas 
+RECHAZO DND135 
+Hubo errores en los datos del Documento Electrónico, no cumple 
+con las validaciones requeridas 
+RECHAZO CIN005 La modalidad de pago no corresponde a la cobertura o plan de 
+beneficios informado. 
+ 
+ 
+ 
+10.4. VALIDACIONES EN EL ALMACENAMIENTO 
+ 
+Estas validaciones dan cuenta de la existencia de inconvenientes tecnológicos en el proceso 
+de transmisión de información a la plataforma del mecanismo único de validación del Ministerio, 
+relacionados con fallas en la conexión a la base de datos de almacenamiento de información 
+en los servidores del Ministerio, que impiden dicho almacenamiento y que obligan al facturador 
+electrónico del sector salud a realizar una nueva transmisión de información. 
+ 
+Solo una vez se confirma la transmisión de la información en la base de datos de 
+almacenamiento de información en los servidores del Ministerio y su procesamiento exitoso, se 
+generará el Código Único de Validación -CUV. 
+ 
+Tipo Código Descripción 
+RECHAZO CFR001 Hubo errores al almacenar los datos, por favor intente transmitir 
+nuevamente. 
+ 
+10.5. VALIDACIONES DE LA CONSISTENCIA DE ARCHIVOS 
+Estas validaciones se generan al momento de trasmitir la información del mecanismo único de 
+validación desde el procesamiento realizado en la solución tecnológica alojada en el facturador 
+electrónico del sector salud al mecanismo único de validación al interior del Ministerio, para 
+culminar el procesamiento de información. 
+Tienen el propósito de validar la consistencia de los datos contenidos en los archivos XML -
+JSON desde su origen y hasta su almacenamiento en la base de datos en los servidores del 
+Ministerio 
+ 
+Tipo Código Descripción 
+RECHAZO VDI001 El directorio seleccionado que contiene los archivos a validar no 
+es válido 
+RECHAZO PFR001 El Código Único de Validación (CUV) generado por el MSPS no 
+corresponde a los datos enviados de XML y Json 
+ 

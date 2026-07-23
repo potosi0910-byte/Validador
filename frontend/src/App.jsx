@@ -25,6 +25,7 @@ export default function App() {
   const [error, setError]           = useState(null)
   const [jsonFiles, setJsonFiles]   = useState([])
   const [excelFiles, setExcelFiles] = useState([])
+  const [xmlFiles, setXmlFiles]     = useState([])
 
   useEffect(() => {
     precalentarConexion()
@@ -44,6 +45,7 @@ export default function App() {
     setError(null)
     setJsonFiles([])
     setExcelFiles([])
+    setXmlFiles([])
     setSection('malla')
   }
 
@@ -54,7 +56,7 @@ export default function App() {
     setError(null)
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
     try {
-      const data = await procesar(jsonFiles, excelFiles, pct => setLoadingPct(pct))
+      const data = await procesar(jsonFiles, excelFiles, pct => setLoadingPct(pct), xmlFiles)
       setResultado(data)
     } catch (err) {
       setError(err?.response?.data?.detail ?? err?.message ?? 'Error al procesar los archivos.')
@@ -144,8 +146,10 @@ export default function App() {
                 <UploadCard
                   jsonFiles={jsonFiles}
                   excelFiles={excelFiles}
+                  xmlFiles={xmlFiles}
                   onJsonChange={setJsonFiles}
                   onExcelChange={setExcelFiles}
+                  onXmlChange={setXmlFiles}
                   onProcesar={handleProcesar}
                   onExportar={handleExportar}
                   hasResults={hasResults}

@@ -794,3 +794,55 @@ def validar_concepto_recaudo(data, nombre_archivo=""):
                            f"código={cod} | conceptoRecaudo={cr_raw} | esperado=1 o 5")
 
     return alertas
+
+
+# ══════════════════════════════════════════════════════════════
+# VALIDACIÓN: TIPO DE IDENTIFICACIÓN "AS" SOLO PARA COLOMBIANOS
+# REC-AS: tipoDocumentoIdentificacion=AS no aplica para extranjeros
+# ══════════════════════════════════════════════════════════════
+
+_COD_COLOMBIA = "170"
+
+
+def validar_tipo_identificacion_as(data, nombre_archivo=""):
+    """
+    REC-AS: El tipo de identificación "AS" (Adulto sin identificación)
+    solo aplica para colombianos (codPaisOrigen = 170).
+    Si el usuario es extranjero o venezolano con tipo AS, se debe
+    ajustar a "SI" (Sin identificación).
+    """
+    alertas = []
+    if not isinstance(data, dict):
+        return alertas
+
+    num_factura = _get_factura(data)
+
+    for usuario in data.get("usuarios", []):
+        if not isinstance(usuario, dict):
+            continue
+
+        tipo_doc = _nstr(usuario.get("tipoDocumentoIdentificacion", "")).upper()
+        if tipo_doc != "AS":
+            continue
+
+        cod_pais = _nstr(usuario.get("codPaisOrigen", ""))
+        if cod_pais == _COD_COLOMBIA or cod_pais == "":
+            continue
+
+        nd = _num_doc_usuario(usuario)
+        alertas.append({
+            "archivo":       nombre_archivo,
+            "num_factura":   num_factura,
+            "num_doc":       nd,
+            "consecutivo":   _nstr(usuario.get("consecutivo", "")),
+            "id_regla":      "REC-AS",
+            "severidad":     "alta",
+            "campo":         "tipoDocumentoIdentificacion",
+            "mensaje":       (
+                "Tipo de identificación AS solo aplica para colombianos sin "
+                "identificación, ajustar a tipo SI."
+            ),
+            "valor_actual":  f"tipoDocumentoIdentificacion=AS | codPaisOrigen={cod_pais}",
+        })
+
+    return alertas

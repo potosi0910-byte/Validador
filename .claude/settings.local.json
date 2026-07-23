@@ -31,7 +31,9 @@
       "Bash(timeout 8 py -3.13 -c ' *)",
       "Bash(dir \"c:\\\\Users\\\\HAUDITORIA42\\\\Documents\\\\Didier Potosi\\\\Dr-Factory\\\\Python\\\\Extractor_rips\\\\frontend\\\\src\" /s /b)",
       "Bash(findstr /v node_modules)",
-      "Read(//c/Users/HAUDITORIA42/Documents/Didier Potosi/Dr-Factory/Python/**)"
+      "Read(//c/Users/HAUDITORIA42/Documents/Didier Potosi/Dr-Factory/Python/**)",
+      "Bash(python -c \"print\\(1\\)\")",
+      "Bash(py --version)"
     ],
     "additionalDirectories": [
       "c:\\Users\\HAUDITORIA42\\.claude\\projects\\c--Users-HAUDITORIA42-Documents-Didier-Potosi-Dr-Factory-Python-Extractor-rips\\memory"

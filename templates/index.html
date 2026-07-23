@@ -305,6 +305,26 @@
                     <ul class="file-list" id="listExcel"></ul>
                 </div>
 
+                <!-- XML FACTURA ELECTRÓNICA (Ad####.xml) -->
+                <div class="upload-zone" id="zoneXml">
+                    <div class="upload-zone-icon excel-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <path d="M14 2v6h6M9.5 13.5l-1.5 2 1.5 2M14.5 13.5l1.5 2-1.5 2"/>
+                        </svg>
+                    </div>
+                    <p class="upload-zone-title">XML Factura FEV <span class="tag-optional">Opcional</span></p>
+                    <p class="upload-zone-sub">Archivos <code>Ad####.xml</code> (Anexo Técnico 2 - Res. 948/2026)</p>
+                    <button type="button" class="btn-file btn-excel"
+                            onclick="document.getElementById('xml_files').click()">
+                        Seleccionar XML
+                    </button>
+                    <input id="xml_files" type="file" name="xml_files"
+                           accept=".xml" multiple
+                           onchange="mostrarNombres(this, 'listXml')">
+                    <ul class="file-list" id="listXml"></ul>
+                </div>
+
             </div><!-- /upload-grid -->
 
             <!-- ── AVISO JORGE ─────────────────────────────── -->
@@ -382,6 +402,12 @@
                         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 1a.5.5 0 00-.5.5v3a.5.5 0 01-1 0v-3A1.5 1.5 0 011.5 0h3a.5.5 0 010 1h-3zm9 0a.5.5 0 000 1h3a.5.5 0 01.5.5v3a.5.5 0 001 0v-3A1.5 1.5 0 0013.5 0h-3zm-9 13a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a1.5 1.5 0 01-1.5-1.5v-3a.5.5 0 011 0v3zm13 0a1.5 1.5 0 01-1.5 1.5h-3a.5.5 0 010-1h3a.5.5 0 00.5-.5v-3a.5.5 0 011 0v3z"/></svg>
                         {{ stats.total_rips }} registros RIPS
                     </span>
+                    {% if stats.get('archivos_xml') %}
+                    <span class="dh-tag">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+                        {{ stats.archivos_xml }} archivo(s) XML FEV validado(s)
+                    </span>
+                    {% endif %}
                     <span class="dh-tag dh-tag-time">
                         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 3.5a.5.5 0 00-1 0V9a.5.5 0 00.252.434l3.5 2a.5.5 0 00.496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 108 0a8 8 0 000 16zm7-8A7 7 0 111 8a7 7 0 0114 0z"/></svg>
                         {{ stats.tiempo_procesamiento }}
@@ -389,12 +415,12 @@
                 </div>
             </div>
             <div class="dh-totals">
-                {% set grand_total = stats.get('malla_total',0) + stats.get('general_total',0) + stats.get('auditoria_total',0) %}
+                {% set grand_total = stats.get('malla_total',0) + stats.get('general_total',0) + stats.get('auditoria_total',0) + stats.get('xml_fev_total',0) %}
                 <div class="dh-total-big {% if grand_total > 0 %}dh-has-alerts{% endif %}">
                     <span class="dh-big-num">{{ grand_total }}</span>
                     <span class="dh-big-lbl">alertas totales</span>
                 </div>
-                {% set grand_critica = stats.get('malla_criticas',0) + stats.get('general_criticas',0) + stats.get('auditoria_criticas',0) %}
+                {% set grand_critica = stats.get('malla_criticas',0) + stats.get('general_criticas',0) + stats.get('auditoria_criticas',0) + stats.get('xml_fev_criticas',0) %}
                 {% if grand_critica > 0 %}
                 <div class="dh-critica-badge">
                     <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
@@ -589,6 +615,67 @@
                 {% endif %}
             </div>
 
+            {% if stats.get('archivos_xml') %}
+            <!-- ── Módulo 4: XML Factura FEV (Anexo Técnico 2 - Res. 948/2026) ── -->
+            <div class="module-card {% if stats.get('xml_fev_criticas',0) > 0 %}mc-danger{% elif stats.get('xml_fev_total',0) > 0 %}mc-warn{% else %}mc-ok{% endif %}">
+                <div class="mc-header">
+                    <div class="mc-icon mc-icon-audit">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="mc-title">XML Factura FEV</div>
+                        <div class="mc-sub">{{ stats.archivos_xml }} archivo(s) Ad####.xml · Anexo Técnico 2</div>
+                    </div>
+                </div>
+                <div class="mc-count-row">
+                    <span class="mc-count {% if stats.get('xml_fev_criticas',0) > 0 %}mc-count-red{% elif stats.get('xml_fev_total',0) > 0 %}mc-count-warn{% else %}mc-count-ok{% endif %}">
+                        {{ stats.get('xml_fev_total', 0) }}
+                    </span>
+                    <span class="mc-count-lbl">alertas</span>
+                </div>
+                {% if stats.get('xml_fev_total', 0) > 0 %}
+                <div class="mc-sev-bars">
+                    {% set tx = stats.get('xml_fev_total',1) %}
+                    <div class="sev-row">
+                        <span class="sev-lbl sev-red">Crítica</span>
+                        <div class="sev-track">
+                            <div class="sev-fill sev-fill-red" style="width:{{ ((stats.get('xml_fev_criticas',0)/tx)*100)|int }}%"></div>
+                        </div>
+                        <span class="sev-num">{{ stats.get('xml_fev_criticas',0) }}</span>
+                    </div>
+                    <div class="sev-row">
+                        <span class="sev-lbl sev-amber">Alta/Med</span>
+                        <div class="sev-track">
+                            <div class="sev-fill sev-fill-amber" style="width:{{ ((stats.get('xml_fev_notificaciones',0)/tx)*100)|int }}%"></div>
+                        </div>
+                        <span class="sev-num">{{ stats.get('xml_fev_notificaciones',0) }}</span>
+                    </div>
+                </div>
+                {% if stats.get('xml_fev_top_reglas') %}
+                <div class="mc-top-rules">
+                    <div class="mtr-header">Reglas más frecuentes</div>
+                    {% for regla, cnt in stats.xml_fev_top_reglas %}
+                    <div class="mtr-row">
+                        <span class="mtr-code">{{ regla }}</span>
+                        <div class="mtr-bar-wrap">
+                            <div class="mtr-bar" style="width:{{ ((cnt / stats.xml_fev_top_reglas[0][1]) * 100)|int }}%"></div>
+                        </div>
+                        <span class="mtr-cnt">{{ cnt }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="mc-ok-msg">
+                    <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    Sin alertas detectadas
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
         </div><!-- /module-grid -->
     </section>
     {% endif %}
@@ -614,6 +701,22 @@
             <span class="stat-val">{{ stats.auts_rips }}</span>
             <span class="stat-lbl">Autorizaciones RIPS</span>
         </div>
+        {% if stats.get('archivos_xml') %}
+        <div class="stat-chip">
+            <span class="stat-val">{{ stats.archivos_xml }}</span>
+            <span class="stat-lbl">XML FEV validados</span>
+        </div>
+        <div class="stat-chip {{ 'stat-danger' if stats.get('xml_fev_criticas',0) > 0 else 'stat-ok' }}">
+            <span class="stat-val">{{ stats.get('xml_fev_total',0) }}</span>
+            <span class="stat-lbl">Alertas XML FEV ({{ stats.get('xml_fev_criticas',0) }} críticas)</span>
+        </div>
+        {% if stats.get('archivos_faltantes_total',0) > 0 %}
+        <div class="stat-chip stat-danger">
+            <span class="stat-val">{{ stats.archivos_faltantes_total }}</span>
+            <span class="stat-lbl">Carpetas incompletas (RIPS/XML)</span>
+        </div>
+        {% endif %}
+        {% endif %}
         {% if stats.auts_excel is defined and stats.auts_excel > 0 %}
         <div class="stat-chip">
             <span class="stat-val">{{ stats.auts_excel }}</span>
@@ -1756,6 +1859,11 @@ function _enviarFormulario(action) {
     const excelInput = document.getElementById('excel_files');
     if (excelInput) {
         Array.from(excelInput.files).forEach(f => fd.append('excel_files', f));
+    }
+
+    const xmlInput = document.getElementById('xml_files');
+    if (xmlInput) {
+        Array.from(xmlInput.files).forEach(f => fd.append('xml_files', f));
     }
 
     fetch(window.location.pathname, { method: 'POST', body: fd })

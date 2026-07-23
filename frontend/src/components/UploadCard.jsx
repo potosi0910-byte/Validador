@@ -11,13 +11,16 @@ function fmtFecha(ts) {
   return new Date(ts).toISOString().slice(0, 10)
 }
 
+const AD_XML_REGEX = /^ad.+\.xml$/i
+
 export default function UploadCard({
-  jsonFiles, excelFiles,
-  onJsonChange, onExcelChange,
+  jsonFiles, excelFiles, xmlFiles = [],
+  onJsonChange, onExcelChange, onXmlChange = () => {},
   onProcesar, onExportar,
   hasResults, error, loading, loadingPct = 0,
 }) {
   const [modo, setModo]               = useState('auto')
+  const [modoXml, setModoXml]         = useState('auto')
   const [filtro, setFiltro]           = useState('fecha')
   const [autoTodos, setAutoTodos]     = useState([])
   const [diasPorFecha, setDiasPorFecha] = useState([])
@@ -39,6 +42,8 @@ export default function UploadCard({
   const inputAutoRef      = useRef()
   const inputManualRef    = useRef()
   const inputExcelRef     = useRef()
+  const inputXmlAutoRef   = useRef()
+  const inputXmlManualRef = useRef()
   const carpetaOkRef      = useRef(false)  // true cuando onChange disparó (carpeta confirmada)
 
   // ── Aplicar filtro ────────────────────────────────────────────────────────
@@ -139,6 +144,22 @@ export default function UploadCard({
   // ── Excel ─────────────────────────────────────────────────────────────────
   function onExcel(e) {
     onExcelChange(Array.from(e.target.files))
+  }
+
+  // ── XML Factura FEV (Ad####.xml) ────────────────────────────────────────
+  function onXml(e) {
+    const all = Array.from(e.target.files).filter(f => AD_XML_REGEX.test(f.name))
+    onXmlChange(all)
+  }
+
+  function onXmlAuto(e) {
+    const all = Array.from(e.target.files).filter(f => AD_XML_REGEX.test(f.name))
+    onXmlChange(all)
+  }
+
+  function cambiarModoXml(m) {
+    setModoXml(m)
+    onXmlChange([])
   }
 
   function cambiarModo(m) {
@@ -391,6 +412,67 @@ export default function UploadCard({
           {excelFiles.length > 0 && (
             <ul className="file-list">
               {excelFiles.map((f, i) => <li key={i}>{f.name}</li>)}
+            </ul>
+          )}
+        </div>
+
+        {/* ── Zona XML Factura FEV ── */}
+        <div className={`upload-zone ${xmlFiles.length > 0 ? 'zone-loaded' : ''}`}>
+          <div className="upload-zone-icon excel-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <path d="M14 2v6h6M9.5 13.5l-1.5 2 1.5 2M14.5 13.5l1.5 2-1.5 2"/>
+            </svg>
+          </div>
+          <p className="upload-zone-title">XML Factura FEV <span className="tag-optional">Opcional</span></p>
+          <p className="upload-zone-sub">Archivos <code>Ad####.xml</code> (Anexo Técnico 2 - Res. 948/2026)</p>
+
+          <div className="rips-mode-toggle">
+            <button type="button" onClick={() => cambiarModoXml('auto')}
+              className={`rips-mode-btn ${modoXml === 'auto' ? 'rips-mode-active' : ''}`}>
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.5 7.5a.5.5 0 010 1H5.707l2.147 2.146a.5.5 0 01-.708.708l-3-3a.5.5 0 010-.708l3-3a.5.5 0 11.708.708L5.707 7.5H11.5z"/></svg>
+              Automático
+            </button>
+            <button type="button" onClick={() => cambiarModoXml('manual')}
+              className={`rips-mode-btn ${modoXml === 'manual' ? 'rips-mode-active' : ''}`}>
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/><path d="M7.646 1.146a.5.5 0 01.708 0l3 3a.5.5 0 01-.708.708L8.5 2.707V11.5a.5.5 0 01-1 0V2.707L5.354 4.854a.5.5 0 11-.708-.708l3-3z"/></svg>
+              Manual
+            </button>
+          </div>
+
+          {modoXml === 'auto' && (
+            <div>
+              <p className="upload-zone-sub">Seleccione la carpeta con archivos <code>Ad####.xml</code></p>
+              <button type="button" className="btn-file btn-excel"
+                onClick={() => inputXmlAutoRef.current.click()}>
+                Cargue XML FEV
+              </button>
+              <input ref={inputXmlAutoRef} type="file" webkitdirectory="true" mozdirectory="true"
+                style={{ display: 'none' }} onChange={onXmlAuto} />
+            </div>
+          )}
+
+          {modoXml === 'manual' && (
+            <div>
+              <p className="upload-zone-sub">Seleccione los archivos <code>Ad####.xml</code></p>
+              <button type="button" className="btn-file btn-excel"
+                onClick={() => inputXmlManualRef.current.click()}>
+                Seleccionar XML
+              </button>
+              <input ref={inputXmlManualRef} type="file" accept=".xml" multiple
+                style={{ display: 'none' }} onChange={onXml} />
+            </div>
+          )}
+
+          {xmlFiles.length > 0 && (
+            <div className="file-counter" style={{ display: 'flex' }}>
+              <span className="counter-num">{xmlFiles.length}</span>
+              <span className="counter-lbl">archivo(s) XML listos</span>
+            </div>
+          )}
+          {xmlFiles.length > 0 && (
+            <ul className="file-list">
+              {xmlFiles.map((f, i) => <li key={i}>{f.name}</li>)}
             </ul>
           )}
         </div>

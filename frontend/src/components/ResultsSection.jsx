@@ -213,8 +213,8 @@ const ROWS = {
 export default function ResultsSection({ resultado }) {
   const { stats = {}, registros = [], alertas = {}, validaciones_malla = [], validaciones_general = [], validaciones_malla_0948 = [], validaciones_auditoria = [], validaciones_pertinencia = [] } = resultado
 
-  const grandTotal   = (stats.malla_total || 0) + (stats.general_total || 0) + (stats.auditoria_total || 0) + (stats.pertinencia_total || 0) + (stats.malla_0948_total || 0)
-  const grandCritica = (stats.malla_criticas || 0) + (stats.general_criticas || 0) + (stats.auditoria_criticas || 0) + (stats.malla_0948_criticas || 0)
+  const grandTotal   = (stats.malla_total || 0) + (stats.general_total || 0) + (stats.auditoria_total || 0) + (stats.pertinencia_total || 0) + (stats.malla_0948_total || 0) + (stats.xml_fev_total || 0)
+  const grandCritica = (stats.malla_criticas || 0) + (stats.general_criticas || 0) + (stats.auditoria_criticas || 0) + (stats.malla_0948_criticas || 0) + (stats.xml_fev_criticas || 0)
 
   const noAlertasAut = !alertas || Object.values(alertas).every(v => !v || v.length === 0)
 
@@ -239,6 +239,12 @@ export default function ResultsSection({ resultado }) {
                 <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 1a.5.5 0 00-.5.5v3a.5.5 0 01-1 0v-3A1.5 1.5 0 011.5 0h3a.5.5 0 010 1h-3zm9 0a.5.5 0 000 1h3a.5.5 0 01.5.5v3a.5.5 0 001 0v-3A1.5 1.5 0 0013.5 0h-3zm-9 13a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a1.5 1.5 0 01-1.5-1.5v-3a.5.5 0 011 0v3zm13 0a1.5 1.5 0 01-1.5 1.5h-3a.5.5 0 010-1h3a.5.5 0 00.5-.5v-3a.5.5 0 011 0v3z"/></svg>
                 {stats.total_rips} registros RIPS
               </span>
+              {stats.archivos_xml > 0 && (
+                <span className="dh-tag">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+                  {stats.archivos_xml} archivo(s) XML FEV validado(s)
+                </span>
+              )}
               <span className="dh-tag dh-tag-time">
                 <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 3.5a.5.5 0 00-1 0V9a.5.5 0 00.252.434l3.5 2a.5.5 0 00.496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 108 0a8 8 0 000 16zm7-8A7 7 0 111 8a7 7 0 0114 0z"/></svg>
                 {stats.tiempo_procesamiento}
@@ -273,6 +279,10 @@ export default function ResultsSection({ resultado }) {
           <ModuleCard title="Pertinencia Clínica" sub="CIE-10 vs CUPS · Coherencia diagnóstico-procedimiento" iconClass="mc-icon-pert"
             colorClass={stats.pertinencia_total > 0 ? 'mc-pert' : 'mc-ok'}
             total={stats.pertinencia_total} criticas={0} notificaciones={stats.pertinencia_total} topReglas={stats.pertinencia_top_reglas} />
+          {stats.archivos_xml > 0 && (
+            <ModuleCard title="XML Factura FEV" sub={`${stats.archivos_xml} archivo(s) Ad####.xml · Anexo Técnico 2`} iconClass="mc-icon-audit"
+              total={stats.xml_fev_total} criticas={stats.xml_fev_criticas} notificaciones={stats.xml_fev_notificaciones} topReglas={stats.xml_fev_top_reglas} />
+          )}
         </div>
       </section>
 
@@ -282,6 +292,13 @@ export default function ResultsSection({ resultado }) {
         <div className={`stat-chip ${stats.alerta_volumen ? 'stat-danger' : ''}`}><span className="stat-val">{stats.total_rips}</span><span className="stat-lbl">Registros RIPS</span></div>
         <div className={`stat-chip ${stats.med_invalidos > 0 ? 'stat-warn' : ''}`}><span className="stat-val">{stats.med_invalidos}</span><span className="stat-lbl">Med. inválidos</span></div>
         <div className="stat-chip"><span className="stat-val">{stats.auts_rips}</span><span className="stat-lbl">Autorizaciones RIPS</span></div>
+        {stats.archivos_xml > 0 && <>
+          <div className="stat-chip"><span className="stat-val">{stats.archivos_xml}</span><span className="stat-lbl">XML FEV validados</span></div>
+          <div className={`stat-chip ${stats.xml_fev_criticas > 0 ? 'stat-danger' : 'stat-ok'}`}><span className="stat-val">{stats.xml_fev_total || 0}</span><span className="stat-lbl">Alertas XML FEV ({stats.xml_fev_criticas || 0} críticas)</span></div>
+          {stats.archivos_faltantes_total > 0 && (
+            <div className="stat-chip stat-danger"><span className="stat-val">{stats.archivos_faltantes_total}</span><span className="stat-lbl">Carpetas incompletas (RIPS/XML)</span></div>
+          )}
+        </>}
         {stats.auts_excel > 0 && <>
           <div className="stat-chip"><span className="stat-val">{stats.auts_excel}</span><span className="stat-lbl">Autorizaciones EPS</span></div>
           {stats.tipo_mismatch > 0 && <div className="stat-chip stat-danger"><span className="stat-val">{stats.tipo_mismatch}</span><span className="stat-lbl">Tipo doc. difiere</span></div>}
